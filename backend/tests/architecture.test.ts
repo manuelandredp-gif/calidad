@@ -283,4 +283,135 @@ describe('Architectural Fitness Functions (Forensic Clean Architecture Suite)', 
       expect(SecurityPolicy.canAccessProject('owner-1', { userId: 'other-user', role: 'TESTER' })).toBe(false);
     });
   });
+
+  // =========================================================================
+  // FF-08: Entidades Ricas e Invariantes (ProjectEntity, RequirementEntity, TestRunEntity)
+  // =========================================================================
+  describe('FF-08: Rich Domain Entities (Project, Requirement, TestRun)', () => {
+    it('ProjectEntity protege sus invariantes de archivado y código', async () => {
+      const { ProjectEntity } = await import('../src/core/domain/entities/project.entity');
+      const project = new ProjectEntity({
+        id: 'proj-01',
+        name: 'Plataforma Core',
+        description: 'Proyecto de prueba',
+        ownerId: 'user-01',
+        status: 'ACTIVE',
+        nextRequirementNumber: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      expect(project.isActive()).toBe(true);
+      expect(project.allocateNextRequirementCode()).toBe('REQ-001');
+      expect(project.nextRequirementNumber).toBe(2);
+
+      project.archive();
+      expect(project.isArchived()).toBe(true);
+      expect(() => project.updateDetails('Nuevo Nombre')).toThrow(/archivado/i);
+    });
+
+    it('RequirementEntity administra su versionado e invariantes', async () => {
+      const { RequirementEntity } = await import('../src/core/domain/entities/requirement.entity');
+      const req = new RequirementEntity({
+        id: 'req-01',
+        projectId: 'proj-01',
+        code: 'REQ-001',
+        title: 'Login Seguro',
+        description: 'Autenticación con 2FA',
+        acceptanceCriteria: 'Debe ingresar código SMS',
+        version: 1,
+        status: 'READY_FOR_AI',
+        nextCaseNumber: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      expect(req.version).toBe(1);
+      req.updateContent('Login Seguro Actualizado', 'Autenticación con TOTP', 'Debe ingresar código de app');
+      expect(req.version).toBe(2);
+      expect(req.allocateNextCaseCode()).toBe('CP-001');
+      expect(req.nextCaseNumber).toBe(2);
+    });
+
+    it('TestRunEntity calcula métricas de ejecución deterministas', async () => {
+      const { TestRunEntity } = await import('../src/core/domain/entities/test-run.entity');
+      const run = new TestRunEntity({
+        id: 'run-01',
+        projectId: 'proj-01',
+        name: 'Smoke Test Sprint 1',
+        environment: 'QA',
+        status: 'IN_PROGRESS',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        executions: [
+          { testRunId: 'run-01', testCaseId: 'tc-01', code: 'CP-001', title: 'Caso 1', status: 'PASSED', durationSeconds: 5, defectLogged: false },
+          { testRunId: 'run-01', testCaseId: 'tc-02', code: 'CP-002', title: 'Caso 2', status: 'FAILED', durationSeconds: 10, defectLogged: true },
+          { testRunId: 'run-01', testCaseId: 'tc-03', code: 'CP-003', title: 'Caso 3', status: 'PENDING', durationSeconds: 0, defectLogged: false },
+        ],
+      });
+
+      const metrics = run.getMetrics();
+      expect(metrics.totalCases).toBe(3);
+      expect(metrics.executedCases).toBe(2);
+      expect(metrics.passed).toBe(1);
+      expect(metrics.failed).toBe(1);
+      expect(metrics.passRatePercent).toBe(50);
+      expect(metrics.defectsLogged).toBe(1);
+      expect(metrics.isCompleted).toBe(false);
+    });
+  });
+
+  // =========================================================================
+  // FF-09: Cero Almacenamiento Volátil en RAM para Dominio (No Map Stores)
+  // =========================================================================
+  describe('FF-09: No In-Memory Volatile Stores in Domain Services', () => {
+    it('test-runs.service.ts no debe declarar almacenes Map volátiles en memoria', () => {
+      const servicePath = path.resolve(__dirname, '../src/modules/test-runs/test-runs.service.ts');
+      const content = fs.readFileSync(servicePath, 'utf-8');
+      expect(content).not.toMatch(/new\s+Map\s*<.*TestRun.*>/);
+      expect(content).not.toMatch(/testRunsStore\s*=/);
+    });
+  });
+
+  // =========================================================================
+  // FF-10: Protección Contra SSRF en Webhooks
+  // =========================================================================
+  describe('FF-10: Outgoing Webhook SSRF Guard', () => {
+    it('bloquea URLs internas, loopback, rangos RFC 1918 y metadatos cloud', async () => {
+      const { OutgoingWebhookService } = await import('../src/infrastructure/webhooks/webhook.service');
+
+      expect(OutgoingWebhookService.isSafeUrl('http://localhost:5432')).toBe(false);
+      expect(OutgoingWebhookService.isSafeUrl('http://127.0.0.1:4000/api')).toBe(false);
+      expect(OutgoingWebhookService.isSafeUrl('http://169.254.169.254/latest/meta-data')).toBe(false);
+      expect(OutgoingWebhookService.isSafeUrl('http://192.168.1.1/admin')).toBe(false);
+      expect(OutgoingWebhookService.isSafeUrl('http://10.0.0.5/api')).toBe(false);
+      expect(OutgoingWebhookService.isSafeUrl('http://172.20.0.1/status')).toBe(false);
+      expect(OutgoingWebhookService.isSafeUrl('ftp://example.com/webhook')).toBe(false);
+
+      // URLs públicas legítimas deben permitirse
+      expect(OutgoingWebhookService.isSafeUrl('https://hooks.slack.com/services/T00/B00/XXXX')).toBe(true);
+      expect(OutgoingWebhookService.isSafeUrl('https://discord.com/api/webhooks/123/xyz')).toBe(true);
+    });
+  });
+
+  // =========================================================================
+  // FF-11: Criptografía Robusta con HKDF
+  // =========================================================================
+  describe('FF-11: Cryptographic Vault Authenticated Encryption', () => {
+    it('cifra y descifra datos correctamente con autenticación AES-256-GCM', async () => {
+      const { CryptoVault } = await import('../src/common/security/crypto-vault');
+      const secretData = 'api-key-secreta-enterprise-12345';
+
+      const encrypted = CryptoVault.encrypt(secretData);
+      expect(encrypted).not.toBe(secretData);
+
+      const decrypted = CryptoVault.decrypt(encrypted);
+      expect(decrypted).toBe(secretData);
+    });
+
+    it('falla al descifrar si el payload está alterado o corrupto', async () => {
+      const { CryptoVault } = await import('../src/common/security/crypto-vault');
+      expect(() => CryptoVault.decrypt('payload_invalido_demasiado_corto')).toThrow();
+    });
+  });
 });

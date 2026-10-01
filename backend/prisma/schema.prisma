@@ -58,6 +58,7 @@ model Project {
 
   owner        User          @relation(fields: [ownerId], references: [id], onDelete: Restrict)
   requirements Requirement[]
+  testRuns     TestRun[]
 
   @@index([ownerId])
   @@index([status])
@@ -158,9 +159,10 @@ model TestCase {
   createdAt          DateTime         @default(now()) @map("created_at")
   updatedAt          DateTime         @updatedAt @map("updated_at")
 
-  requirement Requirement      @relation(fields: [requirementId], references: [id], onDelete: Cascade)
-  generation  AiGeneration?    @relation(fields: [generationId], references: [id], onDelete: SetNull)
+  requirement Requirement           @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  generation  AiGeneration?         @relation(fields: [generationId], references: [id], onDelete: SetNull)
   reviews     TestCaseReview[]
+  executions  TestExecutionResult[]
 
   @@unique([requirementId, code])
   @@index([requirementId])
@@ -189,3 +191,46 @@ model TestCaseReview {
   @@index([reviewerId])
   @@map("test_case_reviews")
 }
+
+model TestRun {
+  id          String   @id @default(uuid())
+  projectId   String   @map("project_id")
+  name        String
+  environment String   @default("QA Sandbox")
+  status      String   @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  project    Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  executions TestExecutionResult[]
+
+  @@index([projectId])
+  @@index([status])
+  @@map("test_runs")
+}
+
+model TestExecutionResult {
+  id              String    @id @default(uuid())
+  testRunId       String    @map("test_run_id")
+  testCaseId      String    @map("test_case_id")
+  code            String
+  title           String
+  status          String    @default("PENDING") // PASSED, FAILED, BLOCKED, SKIPPED, PENDING
+  durationSeconds Int       @default(0) @map("duration_seconds")
+  executedAt      DateTime? @map("executed_at")
+  executedBy      String?   @map("executed_by")
+  evidenceText    String?   @map("evidence_text")
+  defectNotes     String?   @map("defect_notes")
+  defectLogged    Boolean   @default(false) @map("defect_logged")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  testRun  TestRun  @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+  testCase TestCase @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+
+  @@index([testRunId])
+  @@index([testCaseId])
+  @@index([status])
+  @@map("test_execution_results")
+}
+

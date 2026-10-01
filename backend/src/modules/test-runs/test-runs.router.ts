@@ -23,7 +23,7 @@ testRunsRouter.get(
     if (!runA || !runB) {
       return res.status(400).json({ success: false, error: 'Debe especificar runA y runB en los parámetros.' });
     }
-    const comparison = TestRunsService.compareRuns(String(runA), String(runB));
+    const comparison = await TestRunsService.compareRuns(String(runA), String(runB));
     return sendSuccess(res, comparison, 'Comparativa de ejecuciones completada');
   })
 );
@@ -52,7 +52,7 @@ testRunsRouter.get(
   '/project/:projectId',
   asyncHandler(async (req: Request, res: Response) => {
     await assertProjectAccess(req.params.projectId, req.user!.userId, req.user!.role);
-    const runs = TestRunsService.listRunsByProject(req.params.projectId);
+    const runs = await TestRunsService.listRunsByProject(req.params.projectId);
     return sendSuccess(res, runs);
   })
 );
@@ -61,7 +61,7 @@ testRunsRouter.get(
 testRunsRouter.get(
   '/:id',
   asyncHandler(async (req: Request, res: Response) => {
-    const run = TestRunsService.getRun(req.params.id);
+    const run = await TestRunsService.getRun(req.params.id);
     await assertProjectAccess(run.projectId, req.user!.userId, req.user!.role);
     return sendSuccess(res, run);
   })
@@ -71,9 +71,9 @@ testRunsRouter.get(
 testRunsRouter.get(
   '/:id/metrics',
   asyncHandler(async (req: Request, res: Response) => {
-    const run = TestRunsService.getRun(req.params.id);
+    const run = await TestRunsService.getRun(req.params.id);
     await assertProjectAccess(run.projectId, req.user!.userId, req.user!.role);
-    const metrics = TestRunsService.getRunMetrics(req.params.id);
+    const metrics = await TestRunsService.getRunMetrics(req.params.id);
     return sendSuccess(res, metrics);
   })
 );
@@ -89,10 +89,10 @@ testRunsRouter.patch(
     });
 
     const { status, durationSeconds, evidenceText } = schema.parse(req.body);
-    const run = TestRunsService.getRun(req.params.id);
+    const run = await TestRunsService.getRun(req.params.id);
     await assertProjectAccess(run.projectId, req.user!.userId, req.user!.role);
 
-    const result = TestRunsService.recordExecution(
+    const result = await TestRunsService.recordExecution(
       req.params.id,
       req.params.caseId,
       status as ExecutionStatus,
@@ -114,7 +114,7 @@ testRunsRouter.post(
     });
 
     const { defectNotes } = schema.parse(req.body);
-    const run = TestRunsService.getRun(req.params.id);
+    const run = await TestRunsService.getRun(req.params.id);
     await assertProjectAccess(run.projectId, req.user!.userId, req.user!.role);
 
     const defect = await TestRunsService.logDefectFromRun(

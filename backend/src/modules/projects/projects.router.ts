@@ -7,6 +7,7 @@ import { asyncHandler } from '../../common/middleware/async-handler';
 import { assertProjectAccess } from '../../common/utils/ownership';
 import { audit } from '../../common/utils/audit';
 import { GetProjectsWithMetricsUseCase } from '../../application/use-cases/get-projects-with-metrics.use-case';
+import { OpenApiImporterService } from '../../infrastructure/importers/openapi-importer.service';
 
 export const projectsRouter = Router();
 
@@ -111,8 +112,6 @@ projectsRouter.patch(
 );
 
 // POST /api/v1/projects/:id/import-openapi - Mejora 63: Importador OpenAPI 3.0 / Swagger
-import { OpenApiImporterService } from '../../infrastructure/importers/openapi-importer.service';
-
 projectsRouter.post(
   '/:id/import-openapi',
   asyncHandler(async (req: Request, res: Response) => {

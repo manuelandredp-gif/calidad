@@ -12,8 +12,11 @@ const TAG_LENGTH = 16;
 
 export class CryptoVault {
   private static getKey(): Buffer {
-    // Derivar clave de 32 bytes usando SHA-256 sobre JWT_SECRET
-    return crypto.createHash('sha256').update(env.JWT_SECRET).digest();
+    // Derivación criptográfica robusta HKDF (RFC 5869) con salt e info de dominio
+    const secret = process.env.DATA_ENCRYPTION_KEY || env.JWT_SECRET;
+    const salt = 'testgenai-vault-hkdf-salt-v1';
+    const info = 'aes-256-gcm-master-key';
+    return Buffer.from(crypto.hkdfSync('sha256', secret, salt, info, 32));
   }
 
   /**
