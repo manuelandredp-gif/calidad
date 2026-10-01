@@ -89,9 +89,11 @@ export class DiffViewer {
       </div>
     `;
 
-    modal.classList.add('active');
+    modal.style.display = 'flex';
 
-    const closeModal = () => modal.classList.remove('active');
+    const closeModal = () => {
+      modal.style.display = 'none';
+    };
     modal.querySelector('#btn-diff-close')?.addEventListener('click', closeModal);
     modal.querySelector('#btn-diff-ok')?.addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => {

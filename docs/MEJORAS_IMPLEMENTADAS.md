@@ -1,9 +1,7 @@
-# Mejoras Implementadas — TestGenAI (v1.0 → v1.1)
+# [HISTÓRICO / ANTECEDENTES] Mejoras Previas v1.1
 
-**Fecha:** Septiembre 2026
-**Alcance:** Endurecimiento de seguridad, robustez, calidad de código, testing, CI/CD y documentación del backend.
-
-Este documento detalla las **40 mejoras** aplicadas sobre la base v1.0, agrupadas por categoría, con el problema original, la solución y los archivos afectados.
+> ⚠️ **Nota de Consolidación (Octubre 2026):**  
+> Este documento registra las iteraciones intermedias de la versión previa. En el MVP Real final, las directrices y contratos operativos vigentes son los establecidos en [README.md](../README.md) y [ARQUITECTURA_TECNICA.md](./ARQUITECTURA_TECNICA.md).
 
 ---
 

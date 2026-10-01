@@ -23,6 +23,10 @@ export interface TestCaseProps {
   source: 'MANUAL' | 'RULE_BASED' | 'AI_GENERATED';
   evidenceStatus: 'derived' | 'suggested' | 'ambiguous' | 'conflict';
   evidenceText: string | null;
+  isObsolete?: boolean;
+  generationId?: string | null;
+  requirementVersion?: number;
+  originalContent?: Record<string, unknown> | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -46,6 +50,10 @@ export class TestCaseEntity {
     this.props = {
       ...props,
       version: props.version ?? 1,
+      isObsolete: props.isObsolete ?? false,
+      generationId: props.generationId ?? null,
+      requirementVersion: props.requirementVersion ?? 1,
+      originalContent: props.originalContent ?? null,
       createdAt: props.createdAt ?? new Date(),
       updatedAt: props.updatedAt ?? new Date(),
     };
@@ -67,6 +75,10 @@ export class TestCaseEntity {
   public get source(): string { return this.props.source; }
   public get evidenceStatus(): string { return this.props.evidenceStatus; }
   public get evidenceText(): string | null { return this.props.evidenceText; }
+  public get isObsolete(): boolean { return this.props.isObsolete ?? false; }
+  public get generationId(): string | null { return this.props.generationId ?? null; }
+  public get requirementVersion(): number { return this.props.requirementVersion ?? 1; }
+  public get originalContent(): Record<string, unknown> | null { return this.props.originalContent ?? null; }
   public get createdAt(): Date { return this.props.createdAt!; }
   public get updatedAt(): Date { return this.props.updatedAt!; }
 
@@ -125,6 +137,10 @@ export class TestCaseEntity {
       source: this.source,
       evidenceStatus: this.evidenceStatus,
       evidenceText: this.evidenceText,
+      isObsolete: this.isObsolete,
+      generationId: this.generationId,
+      requirementVersion: this.requirementVersion,
+      originalContent: this.originalContent,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };

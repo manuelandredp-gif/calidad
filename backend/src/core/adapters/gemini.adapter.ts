@@ -2,13 +2,13 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import {
   IAIProvider,
   AIGenerationResult,
-  RawGeneratedCase,
   GenerateOptions,
 } from '../interfaces/ai-provider.interface';
 import { calculateAICost } from '../../config/ai-pricing';
 import { buildPromptForRequirement } from '../prompts/prompt-builder';
 import { env } from '../../config/env';
 import { withRetry } from '../../common/utils/retry';
+import { validateAIResponse } from '../validation/ai-output.validator';
 
 export class GeminiAdapter implements IAIProvider {
   readonly providerName = 'gemini' as const;
@@ -23,7 +23,7 @@ export class GeminiAdapter implements IAIProvider {
     const apiKey = env.GEMINI_API_KEY;
     if (!apiKey) {
       throw new Error(
-        'GEMINI_API_KEY no está configurada en las variables de entorno del backend.'
+        'GEMINI_API_KEY no está configurada en las variables de entorno del backend. Configure la clave oficial en el archivo .env.'
       );
     }
 
@@ -45,9 +45,8 @@ export class GeminiAdapter implements IAIProvider {
     );
 
     const startTime = Date.now();
-
     const fullPrompt = `${systemPrompt}\n\n---\n${userPrompt}`;
-    // Timeout + reintentos con backoff ante fallos transitorios del proveedor.
+
     const result = await withRetry(
       () => model.generateContent(fullPrompt),
       {
@@ -56,27 +55,17 @@ export class GeminiAdapter implements IAIProvider {
         label: 'Gemini generateTestCases',
       }
     );
+
     const response = await result.response;
     const responseTimeMs = Date.now() - startTime;
-
     const responseText = response.text();
-    let parsed: { cases?: RawGeneratedCase[] } = {};
 
-    try {
-      parsed = JSON.parse(responseText);
-    } catch {
-      // Limpiar en caso de bloques de markdown residuales
-      const cleanText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-      parsed = JSON.parse(cleanText);
-    }
+    // Validación rigurosa de esquema Zod
+    const validated = validateAIResponse(responseText);
 
-    const cases = parsed.cases || [];
-
-    // Conteo de tokens devueltos por la API o estimación si no vienen en metadatos
     const usageMetadata = response.usageMetadata;
     const inputTokens = usageMetadata?.promptTokenCount ?? Math.floor(fullPrompt.length / 4);
     const outputTokens = usageMetadata?.candidatesTokenCount ?? Math.floor(responseText.length / 4);
-
     const estimatedCost = calculateAICost(modelName, inputTokens, outputTokens);
 
     return {
@@ -87,7 +76,7 @@ export class GeminiAdapter implements IAIProvider {
       outputTokens,
       responseTimeMs,
       estimatedCost,
-      cases,
+      cases: validated.cases,
     };
   }
 }

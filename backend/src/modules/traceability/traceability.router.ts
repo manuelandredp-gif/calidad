@@ -9,7 +9,7 @@ export const traceabilityRouter = Router();
 
 traceabilityRouter.use(authenticateJWT);
 
-// GET /api/traceability/:projectId - Matriz bidireccional de trazabilidad
+// GET /api/v1/traceability/:projectId - Matriz de trazabilidad y cobertura de requisitos vigentes
 traceabilityRouter.get(
   '/:projectId',
   asyncHandler(async (req: Request, res: Response) => {
@@ -20,6 +20,7 @@ traceabilityRouter.get(
       where: { id: projectId },
       include: {
         requirements: {
+          where: { status: { not: 'OBSOLETE' } },
           orderBy: { code: 'asc' },
           include: {
             testCases: {
@@ -33,6 +34,9 @@ traceabilityRouter.get(
                 priority: true,
                 evidenceStatus: true,
                 evidenceText: true,
+                isObsolete: true,
+                version: true,
+                requirementVersion: true,
               },
             },
           },
@@ -43,8 +47,11 @@ traceabilityRouter.get(
     let coveredRequirementsCount = 0;
 
     const matrix = project!.requirements.map((req) => {
-      const approvedCases = req.testCases.filter((tc) => tc.status === 'APPROVED');
-      const isCovered = approvedCases.length > 0;
+      // Cobertura exige al menos un caso APPROVED y VIGENTE (no obsoleto)
+      const approvedActiveCases = req.testCases.filter(
+        (tc) => tc.status === 'APPROVED' && !tc.isObsolete
+      );
+      const isCovered = approvedActiveCases.length > 0;
       if (isCovered) coveredRequirementsCount++;
 
       return {
@@ -56,10 +63,12 @@ traceabilityRouter.get(
         isCovered,
         stats: {
           totalCases: req.testCases.length,
-          approved: approvedCases.length,
-          pending: req.testCases.filter((tc) => tc.status === 'PENDING').length,
-          modified: req.testCases.filter((tc) => tc.status === 'MODIFIED').length,
+          activeCases: req.testCases.filter((tc) => !tc.isObsolete).length,
+          approvedVigentes: approvedActiveCases.length,
+          pending: req.testCases.filter((tc) => tc.status === 'PENDING' && !tc.isObsolete).length,
+          modified: req.testCases.filter((tc) => tc.status === 'MODIFIED' && !tc.isObsolete).length,
           rejected: req.testCases.filter((tc) => tc.status === 'REJECTED').length,
+          obsolete: req.testCases.filter((tc) => tc.isObsolete).length,
         },
         testCases: req.testCases,
       };

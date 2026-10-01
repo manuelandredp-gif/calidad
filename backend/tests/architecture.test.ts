@@ -186,7 +186,10 @@ describe('Architectural Fitness Functions (Forensic Clean Architecture Suite)', 
 
       const persistencePayload = TestCaseMapper.toPersistence(entity);
       expect(persistencePayload.id).toBe('tc-uuid-123');
-      expect(JSON.parse(persistencePayload.preconditions)).toEqual(['Servidor activo', 'Token válido']);
+      const pre = Array.isArray(persistencePayload.preconditions)
+        ? persistencePayload.preconditions
+        : JSON.parse(persistencePayload.preconditions as string);
+      expect(pre).toEqual(['Servidor activo', 'Token válido']);
     });
   });
 

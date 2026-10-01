@@ -1,5 +1,6 @@
 // ==========================================================================
-// Traceability Matrix View - TestGenAI ISTQB Compliance
+// Traceability Matrix View - TestGenAI (MVP Real)
+// Matriz de cobertura bidireccional requisito <-> casos aprobados vigentes
 // ==========================================================================
 
 import { store } from '../state.js';
@@ -22,20 +23,14 @@ export async function renderTraceability(container) {
   container.innerHTML = `
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:16px;">
       <div>
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-          <h2 style="font-size:1.35rem; font-weight:700;">Cobertura de requisitos</h2>
-        </div>
+        <h2 style="font-size:1.35rem; font-weight:700;">Matriz de Trazabilidad y Cobertura</h2>
         <p style="font-size:0.84rem; color:var(--text-secondary);">
-          Qué requisitos ya tienen casos de prueba aprobados y cuáles aún no.
+          Asociación verificable entre requisitos y sus casos de prueba aprobados vigentes.
         </p>
       </div>
 
-      <!-- Export Toolbar -->
+      <!-- Barra de Exportación Oficial -->
       <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-        <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; color:var(--text-secondary); cursor:pointer;">
-          <input type="checkbox" id="chk-export-approved-only" checked />
-          Solo Casos Aprobados
-        </label>
         <button class="btn btn-secondary btn-sm" id="btn-export-csv">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
           Exportar CSV
@@ -51,149 +46,136 @@ export async function renderTraceability(container) {
       </div>
     </div>
 
-    <!-- Table Container Loading placeholder -->
+    <!-- Contenedor de la Matriz -->
     <div id="trace-table-container">
       <div class="card" style="text-align:center; padding:40px;">
-        <span class="spinner"></span>
-        <p style="color:var(--text-muted); margin-top:10px; font-size:0.85rem;">Calculando cobertura...</p>
+        <span class="spinner-inline"></span>
+        <p style="color:var(--text-muted); margin-top:10px; font-size:0.85rem;">Calculando matriz de cobertura...</p>
       </div>
     </div>
   `;
 
-  // Fetch traceability data
+  // Configurar botones de exportación
+  setupExportButtons(projectId, container);
+
+  // Cargar matriz
+  loadTraceabilityData(projectId, container);
+}
+
+async function loadTraceabilityData(projectId, container) {
+  const tableContainer = container.querySelector('#trace-table-container');
   try {
     const res = await api.getTraceability(projectId);
-    const matrix = res.data?.matrix || res.data || [];
-    renderMatrixTable(matrix, container);
+    const traceData = res.data || {};
+    renderTraceabilityTable(traceData, tableContainer);
   } catch (err) {
-    const tableContainer = container.querySelector('#trace-table-container');
     if (tableContainer) {
       tableContainer.innerHTML = `
         <div class="card" style="text-align:center; padding:40px; color:var(--error);">
-          Error al cargar trazabilidad: ${err.message}
+          Error al cargar la matriz de trazabilidad: ${escapeHtml(err.message)}
         </div>
       `;
     }
   }
-
-  // Setup Export Buttons
-  setupExportButtons(projectId, container);
 }
 
-function renderMatrixTable(matrix, container) {
-  const tableContainer = container.querySelector('#trace-table-container');
+function renderTraceabilityTable(data, tableContainer) {
   if (!tableContainer) return;
 
-  if (!Array.isArray(matrix) || matrix.length === 0) {
+  const matrix = data.matrix || [];
+  const summary = data.summary || {};
+  const coveragePct = summary.coveragePercentage ?? 0;
+
+  if (matrix.length === 0) {
     tableContainer.innerHTML = `
-      <div class="card" style="text-align:center; padding:40px; color:var(--text-muted);">
-        No hay datos de trazabilidad disponibles aún para este proyecto.
+      <div class="card" style="text-align:center; padding:40px;">
+        <p style="color:var(--text-muted);">No hay requisitos registrados en este proyecto para calcular cobertura.</p>
       </div>
     `;
     return;
   }
 
-  // Summary counts
-  const totalReqs = matrix.length;
-  const coveredReqs = matrix.filter((row) => (row.testCases || []).some((c) => c.status === 'APPROVED')).length;
-  const coveragePct = totalReqs > 0 ? Math.round((coveredReqs / totalReqs) * 100) : 0;
-
   tableContainer.innerHTML = `
-    <!-- Matrix KPI Summary -->
-    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-bottom:20px;">
-      <div class="card" style="padding:14px; background:rgba(6, 182, 212, 0.08); border-color:rgba(6, 182, 212, 0.25);">
-        <div style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted);">Requisitos Evaluados</div>
-        <div style="font-size:1.6rem; font-weight:800; color:var(--cyan);">${totalReqs}</div>
-      </div>
-      <div class="card" style="padding:14px; background:rgba(16, 185, 129, 0.08); border-color:rgba(16, 185, 129, 0.25);">
-        <div style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted);">Requisitos con casos aprobados</div>
-        <div style="font-size:1.6rem; font-weight:800; color:var(--success);">${coveredReqs}</div>
-      </div>
-      <div class="card" style="padding:14px; background:rgba(99, 102, 241, 0.08); border-color:rgba(99, 102, 241, 0.25);">
-        <div style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted);">Cobertura total</div>
-        <div style="font-size:1.6rem; font-weight:800; color:var(--primary);">${coveragePct}%</div>
+    <!-- Tarjeta de Resumen de Cobertura -->
+    <div class="card" style="margin-bottom:20px; padding:16px 20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+        <div>
+          <span style="font-size:0.8rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Cobertura de Requisitos (RF-07)</span>
+          <div style="font-size:1.6rem; font-weight:800; color:${coveragePct > 0 ? 'var(--success)' : 'var(--text-muted)'}; margin-top:2px;">
+            ${coveragePct}%
+          </div>
+        </div>
+        <div style="display:flex; gap:20px; font-size:0.85rem;">
+          <div><strong style="color:#fff;">${summary.coveredRequirements ?? 0}</strong> <span style="color:var(--text-muted);">cubiertos</span></div>
+          <div><strong style="color:#fff;">${summary.uncoveredRequirements ?? 0}</strong> <span style="color:var(--text-muted);">sin cubrir</span></div>
+          <div><strong style="color:#fff;">${summary.totalTestCases ?? 0}</strong> <span style="color:var(--text-muted);">casos totales</span></div>
+          <div><strong style="color:var(--success);">${summary.approvedTestCases ?? 0}</strong> <span style="color:var(--text-muted);">aprobados</span></div>
+        </div>
       </div>
     </div>
 
-    <!-- Interactive Table -->
-    <div class="table-container">
-      <table class="data-table">
+    <!-- Tabla de Trazabilidad -->
+    <div class="table-responsive card" style="padding:0; overflow:hidden;">
+      <table class="table">
         <thead>
           <tr>
-            <th style="width:110px;">Requisito</th>
+            <th style="width:110px;">Cód. Requisito</th>
             <th>Título del Requisito</th>
-            <th>Casos de prueba (clic para revisar)</th>
-            <th>Tipos cubiertos</th>
-            <th>Estado</th>
-            <th style="width:140px; text-align:center;">Cobertura</th>
+            <th style="width:70px; text-align:center;">Versión</th>
+            <th>Casos Asociados</th>
+            <th style="width:140px; text-align:center;">Estado de Casos</th>
+            <th style="width:120px; text-align:center;">Cobertura</th>
           </tr>
         </thead>
         <tbody>
           ${matrix
             .map((row) => {
-              const req = row.requirement || row;
               const cases = row.testCases || [];
-              const totalCases = cases.length;
               const approvedCount = cases.filter((c) => c.status === 'APPROVED').length;
-              const hasCases = totalCases > 0;
-
-              // Unique types covered
-              const types = [...new Set(cases.map((c) => c.type || 'positive'))];
-
-              // Coverage status
-              let coveragePill = `<span class="badge badge-rejected">Sin Casos</span>`;
-              if (approvedCount > 0 && approvedCount >= totalCases * 0.7) {
-                coveragePill = `<span class="badge badge-approved">✓ Óptima (${Math.round((approvedCount / totalCases) * 100)}%)</span>`;
-              } else if (hasCases) {
-                coveragePill = `<span class="badge badge-pending">Parcial (${approvedCount}/${totalCases})</span>`;
-              }
+              const pendingCount = cases.filter((c) => c.status === 'PENDING').length;
+              const isCovered = approvedCount > 0;
 
               return `
               <tr>
                 <td>
-                  <span class="test-case-code req-jump-link" data-req-id="${req.requirementId || req.id}" style="cursor:pointer;" title="Ver requisito en detalle">
-                    ${req.code || 'REQ-?'}
+                  <span class="test-case-code req-jump-link" data-req-id="${row.id}" style="cursor:pointer;" title="Ir a detalle del requisito">
+                    ${escapeHtml(row.code)}
                   </span>
                 </td>
-                <td style="font-weight:600; max-width:240px;">
-                  ${req.title || 'Sin título'}
+                <td style="font-weight:600; font-size:0.88rem;">
+                  ${escapeHtml(row.title)}
+                </td>
+                <td style="text-align:center;">
+                  <span class="badge badge-outline">v${row.version || 1}</span>
                 </td>
                 <td>
-                  <div style="display:flex; flex-wrap:wrap; gap:5px; max-width:340px;">
-                    ${
-                      cases.length > 0
-                        ? cases
-                            .map((c) => {
-                              let badgeColor = 'badge-pending';
-                              if (c.status === 'APPROVED') badgeColor = 'badge-approved';
-                              else if (c.status === 'MODIFIED') badgeColor = 'badge-modified';
-                              else if (c.status === 'REJECTED') badgeColor = 'badge-rejected';
-                              return `<span class="badge ${badgeColor} tc-jump-link" data-req-id="${req.requirementId || req.id}" data-tc-code="${c.code}" style="cursor:pointer;" title="Clic para revisar ${c.code}: ${c.title}">${c.code}</span>`;
-                            })
-                            .join('')
-                        : `<span style="color:var(--text-muted); font-size:0.75rem;">Ningún caso asociado</span>`
-                    }
+                  ${
+                    cases.length > 0
+                      ? `<div style="display:flex; flex-wrap:wrap; gap:4px;">
+                          ${cases
+                            .map(
+                              (c) => `
+                            <span class="badge badge-type-${c.type} tc-jump-link" data-req-id="${row.id}" data-tc-code="${c.code}" style="cursor:pointer; font-size:0.7rem;" title="${escapeHtml(c.title)}">
+                              ${escapeHtml(c.code)} (${c.status})
+                            </span>
+                          `
+                            )
+                            .join('')}
+                        </div>`
+                      : `<span style="color:var(--text-muted); font-size:0.8rem;">Sin casos generados</span>`
+                  }
+                </td>
+                <td style="text-align:center;">
+                  <div style="font-size:0.78rem; display:flex; justify-content:center; gap:6px;">
+                    <span style="color:var(--success);">${approvedCount} apr.</span>
+                    <span style="color:#fbbf24;">${pendingCount} pend.</span>
                   </div>
                 </td>
-                <td>
-                  <div style="display:flex; flex-wrap:wrap; gap:4px;">
-                    ${
-                      types.length > 0
-                        ? types
-                            .map((t) => `<span class="badge badge-type-${t}" style="font-size:0.65rem;">${t}</span>`)
-                            .join('')
-                        : `<span style="color:var(--text-muted); font-size:0.75rem;">N/A</span>`
-                    }
-                  </div>
+                <td style="text-align:center;">
+                  <span class="badge ${isCovered ? 'badge-approved' : 'badge-pending'}">
+                    ${isCovered ? '✓ CUBIERTO' : 'SIN COBERTURA'}
+                  </span>
                 </td>
-                <td>
-                  <div style="font-size:0.8rem; display:flex; gap:8px;">
-                    <span style="color:#34d399;">${approvedCount} apr.</span>
-                    <span style="color:#fbbf24;">${cases.filter((c) => c.status === 'PENDING').length} pend.</span>
-                    <span style="color:#f87171;">${cases.filter((c) => c.status === 'REJECTED').length} rech.</span>
-                  </div>
-                </td>
-                <td style="text-align:center;">${coveragePill}</td>
               </tr>
             `;
             })
@@ -203,73 +185,46 @@ function renderMatrixTable(matrix, container) {
     </div>
   `;
 
-  // Attach click-to-jump on test case badges
-  tableContainer.querySelectorAll('.tc-jump-link').forEach((badge) => {
-    badge.addEventListener('click', () => {
-      const reqId = badge.getAttribute('data-req-id');
-      const tcCode = badge.getAttribute('data-tc-code');
-      if (reqId) store.set('activeRequirementId', reqId);
-      // Navigate to test-cases review
-      const navItem = document.querySelector('.nav-item[data-view="test-cases"]');
-      if (navItem) navItem.click();
-      toast.info(`Navegando a caso: ${tcCode}`);
-    });
-  });
-
-  // Attach click-to-jump on requirement code
+  // Click-to-jump to requirements or test cases
   tableContainer.querySelectorAll('.req-jump-link').forEach((link) => {
     link.addEventListener('click', () => {
       const reqId = link.getAttribute('data-req-id');
       if (reqId) store.set('activeRequirementId', reqId);
-      const navItem = document.querySelector('.nav-item[data-view="requirements"]');
-      if (navItem) navItem.click();
+      document.querySelector('[data-view="requirements"]')?.click();
+    });
+  });
+
+  tableContainer.querySelectorAll('.tc-jump-link').forEach((link) => {
+    link.addEventListener('click', () => {
+      const reqId = link.getAttribute('data-req-id');
+      if (reqId) store.set('activeRequirementId', reqId);
+      document.querySelector('[data-view="test-cases"]')?.click();
     });
   });
 }
 
 function setupExportButtons(projectId, container) {
-  const getOnlyApproved = () => container.querySelector('#chk-export-approved-only')?.checked || false;
-
-  const downloadFile = (format) => {
-    const onlyApproved = getOnlyApproved();
-
-    api
-      .request(`/export/${projectId}?format=${format}&onlyApproved=${onlyApproved}`)
-      .then((res) => {
-        let content = '';
-        let mimeType = 'text/plain';
-        let ext = format;
-
-        if (format === 'csv') {
-          content = typeof res === 'string' ? res : (res?.data?.csvContent || (typeof res?.data === 'string' ? res.data : JSON.stringify(res)));
-          mimeType = 'text/csv;charset=utf-8;';
-        } else if (format === 'markdown') {
-          content = typeof res === 'string' ? res : (res?.data?.markdownContent || (typeof res?.data === 'string' ? res.data : JSON.stringify(res)));
-          mimeType = 'text/markdown;charset=utf-8;';
-          ext = 'md';
-        } else {
-          content = JSON.stringify(res?.data || res, null, 2);
-          mimeType = 'application/json;charset=utf-8;';
-        }
-
-        const blob = new Blob([content], { type: mimeType });
-        const downloadUrl = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = `matriz_trazabilidad_${projectId.slice(0, 8)}_${Date.now()}.${ext}`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(downloadUrl);
-
-        toast.success(`Exportación a ${format.toUpperCase()} descargada exitosamente`);
-      })
-      .catch((err) => {
-        toast.error(`Error al exportar: ${err.message}`);
-      });
+  const handleExport = async (format) => {
+    try {
+      toast.info(`Generando exportación de casos aprobados en ${format.toUpperCase()}...`);
+      await api.downloadExport(projectId, format);
+      toast.success(`Archivo descargado correctamente`);
+    } catch (err) {
+      toast.error(err.message || 'Error al exportar');
+    }
   };
 
-  container.querySelector('#btn-export-csv')?.addEventListener('click', () => downloadFile('csv'));
-  container.querySelector('#btn-export-md')?.addEventListener('click', () => downloadFile('markdown'));
-  container.querySelector('#btn-export-json')?.addEventListener('click', () => downloadFile('json'));
+  container.querySelector('#btn-export-csv')?.addEventListener('click', () => handleExport('csv'));
+  container.querySelector('#btn-export-md')?.addEventListener('click', () => handleExport('markdown'));
+  container.querySelector('#btn-export-json')?.addEventListener('click', () => handleExport('json'));
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }

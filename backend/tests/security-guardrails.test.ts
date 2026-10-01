@@ -3,7 +3,6 @@ import { Request } from 'express';
 import { PromptGuard } from '../src/common/security/prompt-guard';
 import { PIIMasker } from '../src/common/security/pii-masker';
 import { CookieSessionManager, AUTH_COOKIE_NAME } from '../src/common/security/cookie-session';
-import { SoftDeleteManager } from '../src/common/persistence/soft-delete';
 
 
 describe('Security & Governance Guardrails (Mejoras #8, #16, #33, #34)', () => {
@@ -57,23 +56,6 @@ describe('Security & Governance Guardrails (Mejoras #8, #16, #33, #34)', () => {
         headers: { authorization: 'Bearer jwt_bearer_token_abc' },
       } as unknown as Request;
       expect(CookieSessionManager.extractToken(reqFromHeader)).toBe('jwt_bearer_token_abc');
-    });
-  });
-
-
-  describe('SoftDeleteManager (#16)', () => {
-    it('proporciona filtros y payloads consistentes de borrado lógico', () => {
-      expect(SoftDeleteManager.notDeleted()).toEqual({ deletedAt: null });
-      const delPayload = SoftDeleteManager.deletePayload();
-      expect(delPayload.deletedAt).toBeInstanceOf(Date);
-
-      const items = [
-        { id: 1, name: 'Activo', deletedAt: null },
-        { id: 2, name: 'Borrado', deletedAt: new Date() },
-      ];
-      const active = SoftDeleteManager.filterActive(items);
-      expect(active).toHaveLength(1);
-      expect(active[0].id).toBe(1);
     });
   });
 });

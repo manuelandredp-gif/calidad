@@ -13,17 +13,19 @@ export const projectsRouter = Router();
 projectsRouter.use(authenticateJWT);
 
 const createProjectSchema = z.object({
-  name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
+  name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').trim(),
   description: z.string().optional(),
+  budgetUsd: z.number().min(0).optional(),
 });
 
 const updateProjectSchema = z.object({
   name: z.string().min(2).optional(),
   description: z.string().optional(),
+  budgetUsd: z.number().min(0).optional().nullable(),
   status: z.enum(['ACTIVE', 'ARCHIVED']).optional(),
 });
 
-// GET /api/projects - Lista SOLO los proyectos del usuario, paginados, con métricas consolidadas (Thin Controller)
+// GET /api/v1/projects - Lista paginada de proyectos con métricas consolidadas
 projectsRouter.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
@@ -40,20 +42,26 @@ projectsRouter.get(
   })
 );
 
-// POST /api/projects - Crea un nuevo proyecto (propiedad del usuario autenticado)
+// POST /api/v1/projects - Crear nuevo proyecto
 projectsRouter.post(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
     const data = createProjectSchema.parse(req.body);
     const project = await prisma.project.create({
-      data: { name: data.name, description: data.description, ownerId: req.user!.userId },
+      data: {
+        name: data.name,
+        description: data.description,
+        budgetUsd: data.budgetUsd,
+        ownerId: req.user!.userId,
+        status: 'ACTIVE',
+      },
     });
     audit(req, 'PROJECT_CREATED', { projectId: project.id, name: project.name });
     return sendSuccess(res, project, 'Proyecto creado con éxito', 201);
   })
 );
 
-// GET /api/projects/:id - Detalle (solo si pertenece al usuario)
+// GET /api/v1/projects/:id - Detalle de un proyecto con sus requisitos activos
 projectsRouter.get(
   '/:id',
   asyncHandler(async (req: Request, res: Response) => {
@@ -63,7 +71,9 @@ projectsRouter.get(
       include: {
         requirements: {
           orderBy: { code: 'asc' },
-          include: { _count: { select: { testCases: true, aiGenerations: true } } },
+          include: {
+            _count: { select: { testCases: true, aiGenerations: true } },
+          },
         },
       },
     });
@@ -71,24 +81,31 @@ projectsRouter.get(
   })
 );
 
-// PUT /api/projects/:id - Actualiza (solo propietario)
+// PUT /api/v1/projects/:id - Actualización de proyecto
 projectsRouter.put(
   '/:id',
   asyncHandler(async (req: Request, res: Response) => {
     await assertProjectAccess(req.params.id, req.user!.userId, req.user!.role);
     const data = updateProjectSchema.parse(req.body);
-    const project = await prisma.project.update({ where: { id: req.params.id }, data });
+    const project = await prisma.project.update({
+      where: { id: req.params.id },
+      data,
+    });
+    audit(req, 'PROJECT_UPDATED', { projectId: project.id });
     return sendSuccess(res, project, 'Proyecto actualizado con éxito');
   })
 );
 
-// DELETE /api/projects/:id - Elimina (solo propietario)
-projectsRouter.delete(
-  '/:id',
+// PATCH /api/v1/projects/:id/archive - Archivar proyecto
+projectsRouter.patch(
+  '/:id/archive',
   asyncHandler(async (req: Request, res: Response) => {
     await assertProjectAccess(req.params.id, req.user!.userId, req.user!.role);
-    await prisma.project.delete({ where: { id: req.params.id } });
-    audit(req, 'PROJECT_DELETED', { projectId: req.params.id });
-    return sendSuccess(res, null, 'Proyecto eliminado correctamente');
+    const project = await prisma.project.update({
+      where: { id: req.params.id },
+      data: { status: 'ARCHIVED' },
+    });
+    audit(req, 'PROJECT_ARCHIVED', { projectId: project.id });
+    return sendSuccess(res, project, 'Proyecto archivado exitosamente');
   })
 );

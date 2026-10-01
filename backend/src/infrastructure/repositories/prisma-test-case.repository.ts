@@ -4,6 +4,7 @@
 // ==========================================================================
 
 import { prisma } from '../../config/prisma';
+import { Prisma } from '@prisma/client';
 import {
   ITestCaseRepository,
   PaginationOptions,
@@ -11,7 +12,6 @@ import {
 } from '../../core/ports/test-case-repository.port';
 import { TestCaseEntity } from '../../core/domain/entities/test-case.entity';
 import { TestCaseMapper, PrismaTestCaseRow } from '../../core/domain/mappers/test-case.mapper';
-import { TestCaseStatus } from '../../core/domain/value-objects/test-case-status.vo';
 
 export class PrismaTestCaseRepository implements ITestCaseRepository {
   private readonly reviewsInclude = {
@@ -68,7 +68,7 @@ export class PrismaTestCaseRepository implements ITestCaseRepository {
   }
 
   public async save(testCase: TestCaseEntity): Promise<void> {
-    const data = TestCaseMapper.toPersistence(testCase);
+    const data = TestCaseMapper.toPersistence(testCase) as Prisma.TestCaseUncheckedCreateInput;
     await prisma.testCase.upsert({
       where: { id: testCase.id },
       create: data,
@@ -82,7 +82,7 @@ export class PrismaTestCaseRepository implements ITestCaseRepository {
     // Ejecución transaccional atómica (ACID)
     await prisma.$transaction(
       testCases.map((tc) => {
-        const data = TestCaseMapper.toPersistence(tc);
+        const data = TestCaseMapper.toPersistence(tc) as Prisma.TestCaseUncheckedCreateInput;
         return prisma.testCase.upsert({
           where: { id: tc.id },
           create: data,
@@ -90,58 +90,6 @@ export class PrismaTestCaseRepository implements ITestCaseRepository {
         });
       })
     );
-  }
-
-  public async batchReview(
-    ids: string[],
-    decision: TestCaseStatus,
-    reviewerId: string,
-    comments?: string
-  ): Promise<{ affected: number }> {
-    if (ids.length === 0) return { affected: 0 };
-
-    // Transacción atómica: actualiza los casos e inserta logs de revisión en un único commit
-    return await prisma.$transaction(async (tx) => {
-      // 1. Obtener casos existentes para capturar snapshots de auditoría
-      const currentCases = await tx.testCase.findMany({
-        where: { id: { in: ids } },
-      });
-
-      // 2. Actualizar estado
-      const updateResult = await tx.testCase.updateMany({
-        where: { id: { in: ids } },
-        data: {
-          status: decision.getValue(),
-          updatedAt: new Date(),
-        },
-      });
-
-      // 3. Crear registros de revisión de auditoría
-      if (currentCases.length > 0) {
-        await tx.testCaseReview.createMany({
-          data: currentCases.map((c) => ({
-            testCaseId: c.id,
-            reviewerId,
-            decision: decision.getValue(),
-            comments: comments || `Revisión por lotes (${decision.getValue()})`,
-            previousContent: JSON.stringify({
-              title: c.title,
-              status: c.status,
-              steps: c.steps,
-              expectedResult: c.expectedResult,
-            }),
-            newContent: JSON.stringify({
-              title: c.title,
-              status: decision.getValue(),
-              steps: c.steps,
-              expectedResult: c.expectedResult,
-            }),
-          })),
-        });
-      }
-
-      return { affected: updateResult.count };
-    });
   }
 
   public async delete(id: string): Promise<boolean> {
@@ -152,14 +100,5 @@ export class PrismaTestCaseRepository implements ITestCaseRepository {
       return false;
     }
   }
-
-  public async deleteUnapprovedByRequirement(requirementId: string): Promise<number> {
-    const res = await prisma.testCase.deleteMany({
-      where: {
-        requirementId,
-        status: { in: ['PENDING', 'REJECTED'] },
-      },
-    });
-    return res.count;
-  }
 }
+

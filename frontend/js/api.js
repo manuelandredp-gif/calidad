@@ -1,43 +1,51 @@
 // ==========================================================================
-// API REST Client - TestGenAI
+// API REST Client - TestGenAI (MVP Real)
+// Cookies HttpOnly + Prefijo canónico /api/v1 + Manejo seguro de sesión
 // ==========================================================================
 
-const API_BASE = '/api';
+const API_BASE = '/api/v1';
 
 class ApiClient {
   constructor() {
-    this.token = localStorage.getItem('testgenai_token') || null;
+    this.currentUser = null;
+    this._isRefreshing = false;
   }
 
-  setToken(token) {
-    this.token = token;
-    if (token) {
-      localStorage.setItem('testgenai_token', token);
-    } else {
-      localStorage.removeItem('testgenai_token');
-    }
+  setCurrentUser(user) {
+    this.currentUser = user;
   }
 
-  getToken() {
-    return this.token;
+  getCurrentUser() {
+    return this.currentUser;
   }
 
-  async request(endpoint, options = {}) {
+  async request(endpoint, options = {}, isRetry = false) {
     const url = `${API_BASE}${endpoint}`;
     const headers = {
       'Content-Type': 'application/json',
       ...options.headers,
     };
 
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
-    }
-
     try {
       const response = await fetch(url, {
         ...options,
         headers,
+        credentials: 'include', // Enviar y recibir cookies HttpOnly
       });
+
+      // Manejo de expiración de sesión (401) con un único reintento de refresh
+      if (response.status === 401 && !isRetry && !endpoint.startsWith('/auth/')) {
+        const refreshed = await this.refreshToken();
+        if (refreshed) {
+          return this.request(endpoint, options, true);
+        } else {
+          this.currentUser = null;
+          window.dispatchEvent(new CustomEvent('auth:expired'));
+          const err = new Error('Sesión expirada. Por favor, inicie sesión nuevamente.');
+          err.status = 401;
+          throw err;
+        }
+      }
 
       const contentType = response.headers.get('content-type') || '';
       let data;
@@ -48,7 +56,10 @@ class ApiClient {
       }
 
       if (!response.ok) {
-        const errorMsg = (typeof data === 'object' && (data?.error || data?.message)) || data || `Error HTTP ${response.status}`;
+        const errorMsg =
+          (typeof data === 'object' && (data?.error || data?.message)) ||
+          data ||
+          `Error HTTP ${response.status}`;
         const error = new Error(errorMsg);
         error.status = response.status;
         error.data = data;
@@ -57,12 +68,38 @@ class ApiClient {
 
       return data;
     } catch (err) {
-      console.error(`[API Error] ${options.method || 'GET'} ${endpoint}:`, err);
+      if (!isRetry && !endpoint.includes('/health')) {
+        console.warn(`[API] ${options.method || 'GET'} ${endpoint} falló:`, err.message);
+      }
       throw err;
     }
   }
 
-  // Health
+  async refreshToken() {
+    if (this._isRefreshing) return false;
+    this._isRefreshing = true;
+    try {
+      const response = await fetch(`${API_BASE}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const resData = await response.json();
+        if (resData?.data?.user) {
+          this.currentUser = resData.data.user;
+        }
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    } finally {
+      this._isRefreshing = false;
+    }
+  }
+
+  // --- Health Checks ---
   async getHealth() {
     return this.request('/health');
   }
@@ -71,40 +108,46 @@ class ApiClient {
     return this.request('/health/db');
   }
 
-  // Auth
+  // --- Autenticación & Sesión ---
   async login(email, password) {
     const res = await this.request('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
-    if (res.data?.token) {
-      this.setToken(res.data.token);
-    }
+    this.currentUser = res.data?.user || null;
     return res.data;
   }
 
-  async register(email, password, fullName, role = 'QA_TESTER') {
+  async register(email, password, fullName) {
     const res = await this.request('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email, password, fullName, role }),
+      body: JSON.stringify({ email, password, fullName }),
     });
-    if (res.data?.token) {
-      this.setToken(res.data.token);
-    }
+    this.currentUser = res.data?.user || null;
     return res.data;
   }
 
-  logout() {
-    this.setToken(null);
+  async logout() {
+    try {
+      await this.request('/auth/logout', { method: 'POST' });
+    } catch {
+      // Ignorar fallo en logout para garantizar limpieza local
+    } finally {
+      this.currentUser = null;
+    }
   }
 
   async getMe() {
-    return this.request('/auth/me');
+    const res = await this.request('/auth/me');
+    this.currentUser = res.data?.user || null;
+    return res.data?.user || null;
   }
 
-  // Projects
-  async getProjects() {
-    return this.request('/projects');
+  // --- Proyectos ---
+  async getProjects(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    const endpoint = query ? `/projects?${query}` : '/projects';
+    return this.request(endpoint);
   }
 
   async getProject(id) {
@@ -125,19 +168,27 @@ class ApiClient {
     });
   }
 
-  async deleteProject(id) {
+  async archiveProject(id) {
     return this.request(`/projects/${id}`, {
       method: 'DELETE',
     });
   }
 
-  // Requirements
-  async getRequirements(projectId) {
-    return this.request(`/requirements/project/${projectId}`);
+  // --- Requisitos ---
+  async getRequirements(projectId, params = {}) {
+    const query = new URLSearchParams(params).toString();
+    const endpoint = query
+      ? `/requirements/project/${projectId}?${query}`
+      : `/requirements/project/${projectId}`;
+    return this.request(endpoint);
   }
 
   async getRequirement(id) {
     return this.request(`/requirements/${id}`);
+  }
+
+  async getRequirementVersions(id) {
+    return this.request(`/requirements/${id}/versions`);
   }
 
   async createRequirement(payload) {
@@ -154,7 +205,7 @@ class ApiClient {
     });
   }
 
-  async deleteRequirement(id) {
+  async archiveRequirement(id) {
     return this.request(`/requirements/${id}`, {
       method: 'DELETE',
     });
@@ -167,7 +218,11 @@ class ApiClient {
     });
   }
 
-  // AI Generation
+  // --- Configuración e IA Real ---
+  async getAiConfig() {
+    return this.request('/config/ai-providers');
+  }
+
   async generateAiTests(payload) {
     return this.request('/ai/generate', {
       method: 'POST',
@@ -179,70 +234,39 @@ class ApiClient {
     return this.request(`/ai/history/${requirementId}`);
   }
 
-  // Heuristics Engine (Offline ISTQB)
-  async generateHeuristicTests(payload) {
-    return this.request('/heuristics/generate', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
+  async getProjectAiHistory(projectId) {
+    return this.request(`/ai/history/project/${projectId}`);
   }
 
-  // Test Cases & Manual Design
+  // --- Casos de Prueba & Revisión Humana (Human-in-the-Loop) ---
   async getTestCases(requirementId) {
     return this.request(`/test-cases/requirement/${requirementId}`);
   }
 
-  async getProjectTestCases(projectId) {
-    return this.request(`/test-cases/project/${projectId}`);
+  async getProjectTestCases(projectId, params = {}) {
+    const query = new URLSearchParams(params).toString();
+    const endpoint = query
+      ? `/test-cases/project/${projectId}?${query}`
+      : `/test-cases/project/${projectId}`;
+    return this.request(endpoint);
   }
 
-  async createTestCaseManual(payload) {
-    return this.request('/test-cases', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
+  async getTestCase(id) {
+    return this.request(`/test-cases/${id}`);
   }
 
-  async updateTestCase(id, payload) {
-    return this.request(`/test-cases/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(payload),
-    });
-  }
-
-  async deleteTestCase(id) {
-    return this.request(`/test-cases/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  async cloneTestCase(id) {
-    return this.request(`/test-cases/${id}/clone`, {
-      method: 'POST',
-    });
-  }
-
-  async batchReviewTestCases(ids, decision = 'APPROVED', comments = '') {
-    return this.request('/test-cases/batch-review', {
-      method: 'PATCH',
-      body: JSON.stringify({ ids, decision, comments }),
-    });
+  async getTestCaseHistory(id) {
+    return this.request(`/test-cases/${id}/history`);
   }
 
   async reviewTestCase(id, reviewData) {
-    const payload = {
-      decision: reviewData.decision || reviewData.reviewStatus || 'APPROVED',
-      comments: reviewData.comments,
-      ...reviewData,
-    };
-    delete payload.reviewStatus;
     return this.request(`/test-cases/${id}/review`, {
       method: 'PATCH',
-      body: JSON.stringify(payload),
+      body: JSON.stringify(reviewData),
     });
   }
 
-  // Traceability & Metrics
+  // --- Trazabilidad & Métricas ---
   async getTraceability(projectId) {
     return this.request(`/traceability/${projectId}`);
   }
@@ -251,9 +275,46 @@ class ApiClient {
     return this.request(`/metrics/project/${projectId}`);
   }
 
-  // Export URL helper
-  getExportUrl(projectId, format = 'csv', onlyApproved = false) {
-    return `${API_BASE}/export/${projectId}?format=${format}&onlyApproved=${onlyApproved}`;
+  // --- Exportación de Casos Aprobados Vigentes ---
+  getExportUrl(projectId, format = 'csv') {
+    return `${API_BASE}/export/${projectId}?format=${format}`;
+  }
+
+  async downloadExport(projectId, format = 'csv') {
+    const res = await fetch(this.getExportUrl(projectId, format), {
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      throw new Error(errJson.error || errJson.message || `Error al exportar (${res.status})`);
+    }
+    const blob = await res.blob();
+    const disposition = res.headers.get('content-disposition') || '';
+    let filename = `testgenai-export-${projectId}.${format === 'markdown' ? 'md' : format}`;
+    const match = disposition.match(/filename="?([^";]+)"?/);
+    if (match && match[1]) {
+      filename = match[1];
+    }
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(downloadUrl);
+  }
+
+  // --- Administración de Usuarios (ADMIN) ---
+  async getUsers() {
+    return this.request('/users');
+  }
+
+  async updateUserRoleOrStatus(id, payload) {
+    return this.request(`/users/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
   }
 }
 

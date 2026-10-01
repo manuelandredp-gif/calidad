@@ -1,220 +1,123 @@
-# Estructura del Proyecto y Diagrama de Carpetas — TestGenAI
+# Estructura del Proyecto y Diagrama de Carpetas — TestGenAI MVP Real
 
-**Arquitectura:** Cliente–Servidor Desacoplado (Monorepo Modular)  
-**Tecnologías:** Frontend (React / Next.js / TypeScript) + Backend (API REST en Capas / TypeScript o Python) + Base de Datos (PostgreSQL)  
-**Fecha:** Septiembre 2026  
+**Arquitectura:** Monolito Modular por Capas (Hexagonal / Clean Architecture)  
+**Tecnologías:** Frontend SPA (HTML5 / Vanilla CSS / ES Modules) + Backend API REST (Node.js / Express / TypeScript / Prisma) + PostgreSQL 16  
+**Fecha:** Octubre 2026  
 
 ---
 
-## 1. Visión General del Árbol de Directorios
-
-La estructura propuesta implementa el principio de **Separación de Responsabilidades (SoC)** y una **Arquitectura en Capas Hexagonal/Limpia**, separando el dominio del negocio, la persistencia en base de datos y la integración de proveedores externos de IA.
+## 1. Estructura General del Repositorio
 
 ```text
 CALIDAD/
-├── .env.example                     # Plantilla de variables de entorno globales
-├── .gitignore                       # Archivos y carpetas ignoradas por git
-├── docker-compose.yml               # Orquestación de Frontend, Backend y PostgreSQL
-├── README_FLORES_DONGO.md           # Documento marco teórico y académico de tesis
+├── docker-compose.yml               # Orquestación de PostgreSQL 16 y la aplicación en puerto 4000
+├── README.md                        # Guía operativa de arranque, configuración y administración
+├── README_FLORES_DONGO.md           # Documento académico marco de referencia
 │
-├── docs/                            # Documentación técnica y de ingeniería de software
-│   ├── REQUERIMIENTOS.md            # Especificación detallada de RF, RNF y Reglas de Negocio
-│   ├── DIAGRAMA_DE_CARPETAS.md      # Este documento: Estructura y propósito de archivos
-│   ├── ARQUITECTURA_TECNICA.md      # Flujo de datos, diseño de capas y Patrón Adaptador
-│   └── MODELO_DATOS.md              # DDL SQL, esquemas de tablas, relaciones e índices
+├── docs/                            # Documentación técnica del MVP
+│   ├── API_ENDPOINTS.md             # Contrato de endpoints REST /api/v1
+│   ├── ARQUITECTURA_TECNICA.md      # Diseño hexagonal, componentes y flujo de datos
+│   ├── DIAGRAMA_DE_CARPETAS.md      # Este documento: Estructura real de directorios
+│   ├── MODELO_DATOS.md              # Esquema relacional PostgreSQL, ERD e invariantes
+│   └── REQUERIMIENTOS.md            # Alcance funcional RF-01 al RF-14 del MVP
 │
-├── backend/                         # Servidor API REST y Motor de Orquestación de IA
-│   ├── Dockerfile                   # Contenedorización del backend
-│   ├── package.json                 # Dependencias y scripts (o requirements.txt / pyproject.toml)
-│   ├── tsconfig.json                # Configuración de compilador TypeScript
-│   ├── .env.example                 # Variables de entorno específicas del backend
+├── backend/                         # Servidor API REST y Orquestación de IA
+│   ├── Dockerfile                   # Construcción multi-stage de producción (usuario nodejs)
+│   ├── package.json                 # Scripts de compilación, tests, admin CLI y dependencias
+│   ├── tsconfig.json                # Configuración TypeScript estricta
+│   ├── .env.example                 # Plantilla limpia de variables de entorno (sin secretos)
+│   │
+│   ├── prisma/                      # Persistencia y Migraciones
+│   │   ├── schema.prisma            # Esquema único consolidado para PostgreSQL
+│   │   ├── migrations/              # Migraciones versionadas (20261001000000_init_postgresql)
+│   │   └── backup/                  # Resguardo histórico (dev-db-export.json)
+│   │
+│   ├── scripts/                     # Herramientas CLI de mantenimiento
+│   │   ├── create-admin.ts          # Asistente CLI para registrar el administrador inicial
+│   │   ├── data-maintenance.ts      # Diagnóstico (--dry-run) y purga de demos verificadas
+│   │   └── inspect-db.ts            # Inspección rápida del estado de tablas
 │   │
 │   ├── src/                         # Código fuente del backend
-│   │   ├── main.ts                  # Punto de entrada de la aplicación y configuración de CORS
+│   │   ├── main.ts                  # Arranque del servidor Express y montaje de middlewares
 │   │   │
-│   │   ├── config/                  # Configuraciones globales
-│   │   │   ├── database.config.ts   # Conexión a PostgreSQL y pool de conexiones
-│   │   │   ├── env.validation.ts    # Validación de variables de entorno al arranque
-│   │   │   └── ai-pricing.ts        # Tablas de tarifas de tokens (Gemini, OpenAI)
+│   │   ├── application/             # Casos de Uso de Aplicación
+│   │   │   └── use-cases/
+│   │   │       ├── generate-test-cases.use-case.ts # Orquestación de IA, validación y persistencia
+│   │   │       └── review-test-case.use-case.ts    # Auditoría humana con control optimista
 │   │   │
-│   │   ├── common/                  # Componentes transversales reutilizables
-│   │   │   ├── decorators/          # Decoradores personalizados (ej. CurrentUser, Roles)
-│   │   │   ├── filters/             # Filtros globales de manejo de excepciones HTTP
-│   │   │   ├── guards/              # Guardias de autenticación JWT y roles (RBAC)
-│   │   │   ├── interceptors/        # Interceptores de logging de latencia y formateo de respuesta
-│   │   │   └── utils/               # Utilidades de cálculo de costos, hashing y strings
+│   │   ├── common/                  # Componentes transversales
+│   │   │   ├── errors/              # Jerarquía tipada de errores (ApiError, DomainSecurityException)
+│   │   │   ├── middleware/          # Middlewares (auth, csrf, error-handler, rate-limit)
+│   │   │   ├── security/            # Seguridad (cookie-session, pii-masker, prompt-guard)
+│   │   │   └── utils/               # Utilidades de resiliencia y verificación (ownership, retry)
 │   │   │
-│   │   ├── core/                    # Núcleo de Integración con IA (Patrón Adaptador)
-│   │   │   ├── interfaces/
-│   │   │   │   ├── ai-provider.interface.ts   # Contrato unificado para cualquier LLM
-│   │   │   │   └── ai-response.interface.ts   # Esquema estandarizado de respuesta de la IA
-│   │   │   ├── adapters/
-│   │   │   │   ├── gemini.adapter.ts          # Implementación para Google Gemini API
-│   │   │   │   └── openai.adapter.ts          # Implementación para OpenAI API
-│   │   │   ├── prompts/
-│   │   │   │   ├── system-prompt.v1.ts        # Versión 1 del prompt de ingeniería QA
-│   │   │   │   └── prompt-builder.ts          # Constructor dinámico de prompts según requisito
-│   │   │   └── validators/
-│   │   │       ├── json-schema.validator.ts   # Validación de salida estructurada del LLM
-│   │   │       └── duplicate-detector.ts      # Detección determinista de casos duplicados
+│   │   ├── config/                  # Configuraciones del sistema
+│   │   │   ├── ai-pricing.ts        # Tarifas oficiales versionadas por millón de tokens
+│   │   │   ├── env.ts               # Validación Zod de variables de entorno al arranque
+│   │   │   ├── prisma.ts            # Cliente Prisma singleton
+│   │   │   └── swagger.ts           # Especificación OpenAPI /api/docs
 │   │   │
-│   │   └── modules/                 # Módulos funcionales de negocio (arquitectura modular)
-│   │       ├── auth/                # Módulo de Autenticación
-│   │       │   ├── auth.controller.ts
-│   │       │   ├── auth.service.ts
-│   │       │   ├── auth.module.ts
-│   │       │   ├── dto/             # LoginDto, RegisterDto
-│   │       │   └── strategies/      # JwtStrategy, LocalStrategy
-│   │       │
-│   │       ├── projects/            # Módulo de Proyectos
-│   │       │   ├── projects.controller.ts
-│   │       │   ├── projects.service.ts
-│   │       │   ├── projects.module.ts
-│   │       │   ├── dto/             # CreateProjectDto, UpdateProjectDto
-│   │       │   └── entities/        # Project.entity.ts
-│   │       │
-│   │       ├── requirements/        # Módulo de Requisitos Funcionales
-│   │       │   ├── requirements.controller.ts
-│   │       │   ├── requirements.service.ts
-│   │       │   ├── requirements.module.ts
-│   │       │   ├── dto/             # CreateRequirementDto, ImportCsvDto
-│   │       │   └── entities/        # Requirement.entity.ts
-│   │       │
-│   │       ├── test-cases/          # Módulo de Casos de Prueba y Revisión Humana
-│   │       │   ├── test-cases.controller.ts
-│   │       │   ├── test-cases.service.ts
-│   │       │   ├── test-cases.module.ts
-│   │       │   ├── dto/             # ApproveCaseDto, ModifyCaseDto, RejectCaseDto
-│   │       │   └── entities/        # TestCase.entity.ts, TestCaseReview.entity.ts
-│   │       │
-│   │       ├── ai-generation/       # Módulo de Generación y Registro de Auditoría
-│   │       │   ├── ai-generation.controller.ts
-│   │       │   ├── ai-generation.service.ts
-│   │       │   ├── ai-generation.module.ts
-│   │       │   ├── dto/             # TriggerGenerationDto, RegenerateDto
-│   │       │   └── entities/        # AiGeneration.entity.ts
-│   │       │
-│   │       ├── traceability/        # Módulo de Matriz de Trazabilidad
-│   │       │   ├── traceability.controller.ts
-│   │       │   ├── traceability.service.ts
-│   │       │   └── traceability.module.ts
-│   │       │
-│   │       ├── metrics/             # Módulo de Estadísticas y Cálculos ISTQB
-│   │       │   ├── metrics.controller.ts
-│   │       │   ├── metrics.service.ts
-│   │       │   └── metrics.module.ts
-│   │       │
-│   │       └── export/              # Módulo de Exportación (JSON, CSV, Markdown)
-│   │           ├── export.controller.ts
-│   │           ├── export.service.ts
-│   │           └── export.module.ts
+│   │   ├── core/                    # Dominio y Abstracciones (Hexagonal)
+│   │   │   ├── adapters/            # Adaptadores reales de IA (GeminiAdapter, OpenAIAdapter)
+│   │   │   ├── domain/              # Entidades ricas, Value Objects y Mappers
+│   │   │   ├── ports/               # Interfaces de puertos (IAIProvider, ITestCaseRepository)
+│   │   │   └── prompts/             # Ingeniería de prompts QA estandarizados ISTQB
+│   │   │
+│   │   ├── infrastructure/          # Adaptadores de infraestructura
+│   │   │   └── repositories/        # Implementación de repositorios con Prisma Client
+│   │   │
+│   │   └── modules/                 # Módulos funcionales de la API (Router + Service)
+│   │       ├── ai-generation/       # Rutas /api/v1/ai (generar, regenerar, historial)
+│   │       ├── auth/                # Rutas /api/v1/auth (register, login, refresh, logout, me)
+│   │       ├── config/              # Rutas /api/v1/config (proveedores reales, preferencias)
+│   │       ├── export/              # Rutas /api/v1/export (CSV, JSON, Markdown de aprobados)
+│   │       ├── metrics/             # Rutas /api/v1/metrics (cobertura, costos, latencia)
+│   │       ├── projects/            # Rutas /api/v1/projects (CRUD, archivado)
+│   │       ├── requirements/        # Rutas /api/v1/requirements (CRUD, importación, ambigüedad)
+│   │       ├── test-cases/          # Rutas /api/v1/test-cases (listado, revisión individual)
+│   │       ├── traceability/        # Rutas /api/v1/traceability (matriz de cobertura)
+│   │       └── users/               # Rutas /api/v1/users (administración de cuentas para ADMIN)
 │   │
-│   └── tests/                       # Pruebas automatizadas del backend
-│       ├── unit/                    # Pruebas unitarias de validadores y cálculo de costos
-│       ├── integration/             # Pruebas de integración con la base de datos
-│       └── e2e/                     # Pruebas End-to-End de los flujos críticos de la API
+│   └── tests/                       # Suite automatizada de pruebas unitarias y de arquitectura
+│       ├── setup.ts                 # Configuración de entorno de pruebas
+│       ├── architecture.test.ts     # Pruebas de reglas de arquitectura limpia
+│       ├── auth.test.ts             # Pruebas de autenticación y hashing
+│       ├── export.service.test.ts   # Pruebas de exportación CSV/JSON/Markdown
+│       ├── metrics.service.test.ts  # Pruebas de cálculo de métricas y economía
+│       ├── pagination.test.ts       # Pruebas de utilidades de paginación
+│       ├── property-based.test.ts   # Pruebas de invariantes (PII, PromptGuard, detectores)
+│       ├── retry.test.ts            # Pruebas de reintentos exponenciales
+│       └── security-guardrails.test.ts # Pruebas de guardrails de seguridad
 │
-├── frontend/                        # Cliente Web SPA / SSR (React / Next.js)
-│   ├── Dockerfile                   # Contenedorización del frontend
-│   ├── package.json                 # Dependencias UI, iconos y animaciones
-│   ├── tsconfig.json                # Configuración TypeScript
-│   ├── next.config.js               # Configuración de Next.js
-│   ├── .env.example                 # Variables públicas (NEXT_PUBLIC_API_URL)
-│   │
-│   ├── public/                      # Archivos estáticos
-│   │   ├── icons/                   # Iconos SVG de prueba, estado y trazabilidad
-│   │   └── logos/                   # Logotipo oficial de TestGenAI
-│   │
-│   └── src/                         # Código fuente de la interfaz de usuario
-│       ├── app/                     # Rutas y páginas de la aplicación
-│       │   ├── layout.tsx           # Layout maestro con tema oscuro/claro y navegación
-│       │   ├── page.tsx             # Redirección o landing de bienvenida
-│       │   ├── (auth)/
-│       │   │   └── login/page.tsx   # Pantalla moderna de inicio de sesión
-│       │   ├── (dashboard)/
-│       │   │   ├── layout.tsx       # Layout del panel con Sidebar y Header persistentes
-│       │   │   ├── page.tsx         # Dashboard general con KPIs (cobertura, costos, aprobación)
-│       │   │   ├── projects/
-│       │   │   │   ├── page.tsx     # Listado y creación de proyectos
-│       │   │   │   └── [id]/page.tsx# Detalle del proyecto y vista resumen
-│       │   │   ├── requirements/
-│       │   │   │   ├── page.tsx     # Gestión de requisitos e importación CSV
-│       │   │   │   └── [id]/page.tsx# Editor de requisito y consola de generación IA
-│       │   │   ├── test-cases/
-│       │   │   │   └── page.tsx     # Consola de revisión humana (Aprobar/Editar/Rechazar)
-│       │   │   ├── traceability/
-│       │   │   │   └── page.tsx     # Matriz visual e interactiva de trazabilidad
-│       │   │   ├── metrics/
-│       │   │   │   └── page.tsx     # Reportes científicos (ISTQB, tokens, latencia, costos)
-│       │   │   └── settings/
-│       │   │       └── page.tsx     # Configuración de proveedores y umbrales de IA
-│       │
-│       ├── components/              # Biblioteca de componentes UI reutilizables
-│       │   ├── ui/                  # Componentes atómicos de diseño (botones, inputs, badges)
-│       │   │   ├── Button.tsx
-│       │   │   ├── Badge.tsx        # Etiquetas de tipo de caso (Positivo, Negativo, Límite)
-│       │   │   ├── Card.tsx
-│       │   │   ├── Modal.tsx
-│       │   │   ├── Skeleton.tsx     # Estados de carga elegantes
-│       │   │   └── Toast.tsx        # Notificaciones emergentes
-│       │   ├── layout/              # Estructuras visuales globales
-│       │   │   ├── Sidebar.tsx      # Barra de navegación lateral colapsable
-│       │   │   ├── Header.tsx       # Barra superior con usuario activo y acciones rápidas
-│       │   │   └── Breadcrumbs.tsx  # Navegación jerárquica
-│       │   ├── test-cases/          # Componentes especializados en casos de prueba
-│       │   │   ├── TestCaseCard.tsx # Tarjeta interactiva con pasos, datos y evidencia
-│       │   │   ├── ReviewActions.tsx# Botonera de Aprobar / Editar / Rechazar
-│       │   │   └── EvidenceTag.tsx  # Marcador visual (Derivado / Sugerido / Conflicto)
-│       │   ├── charts/              # Visualizaciones de datos y gráficos interactivos
-│       │   │   ├── CostChart.tsx    # Gráfico de consumo de tokens y costos por modelo
-│       │   │   └── CoverageBar.tsx  # Barra de progreso de cobertura de requisitos
-│       │   └── traceability/        # Componentes de matriz de trazabilidad
-│       │       └── MatrixTable.tsx  # Tabla matricial con enlaces bidireccionales
-│       │
-│       ├── hooks/                   # Custom Hooks de React
-│       │   ├── useAuth.ts           # Estado global de sesión y permisos
-│       │   ├── useProjects.ts       # Operaciones de proyectos
-│       │   ├── useTestCases.ts      # Operaciones sobre casos y revisión
-│       │   └── useGeneration.ts     # Manejo del estado de generación IA y streaming/loader
-│       │
-│       ├── services/                # Clientes de consumo de API REST
-│       │   ├── api.client.ts        # Instancia Axios/Fetch configurada con interceptor JWT
-│       │   ├── auth.service.ts
-│       │   ├── projects.service.ts
-│       │   ├── requirements.service.ts
-│       │   ├── ai.service.ts
-│       │   └── metrics.service.ts
-│       │
-│       ├── types/                   # Definiciones de tipos e interfaces TypeScript
-│       │   ├── auth.types.ts
-│       │   ├── project.types.ts
-│       │   ├── requirement.types.ts
-│       │   ├── test-case.types.ts
-│       │   └── metrics.types.ts
-│       │
-│       └── styles/                  # Sistema de diseño y variables CSS
-│           ├── globals.css          # Estilos globales y reseteo
-│           └── theme.css            # Tokens de diseño (paleta cromática, elevaciones, bordes)
-│
-└── database/                        # Scripts y Esquema de Base de Datos
-    ├── init.sql                     # Script DDL completo de creación de tablas
-    ├── seeds.sql                    # Datos iniciales para pruebas (usuario admin, proyecto demo)
-    └── migrations/                  # Control de versiones del esquema relacional
+└── frontend/                        # Cliente Web SPA (HTML / CSS / JS Vanilla)
+    ├── index.html                   # Documento raíz con las 7 vistas principales
+    ├── css/                         # Hojas de estilo modulares
+    │   ├── base.css                 # Reset, layout y tipografía
+    │   ├── variables.css            # Tokens de color, espaciado y tema
+    │   ├── premium.css              # Estilos sobrios de vistas y modales
+    │   ├── accessibility.css        # Contraste, accesibilidad y modales accesibles
+    │   └── components/              # Estilos de botones, badges, tablas y formularios
+    │
+    └── js/                          # Lógica frontend en ES Modules
+        ├── api.js                   # Cliente API HTTP unificado con cookies HttpOnly
+        ├── app.js                   # Enrutamiento de vistas y ciclo de vida de la aplicación
+        ├── store.js                 # Estado reactivo local (usuario, proyecto activo)
+        ├── theme-manager.js         # Selector de tema claro/oscuro
+        ├── accessibility.js         # Trampa de foco y manejo de teclado en modales
+        │
+        ├── modals/                  # Modales interactivos
+        │   ├── ai-modals.js         # Modal de generación con proveedores reales
+        │   ├── project-modals.js    # Modal de creación y edición de proyectos
+        │   ├── requirement-modals.js# Modal de creación/edición e importación CSV
+        │   └── testcase-modals.js   # Modal de auditoría humana individual
+        │
+        └── views/                   # Vistas principales del sistema
+            ├── auth.js              # Vista de autenticación (Login / Registro QA_TESTER)
+            ├── dashboard.js         # Vista de Inicio / Resumen del proyecto activo
+            ├── projects.js          # Vista de gestión de Proyectos
+            ├── requirements.js      # Vista de Requisitos con alertas de ambigüedad
+            ├── testCases.js         # Vista de Casos de Prueba con historial de revisión
+            ├── traceability.js      # Vista de Matriz de Trazabilidad y Exportación
+            ├── metrics.js           # Vista de Métricas de Calidad y Consumo de IA
+            └── settings.js          # Vista de Configuración y Gestión de Usuarios ADMIN
 ```
-
----
-
-## 2. Descripción de Capas y Responsabilidades
-
-### 2.1 Backend (`/backend/src`)
-- **`config/`**: Aísla variables de entorno y precios. Si los precios de los tokens de OpenAI o Google cambian, solo se actualiza el archivo [`ai-pricing.ts`](file:///c:/Users/LENOVO/Desktop/CALIDAD/backend/src/config/ai-pricing.ts).
-- **`core/adapters/`**: Implementa el **Patrón Adaptador**. La aplicación no se acopla directamente a una biblioteca de IA. Si se desea cambiar de Gemini a GPT-5 o Claude, solo se implementa la interfaz [`ai-provider.interface.ts`](file:///c:/Users/LENOVO/Desktop/CALIDAD/backend/src/core/interfaces/ai-provider.interface.ts).
-- **`modules/`**: Cada módulo de negocio agrupa su propio Controlador (expone endpoints REST), Servicio (contiene lógica de negocio pura) y DTOs (validación de datos de entrada).
-
-### 2.2 Frontend (`/frontend/src`)
-- **`app/`**: Estructura basada en App Router moderna de Next.js, permitiendo separación entre rutas públicas de autenticación y rutas privadas del dashboard.
-- **`components/ui/`**: Componentes visuales atómicos desacoplados de la lógica de negocio para permitir rediseños visuales sin tocar APIs ni endpoints.
-- **`services/`**: Centraliza todas las llamadas HTTP al backend, inyectando automáticamente el token JWT en las cabeceras de autorización.
-
-### 2.3 Base de Datos (`/database`)
-- Centraliza los esquemas relacionales, garantizando que el entorno pueda levantarse de cero con `docker-compose up -d` y ejecutar las migraciones iniciales automáticamente.

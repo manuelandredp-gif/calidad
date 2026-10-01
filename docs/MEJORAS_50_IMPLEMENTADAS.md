@@ -1,14 +1,8 @@
-# Registro de las 50 Mejoras Implementadas en TestGenAI
+# [HISTÓRICO / ANTECEDENTES] Registro de Mejoras Experimentales Previas
 
-Este documento certifica la implementación exhaustiva y verificación de las **50 mejoras de arquitectura, IA, calidad ISTQB, seguridad, observabilidad y DevOps** para la plataforma TestGenAI.
-
----
-
-## Resumen Ejecutivo de Verificación
-
-- **Compilación TypeScript (`tsc --noEmit`):** ✅ **0 errores**
-- **Análisis Estático de Código (`eslint`):** ✅ **0 errores, 0 advertencias**
-- **Suite de Pruebas Automatizadas (`vitest`):** ✅ **71/71 pruebas superadas en 20 suites**
+> ⚠️ **Nota de Consolidación (Octubre 2026):**  
+> Este documento se conserva exclusivamente como antecedente histórico de la fase de prototipado previo. Varios componentes aquí descritos (como generadores offline sin IA, adaptadores mock, cola en memoria y micro-agentes experimentales) fueron retirados o consolidados en el **MVP Real de TestGenAI** para cumplir estrictamente con el documento rector `README_FLORES_DONGO.md`.  
+> Para la especificación operativa vigente, consulte [README.md](../README.md) y [ARQUITECTURA_TECNICA.md](./ARQUITECTURA_TECNICA.md).
 
 ---
 

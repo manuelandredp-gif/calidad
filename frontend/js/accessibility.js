@@ -71,9 +71,11 @@ export class AccessibilityManager {
 
       // Cerrar modales activos con Escape
       if (e.key === 'Escape') {
-        const activeModal = document.querySelector('.modal-backdrop.active');
+        const activeModal = document.querySelector('.modal-overlay.open, .modal-backdrop.active');
         if (activeModal) {
-          activeModal.classList.remove('active');
+          activeModal.classList.remove('open', 'active');
+          if (activeModal.style) activeModal.style.display = 'none';
+          document.body.style.overflow = '';
           this.announce('Ventana modal cerrada.');
         }
       }
@@ -87,7 +89,7 @@ export class AccessibilityManager {
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Tab') return;
 
-      const activeModal = document.querySelector('.modal-backdrop.active');
+      const activeModal = document.querySelector('.modal-overlay.open, .modal-backdrop.active');
       if (!activeModal) return;
 
       const focusableElements = activeModal.querySelectorAll(
@@ -124,17 +126,14 @@ export class AccessibilityManager {
     dialog.innerHTML = `
       <div class="modal-card">
         <div class="modal-header">
-          <h3 class="modal-title">⌨️ Atajos de Teclado Universales</h3>
+          <h3 class="modal-title">⌨️ Atajos de Teclado</h3>
           <button type="button" class="btn-modal-close" id="btn-shortcuts-close">&times;</button>
         </div>
         <div class="modal-body">
           <table class="shortcuts-table">
             <tr><td><kbd>?</kbd></td><td>Mostrar esta ayuda de atajos de teclado</td></tr>
-            <tr><td><kbd>Esc</kbd></td><td>Cerrar cualquier diálogo modal activo</td></tr>
-            <tr><td><kbd>A</kbd></td><td>Aprobar caso en Modo Revisión Masiva</td></tr>
-            <tr><td><kbd>R</kbd></td><td>Rechazar caso en Modo Revisión Masiva</td></tr>
-            <tr><td><kbd>↑ / ↓</kbd> o <kbd>J / K</kbd></td><td>Navegar filas en tabla de casos</td></tr>
-            <tr><td><kbd>Tab</kbd> / <kbd>Shift + Tab</kbd></td><td>Navegación secuencial accesible (WCAG 2.1)</td></tr>
+            <tr><td><kbd>Esc</kbd></td><td>Cerrar cualquier diálogo modal abierto</td></tr>
+            <tr><td><kbd>Tab</kbd> / <kbd>Shift + Tab</kbd></td><td>Navegación secuencial por teclado</td></tr>
           </table>
         </div>
         <div class="modal-footer">
@@ -143,8 +142,12 @@ export class AccessibilityManager {
       </div>
     `;
 
+    dialog.style.display = 'flex';
     dialog.classList.add('active');
-    const close = () => dialog.classList.remove('active');
+    const close = () => {
+      dialog.style.display = 'none';
+      dialog.classList.remove('active');
+    };
     dialog.querySelector('#btn-shortcuts-close')?.addEventListener('click', close);
     dialog.querySelector('#btn-shortcuts-ok')?.addEventListener('click', close);
   }

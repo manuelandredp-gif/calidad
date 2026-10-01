@@ -1,13 +1,13 @@
 import {
   IAIProvider,
   AIGenerationResult,
-  RawGeneratedCase,
   GenerateOptions,
 } from '../interfaces/ai-provider.interface';
 import { calculateAICost } from '../../config/ai-pricing';
 import { buildPromptForRequirement } from '../prompts/prompt-builder';
 import { env } from '../../config/env';
 import { withRetry } from '../../common/utils/retry';
+import { validateAIResponse } from '../validation/ai-output.validator';
 
 export class OpenAIAdapter implements IAIProvider {
   readonly providerName = 'openai' as const;
@@ -21,7 +21,9 @@ export class OpenAIAdapter implements IAIProvider {
   ): Promise<AIGenerationResult> {
     const apiKey = env.OPENAI_API_KEY;
     if (!apiKey) {
-      throw new Error('OPENAI_API_KEY no está configurada en el archivo .env del backend.');
+      throw new Error(
+        'OPENAI_API_KEY no está configurada en las variables de entorno del backend. Configure la clave oficial en el archivo .env.'
+      );
     }
 
     const modelName = options?.model || 'gpt-4o-mini';
@@ -34,7 +36,6 @@ export class OpenAIAdapter implements IAIProvider {
 
     const startTime = Date.now();
 
-    // Llamada con timeout y reintentos automáticos ante fallos transitorios (5xx / red).
     const response = await withRetry(
       (signal) =>
         fetch('https://api.openai.com/v1/chat/completions', {
@@ -54,9 +55,8 @@ export class OpenAIAdapter implements IAIProvider {
           }),
           signal,
         }).then(async (res) => {
-          // Reintentamos solo ante errores transitorios; los 4xx se propagan sin reintento.
           if (!res.ok && res.status >= 500) {
-            throw new Error(`OpenAI respondió ${res.status} (transitorio)`);
+            throw new Error(`OpenAI respondió con código HTTP ${res.status} (error transitorio del servidor)`);
           }
           return res;
         }),
@@ -71,7 +71,7 @@ export class OpenAIAdapter implements IAIProvider {
 
     if (!response.ok) {
       const errText = await response.text();
-      throw new Error(`Error en API de OpenAI (${response.status}): ${errText}`);
+      throw new Error(`Fallo en la llamada a la API de OpenAI (${response.status}): ${errText}`);
     }
 
     const data = (await response.json()) as {
@@ -80,8 +80,7 @@ export class OpenAIAdapter implements IAIProvider {
     };
 
     const content = data.choices?.[0]?.message?.content || '{}';
-    const parsed = JSON.parse(content) as { cases?: RawGeneratedCase[] };
-    const cases = parsed.cases || [];
+    const validated = validateAIResponse(content);
 
     const inputTokens = data.usage?.prompt_tokens ?? 0;
     const outputTokens = data.usage?.completion_tokens ?? 0;
@@ -95,7 +94,7 @@ export class OpenAIAdapter implements IAIProvider {
       outputTokens,
       responseTimeMs,
       estimatedCost,
-      cases,
+      cases: validated.cases,
     };
   }
 }

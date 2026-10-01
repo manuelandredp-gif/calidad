@@ -28,6 +28,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 # Artefactos compilados y cliente Prisma generado
 COPY --from=builder /app/backend/dist ./dist
 COPY --from=builder /app/backend/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/backend/node_modules/@prisma ./node_modules/@prisma
 COPY backend/prisma ./prisma
 
 # El frontend estático se sirve desde ../../frontend (relativo a dist)

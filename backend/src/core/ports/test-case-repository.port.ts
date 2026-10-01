@@ -4,7 +4,6 @@
 // ==========================================================================
 
 import { TestCaseEntity } from '../domain/entities/test-case.entity';
-import { TestCaseStatus } from '../domain/value-objects/test-case-status.vo';
 
 export interface TestCaseFilter {
   requirementId?: string;
@@ -31,12 +30,6 @@ export interface ITestCaseRepository {
   findByProjectId(projectId: string, options?: PaginationOptions): Promise<PaginatedResult<TestCaseEntity>>;
   save(testCase: TestCaseEntity): Promise<void>;
   saveBatch(testCases: TestCaseEntity[]): Promise<void>;
-  batchReview(
-    ids: string[],
-    decision: TestCaseStatus,
-    reviewerId: string,
-    comments?: string
-  ): Promise<{ affected: number }>;
   delete(id: string): Promise<boolean>;
-  deleteUnapprovedByRequirement(requirementId: string): Promise<number>;
 }
+

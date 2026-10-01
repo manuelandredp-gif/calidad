@@ -6,12 +6,22 @@ const auditLogger = logger.child({ channel: 'audit' });
 
 type AuditAction =
   | 'PROJECT_CREATED'
+  | 'PROJECT_UPDATED'
+  | 'PROJECT_ARCHIVED'
   | 'PROJECT_DELETED'
+  | 'REQUIREMENT_CREATED'
+  | 'REQUIREMENT_UPDATED'
+  | 'REQUIREMENTS_BATCH_IMPORTED'
+  | 'REQUIREMENT_ARCHIVED'
   | 'REQUIREMENT_DELETED'
+  | 'TESTCASE_REVIEWED'
   | 'TESTCASE_DELETED'
   | 'AUTH_LOGIN'
   | 'AUTH_REGISTER'
-  | 'AI_GENERATION';
+  | 'AUTH_LOGOUT'
+  | 'AUTH_REFRESH'
+  | 'AI_GENERATION'
+  | 'USER_ADMIN_UPDATED';
 
 /**
  * Registra una acción auditable con el actor, el recurso afectado y el requestId.

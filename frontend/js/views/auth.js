@@ -1,5 +1,6 @@
 // ==========================================================================
-// Authentication View Controller - TestGenAI
+// Authentication View Controller - TestGenAI (MVP Real)
+// Autenticación real con cookies HttpOnly, sin cuentas demo ni selección de rol
 // ==========================================================================
 
 import { api } from '../api.js';
@@ -19,11 +20,10 @@ class AuthController {
 
     this._setupTabListeners();
     this._setupFormListeners();
-    this._setupQuickChips();
   }
 
   show() {
-    const appLayout = document.getElementById('app-container');
+    const appLayout = document.getElementById('app');
     if (appLayout) appLayout.style.display = 'none';
     if (this.container) {
       this.container.style.display = 'flex';
@@ -36,7 +36,7 @@ class AuthController {
       this.container.style.display = 'none';
       this.container.classList.add('hidden');
     }
-    const appLayout = document.getElementById('app-container');
+    const appLayout = document.getElementById('app');
     if (appLayout) appLayout.style.display = 'flex';
   }
 
@@ -73,30 +73,8 @@ class AuthController {
     }
   }
 
-  _setupQuickChips() {
-    const chips = this.container.querySelectorAll('.quick-cred-chip');
-    chips.forEach((chip) => {
-      chip.addEventListener('click', async () => {
-        const email = chip.getAttribute('data-email');
-        const pass = chip.getAttribute('data-pass');
-        
-        const emailInput = document.getElementById('login-email');
-        const passInput = document.getElementById('login-password');
-        if (emailInput && passInput) {
-          emailInput.value = email;
-          passInput.value = pass;
-          
-          chip.classList.add('pulse-active');
-          setTimeout(() => chip.classList.remove('pulse-active'), 500);
-
-          await this._handleLogin(email, pass);
-        }
-      });
-    });
-  }
-
   _setupFormListeners() {
-    // Login Form
+    // Formulario de Inicio de Sesión
     const loginForm = document.getElementById('form-login');
     if (loginForm) {
       loginForm.addEventListener('submit', async (e) => {
@@ -111,7 +89,7 @@ class AuthController {
       });
     }
 
-    // Register Form
+    // Formulario de Registro (Sin selector de rol público: servidor asigna QA_TESTER)
     const registerForm = document.getElementById('form-register');
     if (registerForm) {
       registerForm.addEventListener('submit', async (e) => {
@@ -119,7 +97,6 @@ class AuthController {
         const fullName = document.getElementById('reg-fullname')?.value.trim();
         const email = document.getElementById('reg-email')?.value.trim();
         const password = document.getElementById('reg-password')?.value;
-        const role = document.getElementById('reg-role')?.value || 'QA_TESTER';
 
         if (!fullName || !email || !password) {
           toast.error('Completa todos los campos obligatorios');
@@ -139,7 +116,7 @@ class AuthController {
         }
 
         try {
-          const res = await api.register(email, password, fullName, role);
+          const res = await api.register(email, password, fullName);
           toast.success(`¡Cuenta creada con éxito! Bienvenido, ${fullName}`);
           this.hide();
           if (this.onAuthSuccessCallback) {

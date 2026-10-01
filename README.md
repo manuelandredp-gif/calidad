@@ -1,98 +1,146 @@
-# TestGenAI — Guía técnica y de puesta en marcha
+# TestGenAI — MVP Real Consolidado
 
-Generador inteligente de casos de prueba funcionales (IA + heurísticas ISTQB) con auditoría humana y trazabilidad.
-Backend **Node.js + Express + Prisma + TypeScript**; frontend **HTML/CSS/JS (ES Modules)**.
-
-> 📄 Documento académico del proyecto: [README_FLORES_DONGO.md](./README_FLORES_DONGO.md)
-> 🔧 Mejoras técnicas aplicadas (v1.1): [docs/MEJORAS_IMPLEMENTADAS.md](./docs/MEJORAS_IMPLEMENTADAS.md)
-> 📚 Documentación adicional: [docs/](./docs/)
+> **Sistema Inteligente de Generación y Gestión de Casos de Prueba Funcionales con Auditoría Humana y Trazabilidad**  
+> Basado en la propuesta académica de: [README_FLORES_DONGO.md](./README_FLORES_DONGO.md) (Propuesta de investigación, evaluación empírica formal pendiente).
 
 ---
 
-## Requisitos
+## 1. Alcance y Arquitectura del MVP
 
-- Node.js **>= 20**
-- (Opcional) Docker, para PostgreSQL + pgAdmin
+TestGenAI ha sido consolidado como un MVP real, libre de simuladores (`mock`), generadores heurísticos offline de sustitución y cuentas demo pre-cargadas. Una instalación limpia inicia con la base de datos completamente vacía.
 
-## Puesta en marcha (desarrollo, SQLite)
+| Capa | Tecnología | Características clave |
+|---|---|---|
+| **Frontend** | HTML5, Vanilla CSS, JavaScript (ES Modules) | SPA con 7 vistas básicas: Inicio, Proyectos, Requisitos, Casos & Revisión, Trazabilidad, Métricas e Historial, Configuración & Usuarios. |
+| **Backend API** | Node.js, Express, TypeScript | Arquitectura hexagonal / modular limpia. Prefijo unificado `/api/v1`. |
+| **Persistencia** | PostgreSQL 16 + Prisma ORM | Esquema único consolidado, campos nativos `Json`, versionado atómico de requisitos y casos, sesiones persistidas. |
+| **Inteligencia Artificial** | Google Gemini / OpenAI (`IAIProvider`) | Adaptadores reales con validación estricta de salida Zod, enmascaramiento bidireccional de PII y errores explícitos (sin fallback simulado). |
+| **Seguridad de Sesión** | Cookies HttpOnly + JWT | Access token corto (1h) y Refresh token persistido y rotado en BD (7d). El registro público fija el rol `QA_TESTER`. |
+
+---
+
+## 2. Requisitos Previos
+
+- **Node.js** >= 20.x
+- **PostgreSQL** >= 15.x (o Docker para levantar la instancia incluida)
+- **API Key** real de Google Gemini (`GEMINI_API_KEY`) o OpenAI (`OPENAI_API_KEY`)
+
+---
+
+## 3. Puesta en Marcha Rápida (Local)
+
+### 3.1. Levantar PostgreSQL con Docker Compose
+
+```bash
+docker compose up -d postgres
+```
+Esto iniciará una base de datos PostgreSQL 16 en `localhost:5432` con la base `calidad_db`.
+
+### 3.2. Configuración del Backend
 
 ```bash
 cd backend
-cp .env.example .env          # y edite JWT_SECRET
+cp .env.example .env
+```
+
+Edite `.env` y configure sus variables esenciales:
+```env
+PORT=4000
+NODE_ENV=development
+DATABASE_URL="postgresql://postgres:postgres_password_2026@localhost:5432/calidad_db?schema=public"
+
+# Genere un secreto seguro para JWT:
+# node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+JWT_SECRET="su_clave_secreta_jwt_minimo_32_caracteres"
+
+# Proveedor de IA por defecto: 'gemini' o 'openai'
+AI_PROVIDER_DEFAULT=gemini
+GEMINI_API_KEY=su_clave_real_de_gemini
+# OPENAI_API_KEY=su_clave_real_de_openai
+```
+
+### 3.3. Instalación y Migraciones
+
+```bash
 npm install
 npm run prisma:generate
-npm run prisma:push           # crea/actualiza el esquema en dev.db
-npm run prisma:seed           # datos de ejemplo (opcional)
-npm run dev                   # http://localhost:4000
-```
-
-- App y frontend: `http://localhost:4000`
-- Healthcheck: `http://localhost:4000/api/health`
-- Documentación de la API (Swagger UI): `http://localhost:4000/api/docs`
-
-> ⚠️ Genere un `JWT_SECRET` real:
-> ```bash
-> node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
-> ```
-
-## Scripts disponibles (`backend/`)
-
-| Script | Descripción |
-|--------|-------------|
-| `npm run dev` | Servidor en modo watch (tsx) |
-| `npm run build` | Compila TypeScript a `dist/` |
-| `npm start` | Ejecuta la build de producción |
-| `npm run typecheck` | Verificación de tipos sin emitir |
-| `npm run lint` / `lint:fix` | ESLint |
-| `npm run format` | Prettier |
-| `npm test` / `test:coverage` | Vitest (con cobertura) |
-| `npm run prisma:migrate` / `prisma:deploy` | Migraciones (PostgreSQL) |
-
-## Producción con PostgreSQL
-
-```bash
-cd backend
-docker compose up -d                                   # PostgreSQL + pgAdmin
-cp prisma/schema.postgres.prisma prisma/schema.prisma  # esquema con enums
-# En .env: DATABASE_URL="postgresql://postgres:postgres_password_2026@localhost:5432/calidad_db?schema=public"
 npm run prisma:deploy
-npm run build && npm start
 ```
+*(No hay seeds automáticos: la base de datos queda vacía y lista para su uso real).*
 
-### Docker (imagen de la app)
+### 3.4. Creación del Administrador Inicial
 
-Construir **desde la raíz del repo** (para incluir el frontend):
+Para crear una cuenta de administrador de forma segura mediante CLI interactivo:
 
 ```bash
-docker build -f backend/Dockerfile -t testgenai .
-docker run -p 4000:4000 --env-file backend/.env testgenai
+npm run admin:create
+```
+El script le solicitará nombre, email y contraseña segura por consola.
+
+### 3.5. Iniciar la Aplicación
+
+```bash
+npm run dev
 ```
 
-## Seguridad (resumen)
+- **Aplicación Web (SPA):** [http://localhost:4000](http://localhost:4000)
+- **Healthcheck del Sistema:** [http://localhost:4000/api/health](http://localhost:4000/api/health)
+- **Documentación OpenAPI (Swagger):** [http://localhost:4000/api/docs](http://localhost:4000/api/docs)
 
-- Autenticación JWT con **access token corto + refresh token** (`/api/v1/auth/refresh`).
-- **Autorización por recurso** (evita IDOR): cada usuario solo accede a sus proyectos.
-- `helmet`, CORS por allowlist, **rate limiting**, validación de entrada con Zod.
-- Validación de entorno en el arranque; secretos fuera del repositorio.
-- Presupuesto de gasto de IA por proyecto y caché de generaciones.
+---
 
-## Estructura
+## 4. Scripts Disponibles (`backend/`)
 
+| Script | Propósito |
+|---|---|
+| `npm run dev` | Inicia el servidor en modo desarrollo (tsx watch) |
+| `npm run build` | Compila TypeScript a `dist/` |
+| `npm start` | Ejecuta la build compilada en producción |
+| `npm run typecheck` | Comprobación estricta de tipos (`tsc --noEmit`) |
+| `npm run lint` | Análisis estático de código con ESLint |
+| `npm test` | Ejecuta la suite de pruebas unitarias con Vitest |
+| `npm run prisma:deploy` | Aplica migraciones pendientes de PostgreSQL en producción |
+| `npm run prisma:migrate` | Genera y aplica migraciones de base de datos en desarrollo |
+| `npm run admin:create` | Asistente de línea de comandos para crear administradores |
+| `npm run data:maintenance` | Diagnóstico (`--dry-run`) y limpieza controlada de datos de muestra |
+
+---
+
+## 5. Recorrido Principal de Uso
+
+1. **Autenticación:** El usuario se registra o inicia sesión. La sesión se gestiona con cookies HttpOnly protegidas.
+2. **Proyectos:** Creación de un proyecto explícito (`ACTIVE` o `ARCHIVED`).
+3. **Requisitos Funcionales:** Registro manual o importación masiva por CSV/JSON. El sistema detecta términos ambiguos (RF-13) y versiona automáticamente cada edición.
+4. **Generación con IA Real:** Solicita casos de prueba a Gemini u OpenAI. El backend valida el esquema Zod, registra tokens y calcula latencia real. Si falta la API key, se informa el error 502/503 sin simular casos.
+5. **Auditoría Humana:** El QA revisa cada caso de forma individual en el modal de revisión:
+   - Puede editar pasos, precondiciones, datos o resultado esperado.
+   - Si aprueba un caso en estado `conflict`, se exige justificación técnica.
+   - Si rechaza un caso, el comentario es obligatorio para el historial.
+   - Se guarda snapshot inmutable del antes/después con auditoría.
+6. **Trazabilidad y Métricas:** Matriz de trazabilidad con cálculo de cobertura sobre requisitos activos y casos aprobados vigentes. Métricas de tokens, costos reales e historial de revisiones.
+7. **Exportación:** Descarga de casos aprobados vigentes en formatos CSV, JSON y Markdown.
+
+---
+
+## 6. Mantenimiento y Respaldo de Datos
+
+- Para examinar datos de muestra heredados sin eliminarlos:
+  ```bash
+  npm run data:maintenance -- --dry-run
+  ```
+- Para aplicar la limpieza sobre los registros identificados en el manifiesto:
+  ```bash
+  npm run data:maintenance -- --apply
+  ```
+- Un respaldo exportado en JSON de la base de datos anterior se conserva en: `backend/prisma/backup/dev-db-export.json`.
+
+---
+
+## 7. Despliegue con Docker
+
+Para compilar y ejecutar el contenedor completo (Backend API + Frontend SPA + PostgreSQL):
+
+```bash
+docker compose up -d --build
 ```
-backend/
-  src/
-    common/        # middlewares, utils, errores (capas transversales)
-    config/        # env, prisma, swagger
-    core/          # adaptadores de IA, heurísticas, prompts
-    modules/       # auth, projects, requirements, ai-generation, test-cases,
-                   # heuristics, metrics, export, traceability (router + service)
-  prisma/          # schema.prisma (SQLite) y schema.postgres.prisma (prod)
-  tests/           # Vitest
-frontend/          # SPA estática (ES Modules)
-docs/              # documentación técnica y académica
-```
-
-## CI
-
-GitHub Actions ejecuta en cada push/PR: **lint → typecheck → test (cobertura) → build → build de Docker**.
-Ver [.github/workflows/ci.yml](./.github/workflows/ci.yml).
+El contenedor se ejecuta bajo usuario no privilegiado (`nodejs`) exponiendo el puerto 4000.

@@ -1,6 +1,7 @@
 // ==========================================================================
 // Application Use Case: GetProjectsWithMetricsUseCase
-// Optimized Aggregations, Pagination & Role-Based Scope
+// Agregación de métricas de cobertura ISTQB por proyecto
+// Cobertura = Requisitos activos con al menos 1 caso APPROVED vigente / Requisitos activos
 // ==========================================================================
 
 import { prisma } from '../../config/prisma';
@@ -17,7 +18,7 @@ export interface ProjectStatsDTO {
   totalTestCases: number;
   approvedTestCases: number;
   coveragePercent: number;
-  totalCostUsd: number;
+  totalCostUsd: number | null;
 }
 
 export interface ProjectDTO {
@@ -25,6 +26,7 @@ export interface ProjectDTO {
   name: string;
   description: string | null;
   status: string;
+  budgetUsd: number | null;
   createdAt: Date;
   updatedAt: Date;
   stats: ProjectStatsDTO;
@@ -49,10 +51,16 @@ export class GetProjectsWithMetricsUseCase {
         take,
         include: {
           requirements: {
+            where: { status: { not: 'OBSOLETE' } },
             select: {
               id: true,
-              testCases: { select: { status: true } },
-              aiGenerations: { select: { estimatedCost: true } },
+              testCases: {
+                where: { isObsolete: false },
+                select: { status: true },
+              },
+              aiGenerations: {
+                select: { estimatedCost: true, status: true },
+              },
             },
           },
         },
@@ -60,48 +68,52 @@ export class GetProjectsWithMetricsUseCase {
     ]);
 
     const items: ProjectDTO[] = projects.map((p) => {
-      const requirementsCount = p.requirements.length;
+      const activeReqsCount = p.requirements.length;
       let totalTestCases = 0;
       let approvedTestCases = 0;
-      let totalCostUsd = 0;
+      let knownCostSum = 0;
+      let hasAnyCost = false;
       let reqsWithApproved = 0;
 
-      for (let i = 0; i < p.requirements.length; i++) {
-        const r = p.requirements[i];
+      for (const r of p.requirements) {
         totalTestCases += r.testCases.length;
-        let hasApprovedInReq = false;
+        let reqHasApproved = false;
 
-        for (let j = 0; j < r.testCases.length; j++) {
-          if (r.testCases[j].status === 'APPROVED') {
+        for (const tc of r.testCases) {
+          if (tc.status === 'APPROVED') {
             approvedTestCases++;
-            hasApprovedInReq = true;
+            reqHasApproved = true;
           }
         }
-        if (hasApprovedInReq) reqsWithApproved++;
+        if (reqHasApproved) {
+          reqsWithApproved++;
+        }
 
-        for (let k = 0; k < r.aiGenerations.length; k++) {
-          totalCostUsd += r.aiGenerations[k].estimatedCost;
+        for (const gen of r.aiGenerations) {
+          if (gen.estimatedCost !== null && gen.estimatedCost !== undefined) {
+            knownCostSum += gen.estimatedCost;
+            hasAnyCost = true;
+          }
         }
       }
 
-      const coverage =
-        requirementsCount > 0
-          ? Math.round((reqsWithApproved / requirementsCount) * 100)
-          : 0;
+      const coveragePercent =
+        activeReqsCount > 0 ? Math.round((reqsWithApproved / activeReqsCount) * 100) : 0;
 
       return {
         id: p.id,
         name: p.name,
         description: p.description,
         status: p.status,
+        budgetUsd: p.budgetUsd,
         createdAt: p.createdAt,
         updatedAt: p.updatedAt,
         stats: {
-          requirementsCount,
+          requirementsCount: activeReqsCount,
           totalTestCases,
           approvedTestCases,
-          coveragePercent: coverage,
-          totalCostUsd: Math.round(totalCostUsd * 10000) / 10000,
+          coveragePercent,
+          totalCostUsd: hasAnyCost ? Math.round(knownCostSum * 10000) / 10000 : null,
         },
       };
     });

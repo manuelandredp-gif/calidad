@@ -1,42 +1,44 @@
 // ==========================================================================
 // Application Use Case: GenerateTestCasesUseCase
-// Core Business Orchestration: AI Derivation, Caching, PII Masking & Persistence
+// Orquestación central de generación con IA Real:
+// Gemini / OpenAI -> Zod Validation -> Transacciones cortas -> Trazabilidad
 // ==========================================================================
 
 import { prisma } from '../../config/prisma';
 import { env } from '../../config/env';
 import { logger } from '../../common/utils/logger';
 import { AIFactory } from '../../core/ai.factory';
-import { HeuristicEngine } from '../../core/heuristics/heuristic-engine';
-import { AIGenerationResult, RawGeneratedCase } from '../../core/interfaces/ai-provider.interface';
+import { AIGenerationResult } from '../../core/interfaces/ai-provider.interface';
 import { PromptGuard } from '../../common/security/prompt-guard';
 import { PIIMasker } from '../../common/security/pii-masker';
 import { RequirementFingerprintService } from '../../core/domain/services/requirement-fingerprint.service';
 import { SecurityPolicy } from '../../core/domain/security/security-policy';
-import { TestCaseMapper, PrismaTestCaseRow } from '../../core/domain/mappers/test-case.mapper';
+import { ApiError } from '../../common/errors/api-error';
+import { DuplicateDetector, DuplicateCandidate } from '../../modules/test-cases/duplicate-detector';
 
 export interface GenerateTestCasesInputDTO {
   requirementId: string;
   userId: string;
   userRole: string;
-  provider?: string;
+  provider?: 'gemini' | 'openai';
   model?: string;
   temperature?: number;
-  clearPreviousUnapproved?: boolean;
   useCache?: boolean;
 }
 
 export interface GenerateTestCasesOutputDTO {
   cases: Array<Record<string, unknown>>;
   generation: {
+    id: string;
     provider: string;
     model: string;
     inputTokens: number;
     outputTokens: number;
-    estimatedCost: number;
+    estimatedCost: number | null;
     responseTimeMs: number;
     cached: boolean;
   };
+  duplicateWarnings?: DuplicateCandidate[];
 }
 
 export class GenerateTestCasesUseCase {
@@ -48,27 +50,53 @@ export class GenerateTestCasesUseCase {
       provider,
       model,
       temperature,
-      clearPreviousUnapproved = false,
       useCache = true,
     } = input;
 
-    // 1. Autorización & obtención del requisito
+    // 1. Autorización & verificación del requisito y su proyecto
     const requirement = await prisma.requirement.findUnique({
       where: { id: requirementId },
       include: { project: true },
     });
 
     if (!requirement) {
-      throw new Error(`Requisito con ID ${requirementId} no encontrado.`);
+      throw ApiError.notFound(`Requisito con ID ${requirementId} no encontrado.`);
     }
 
-    // Validación de seguridad de dominio
+    if (requirement.project.status === 'ARCHIVED') {
+      throw ApiError.forbidden('El proyecto está archivado. Reactívelo antes de generar casos.');
+    }
+
     SecurityPolicy.assertProjectAccess(requirement.project.ownerId, { userId, role: userRole });
 
-    const selectedProvider = (provider || env.AI_PROVIDER_DEFAULT || 'mock').toLowerCase();
-    const selectedModel = model || 'default';
+    const selectedProvider = (provider || env.AI_PROVIDER_DEFAULT || 'gemini').toLowerCase() as
+      | 'gemini'
+      | 'openai';
 
-    // 2. Cálculo de Fingerprint determinista (Deduplicación)
+    if (selectedProvider !== 'gemini' && selectedProvider !== 'openai') {
+      throw ApiError.badRequest(`Proveedor '${selectedProvider}' inválido. Solo se admiten 'gemini' u 'openai'.`);
+    }
+
+    const selectedModel = model?.trim() || (selectedProvider === 'gemini' ? 'gemini-1.5-flash' : 'gpt-4o-mini');
+
+    // 2. Control de presupuesto del proyecto
+    const budgetLimit = requirement.project.budgetUsd ?? env.AI_PROJECT_BUDGET_USD;
+    if (budgetLimit > 0) {
+      const currentSpendAggregate = await prisma.aiGeneration.aggregate({
+        where: { requirement: { projectId: requirement.projectId } },
+        _sum: { estimatedCost: true },
+      });
+      const currentSpent = currentSpendAggregate._sum.estimatedCost ?? 0;
+      if (currentSpent >= budgetLimit) {
+        throw ApiError.badRequest(
+          `Presupuesto de IA alcanzado para este proyecto ($${currentSpent.toFixed(2)} de $${budgetLimit.toFixed(
+            2
+          )} USD permitidos). Contacte a su administrador.`
+        );
+      }
+    }
+
+    // 3. Cálculo de huella determinista (Fingerprint para Caché)
     const inputHash = RequirementFingerprintService.compute({
       code: requirement.code,
       title: requirement.title,
@@ -78,16 +106,25 @@ export class GenerateTestCasesUseCase {
       model: selectedModel,
     });
 
-    // 3. CACHÉ: Reutilización de generación idéntica previa si está habilitado
+    // 4. CACHÉ: Reutilización de casos exitosos de la MISMA versión del requisito y MISMA generación
     if (useCache) {
-      const cached = await prisma.aiGeneration.findFirst({
-        where: { requirementId, inputHash },
+      const cachedGen = await prisma.aiGeneration.findFirst({
+        where: {
+          requirementId,
+          requirementVersion: requirement.version,
+          inputHash,
+          status: 'SUCCEEDED',
+        },
         orderBy: { createdAt: 'desc' },
       });
 
-      if (cached) {
-        const existingCases = await prisma.testCase.findMany({
-          where: { requirementId, source: 'AI_GENERATED' },
+      if (cachedGen) {
+        const cachedCases = await prisma.testCase.findMany({
+          where: {
+            requirementId,
+            generationId: cachedGen.id,
+            isObsolete: false,
+          },
           orderBy: { code: 'asc' },
           include: {
             reviews: {
@@ -97,17 +134,27 @@ export class GenerateTestCasesUseCase {
           },
         });
 
-        if (existingCases.length > 0) {
-          logger.info(`[GenerateTestCasesUseCase] Reutilizando ${existingCases.length} casos en caché (Hash: ${inputHash.substring(0, 8)}...)`);
+        if (cachedCases.length > 0) {
+          logger.info(
+            { requirementId, generationId: cachedGen.id, hash: inputHash.slice(0, 8) },
+            '[GenerateTestCasesUseCase] Reutilizando generación previa idéntica en caché'
+          );
+
           return {
-            cases: existingCases.map((tc) => TestCaseMapper.toDTO(tc as unknown as PrismaTestCaseRow)),
+            cases: cachedCases.map((tc) => ({
+              ...tc,
+              preconditions: tc.preconditions,
+              steps: tc.steps,
+              originalContent: tc.originalContent,
+            })),
             generation: {
-              provider: cached.provider,
-              model: cached.model,
+              id: cachedGen.id,
+              provider: cachedGen.provider,
+              model: cachedGen.model,
               inputTokens: 0,
               outputTokens: 0,
               estimatedCost: 0,
-              responseTimeMs: cached.responseTimeMs,
+              responseTimeMs: cachedGen.responseTimeMs,
               cached: true,
             },
           };
@@ -115,18 +162,25 @@ export class GenerateTestCasesUseCase {
       }
     }
 
-    // 4. Guardrails de Seguridad: Anti-Prompt Injection & Anonimización PII
+    // 5. Guardrails de Seguridad: Anti-Prompt Injection & Anonimización PII compartida
+    PromptGuard.assertSafe(requirement.title);
     PromptGuard.assertSafe(requirement.description);
     PromptGuard.assertSafe(requirement.acceptanceCriteria);
 
-    const descMask = PIIMasker.mask(requirement.description);
-    const critMask = PIIMasker.mask(requirement.acceptanceCriteria);
+    const masking = PIIMasker.maskMultiple({
+      title: requirement.title,
+      description: requirement.description,
+      criteria: requirement.acceptanceCriteria,
+    });
 
-    if (descMask.totalMasked > 0 || critMask.totalMasked > 0) {
-      logger.info(`[GenerateTestCasesUseCase] PII detectado y enmascarado (${descMask.totalMasked + critMask.totalMasked} tokens anonimizados).`);
+    if (masking.totalMasked > 0) {
+      logger.info(
+        { tokensAnonimizados: masking.totalMasked },
+        '[GenerateTestCasesUseCase] PII detectado y enmascarado antes del envío a la IA'
+      );
     }
 
-    // 5. Orquestación del Proveedor de IA (Strategy Registry)
+    // 6. Invocación al proveedor de IA Real (fuera de la transacción de BD)
     const aiProvider = AIFactory.getProvider(selectedProvider);
     const startTime = Date.now();
     let result: AIGenerationResult;
@@ -134,66 +188,87 @@ export class GenerateTestCasesUseCase {
     try {
       result = await aiProvider.generateTestCases(
         requirement.code,
-        requirement.title,
-        descMask.maskedText,
-        critMask.maskedText,
+        masking.maskedFields.title,
+        masking.maskedFields.description,
+        masking.maskedFields.criteria,
         {
-          model: selectedModel !== 'default' ? selectedModel : undefined,
+          model: selectedModel,
           temperature,
         }
       );
 
-      // Si se enmascaró PII, restaurar los valores en los casos generados
-      if (descMask.piiFound || critMask.piiFound) {
-        const combinedMaskMap = new Map([...descMask.maskMap, ...critMask.maskMap]);
+      // Si hubo PII enmascarado, restaurar en todos los casos generados
+      if (masking.piiFound) {
         result.cases = result.cases.map((c) => ({
           ...c,
-          title: PIIMasker.unmask(c.title, combinedMaskMap),
-          expectedResult: PIIMasker.unmask(c.expectedResult, combinedMaskMap),
-          preconditions: (c.preconditions || []).map((p) => PIIMasker.unmask(p, combinedMaskMap)),
-          steps: (c.steps || []).map((s) => PIIMasker.unmask(s, combinedMaskMap)),
-          testData: c.testData ? PIIMasker.unmask(c.testData, combinedMaskMap) : c.testData,
+          title: PIIMasker.unmask(c.title, masking.maskMap),
+          expectedResult: PIIMasker.unmask(c.expectedResult, masking.maskMap),
+          preconditions: (c.preconditions || []).map((p) => PIIMasker.unmask(p, masking.maskMap)),
+          steps: (c.steps || []).map((s) => PIIMasker.unmask(s, masking.maskMap)),
+          testData: c.testData ? PIIMasker.unmask(c.testData, masking.maskMap) : c.testData,
         }));
       }
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      logger.warn(`[GenerateTestCasesUseCase] Proveedor '${selectedProvider}' falló. Activando fallback heurístico determinista: ${errorMsg}`);
-      const { cases } = HeuristicEngine.generateDeterministicTestCases(
-        requirement.code,
-        requirement.title,
-        requirement.description,
-        requirement.acceptanceCriteria
+      const latency = Date.now() - startTime;
+
+      // Registrar la ejecución fallida para trazabilidad y auditoría
+      await prisma.aiGeneration.create({
+        data: {
+          requirementId,
+          userId,
+          requirementVersion: requirement.version,
+          provider: selectedProvider,
+          model: selectedModel,
+          promptVersion: 'v1.0',
+          inputTokens: 0,
+          outputTokens: 0,
+          estimatedCost: null,
+          responseTimeMs: latency,
+          inputHash,
+          status: 'FAILED',
+          errorMessage: errorMsg.slice(0, 500),
+        },
+      });
+
+      logger.error(
+        { provider: selectedProvider, model: selectedModel, error: errorMsg },
+        '[GenerateTestCasesUseCase] Fallo al invocar proveedor de IA'
       );
-      result = {
-        provider: 'mock',
-        model: 'fallback-heuristic-engine',
-        promptVersion: 'v1.0-fallback',
-        inputTokens: 0,
-        outputTokens: 0,
-        responseTimeMs: 12,
-        estimatedCost: 0,
-        cases,
-      };
+
+      throw ApiError.badGateway(
+        `Fallo al generar casos con el proveedor '${selectedProvider}': ${errorMsg}. Verifique la API key o intente nuevamente.`
+      );
     }
 
     const responseTimeMs = Date.now() - startTime;
 
-    // 6. Transacción Atómica en Base de Datos
-    const createdCases = await prisma.$transaction(async (tx) => {
-      // Limpieza de casos previos no aprobados si se solicitó
-      if (clearPreviousUnapproved) {
-        await tx.testCase.deleteMany({
-          where: {
-            requirementId,
-            status: { in: ['PENDING', 'REJECTED'] },
-          },
-        });
-      }
+    // 7. Persistencia transaccional corta con reserva atómica de códigos CP-XXX
+    const { createdCases, generationRecord } = await prisma.$transaction(async (tx) => {
+      // Bloquear fila del requisito para reservar códigos secuenciales atómicamente
+      const currentReq = await tx.requirement.findUniqueOrThrow({
+        where: { id: requirementId },
+        select: { nextCaseNumber: true, version: true },
+      });
 
-      // Registro de métricas de telemetría de IA
-      await tx.aiGeneration.create({
+      const startCodeNum = currentReq.nextCaseNumber;
+      const nextCodeNum = startCodeNum + result.cases.length;
+
+      // Actualizar contador atómico del requisito
+      await tx.requirement.update({
+        where: { id: requirementId },
+        data: {
+          nextCaseNumber: nextCodeNum,
+          status: 'GENERATED',
+        },
+      });
+
+      // Crear registro de auditoría de la llamada a IA exitosa
+      const genRecord = await tx.aiGeneration.create({
         data: {
           requirementId,
+          userId,
+          requirementVersion: currentReq.version,
           provider: result.provider,
           model: result.model,
           promptVersion: result.promptVersion || 'v1.0',
@@ -202,61 +277,85 @@ export class GenerateTestCasesUseCase {
           estimatedCost: result.estimatedCost,
           responseTimeMs,
           inputHash,
+          status: 'SUCCEEDED',
         },
       });
 
-      // Inserción de casos de prueba generados
-      const existingCount = await tx.testCase.count({ where: { requirementId } });
+      // Insertar los casos generados asociados a la generación y versión del requisito
       const inserted = [];
-
       for (let i = 0; i < result.cases.length; i++) {
-        const c: RawGeneratedCase = result.cases[i];
-        const code = `CP-${String(existingCount + i + 1).padStart(3, '0')}`;
-        const row = await tx.testCase.create({
+        const c = result.cases[i];
+        const codeNum = startCodeNum + i;
+        const code = `CP-${String(codeNum).padStart(3, '0')}`;
+
+        const created = await tx.testCase.create({
           data: {
             requirementId,
+            generationId: genRecord.id,
             code,
             type: c.type,
             title: c.title,
-            preconditions: JSON.stringify(c.preconditions || []),
-            steps: JSON.stringify(c.steps || []),
+            preconditions: c.preconditions,
+            steps: c.steps,
             testData: c.testData || null,
             expectedResult: c.expectedResult,
-            priority: c.priority || 'medium',
-            evidenceStatus: c.evidenceStatus || 'derived',
+            priority: c.priority,
+            evidenceStatus: c.evidenceStatus,
             evidenceText: c.evidenceText || null,
+            originalContent: {
+              title: c.title,
+              type: c.type,
+              preconditions: c.preconditions,
+              steps: c.steps,
+              expectedResult: c.expectedResult,
+              priority: c.priority,
+              evidenceStatus: c.evidenceStatus,
+              evidenceText: c.evidenceText,
+            },
+            version: 1,
+            requirementVersion: currentReq.version,
+            isObsolete: false,
             source: 'AI_GENERATED',
             status: 'PENDING',
           },
         });
-        inserted.push(row);
+        inserted.push(created);
       }
 
-      // Actualizar estado del requisito
-      await tx.requirement.update({
-        where: { id: requirementId },
-        data: { status: 'GENERATED' },
-      });
-
-      return inserted;
+      return { createdCases: inserted, generationRecord: genRecord };
     });
 
-    // 7. Auditoría
+    // 8. Detección informativa de duplicados potenciales entre los casos del requisito (RF-14)
+    const allRequirementCases = await prisma.testCase.findMany({
+      where: { requirementId, isObsolete: false },
+      select: { id: true, code: true, title: true, steps: true, expectedResult: true },
+    });
+
+    const duplicateWarnings = DuplicateDetector.findDuplicates(
+      allRequirementCases.map((tc) => ({
+        id: tc.id,
+        code: tc.code,
+        title: tc.title,
+        steps: Array.isArray(tc.steps) ? (tc.steps as string[]) : [],
+        expectedResult: tc.expectedResult,
+      }))
+    );
+
     logger.info(
       {
-        action: 'AI_GENERATION',
         requirementId,
-        userId,
         provider: result.provider,
         casesCount: createdCases.length,
-        costUsd: result.estimatedCost,
+        cost: result.estimatedCost,
+        duplicateWarningsCount: duplicateWarnings.length,
       },
-      '[Audit] Generación de casos con IA completada exitosamente'
+      '[GenerateTestCasesUseCase] Generación exitosa de casos de prueba con IA real'
     );
 
     return {
-      cases: createdCases.map((c) => TestCaseMapper.toDTO(c as unknown as PrismaTestCaseRow)),
+      cases: createdCases,
       generation: {
+        id: generationRecord.id,
         provider: result.provider,
         model: result.model,
         inputTokens: result.inputTokens,
@@ -265,6 +364,7 @@ export class GenerateTestCasesUseCase {
         responseTimeMs,
         cached: false,
       },
+      duplicateWarnings: duplicateWarnings.length > 0 ? duplicateWarnings : undefined,
     };
   }
 }

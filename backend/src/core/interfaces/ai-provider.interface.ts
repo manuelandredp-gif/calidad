@@ -1,5 +1,5 @@
 export type TestCaseType = 'positive' | 'negative' | 'alternative' | 'boundary' | 'validation';
-export type EvidenceStatus = 'derived' | 'suggested' | 'ambiguous' | 'conflict';
+export type EvidenceStatus = 'derived' | 'suggested' | 'ambiguous' | 'conflict' | 'pending';
 export type PriorityLevel = 'high' | 'medium' | 'low';
 
 export interface RawGeneratedCase {
@@ -7,21 +7,21 @@ export interface RawGeneratedCase {
   title: string;
   preconditions: string[];
   steps: string[];
-  testData?: string;
+  testData?: string | null;
   expectedResult: string;
   priority: PriorityLevel;
   evidenceStatus: EvidenceStatus;
-  evidenceText?: string;
+  evidenceText?: string | null;
 }
 
 export interface AIGenerationResult {
-  provider: 'gemini' | 'openai' | 'mock';
+  provider: 'gemini' | 'openai';
   model: string;
   promptVersion: string;
   inputTokens: number;
   outputTokens: number;
   responseTimeMs: number;
-  estimatedCost: number;
+  estimatedCost: number | null;
   cases: RawGeneratedCase[];
 }
 
@@ -32,7 +32,7 @@ export interface GenerateOptions {
 }
 
 export interface IAIProvider {
-  readonly providerName: 'gemini' | 'openai' | 'mock';
+  readonly providerName: 'gemini' | 'openai';
   generateTestCases(
     requirementCode: string,
     requirementTitle: string,

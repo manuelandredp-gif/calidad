@@ -1,309 +1,126 @@
-# Catálogo de Endpoints de la API REST — TestGenAI
+# Catálogo de Endpoints de la API REST — TestGenAI MVP Real
 
-**Versión de la API:** 1.0.0  
-**Base URL Local:** `http://localhost:4000/api/v1` (alias retrocompatible: `http://localhost:4000/api`)  
-**Autenticación:** Cabecera HTTP `Authorization: Bearer <ACCESS_TOKEN>` (access token de vida corta; renovable con `/auth/refresh`)  
-**Documentación interactiva (Swagger UI):** `GET /api/docs` — spec OpenAPI en `GET /api/docs.json`  
-**Formato de Respuesta:** JSON estándar `{ "success": boolean, "data": ..., "message": string, "error"?: string }`  
-**Respuestas paginadas:** los listados devuelven además `meta: { page, pageSize, total, totalPages }` y aceptan `?page=&pageSize=` (pageSize máx. 100).
-
-> **Seguridad aplicada:** cabeceras `helmet`, compresión gzip, CORS por allowlist (`CORS_ORIGINS`), `X-Request-Id` por petición y **rate limiting**: `/auth` 10 req/15 min, `/ai` 20 req/5 min, resto 120 req/min.
-> **Autorización a nivel de recurso:** todo endpoint verifica la propiedad del recurso (proyecto→requisito→caso). Acceder a recursos de otro usuario devuelve `404`.
+**Versión de la API:** 1.0 (MVP Real Consolidado)  
+**Base URL:** `http://localhost:4000/api/v1`  
+**Autenticación:** Cookies HttpOnly seguras (`testgenai_session` / `testgenai_refresh`) o cabecera `Authorization: Bearer <ACCESS_TOKEN>`.  
+**Swagger UI:** `http://localhost:4000/api/docs`  
+**Formato de Respuesta:** JSON estándar `{ "success": boolean, "data": ..., "message": string, "meta"?: { "page": number, "pageSize": number, "total": number, "totalPages": number } }`
 
 ---
 
-## 1. Estado y Salud
+## 1. Salud y Diagnóstico
 
-### `GET /health`
-Verifica el estado del servicio y configuración activa del backend.
+### `GET /api/health`
+Estado del servicio.
 - **Acceso:** Público
 - **Respuesta (200 OK):**
 ```json
 {
   "status": "online",
-  "timestamp": "2026-09-14T17:15:00.000Z",
   "service": "TestGenAI Backend Core",
   "version": "1.0.0",
-  "environment": "development",
-  "aiDefaultProvider": "mock"
+  "environment": "development"
 }
 ```
 
-### `GET /health/db`
-Diagnóstico de conectividad con la base de datos (motor y conteos de entidades). **Acceso:** Público.
-
-### `GET /health/ai`
-Verifica que el proveedor de IA por defecto esté configurado (presencia de API key). Devuelve `200` si está listo o `503` si falta la clave (en cuyo caso operará el motor heurístico de repuesto). **Acceso:** Público.
-```json
-{ "provider": "gemini", "configured": true, "fallback": "HeuristicEngine (determinista, 0 tokens)", "message": "..." }
-```
+### `GET /api/health/db`
+Diagnóstico de conectividad con la base de datos PostgreSQL.
+- **Acceso:** Público (informa estado de conexión sin exponer cantidades globales sensibles).
 
 ---
 
-## 2. Autenticación (`/auth`)
+## 2. Autenticación y Sesión (`/api/v1/auth`)
 
-### `POST /auth/register`
-Registra un nuevo usuario en la plataforma.
-- **Acceso:** Público
-- **Body (JSON):**
-```json
-{
-  "email": "usuario@test.com",
-  "password": "Password123*",
-  "fullName": "Juan Pérez",
-  "role": "QA_TESTER" // Opcional: QA_TESTER, QA_LEAD, DEVELOPER, ADMIN
-}
-```
-- **Política de contraseña:** mínimo 8 caracteres, con al menos una minúscula, una mayúscula y un dígito.
-- **Respuesta (201 Created):** Retorna el usuario creado y sus tokens: `token` (= `accessToken`, alias retrocompatible), `accessToken` y `refreshToken`.
+### `POST /api/v1/auth/register`
+Registra un nuevo usuario.
+- **Acceso:** Público.
+- **Seguridad:** El servidor fija obligatoriamente el rol `QA_TESTER`. Cualquier valor de `role` enviado en el body es ignorado o rechazado.
+- **Body:** `{ "email": "usuario@empresa.com", "password": "Password123*", "fullName": "Nombre Apellido" }`
+- **Respuesta (201):** Retorna el usuario creado y establece cookies HttpOnly.
 
-### `POST /auth/login`
-Inicia sesión y genera el par de tokens (access + refresh).
-- **Acceso:** Público
-- **Body (JSON):**
-```json
-{
-  "email": "admin@testgenai.com",
-  "password": "Admin123*TestGenAI"
-}
-```
-- **Respuesta (200 OK):**
-```json
-{
-  "success": true,
-  "data": {
-    "user": {
-      "id": "uuid...",
-      "email": "admin@testgenai.com",
-      "fullName": "Administrador Principal",
-      "role": "ADMIN"
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsIn...",
-    "accessToken": "eyJhbGciOiJIUzI1NiIsIn...",
-    "refreshToken": "eyJhbGciOiJIUzI1NiIsIn..."
-  },
-  "message": "Inicio de sesión exitoso"
-}
-```
+### `POST /api/v1/auth/login`
+Inicia sesión con credenciales válidas.
+- **Acceso:** Público.
+- **Body:** `{ "email": "...", "password": "..." }`
+- **Respuesta (200):** Retorna datos del usuario y establece cookies HttpOnly: `testgenai_session` (1 hora) y `testgenai_refresh` (7 días).
 
-### `POST /auth/refresh`
-Emite un nuevo par de tokens a partir de un `refreshToken` válido (rotación de tokens).
-- **Acceso:** Público (requiere refresh token en el body).
-- **Body (JSON):** `{ "refreshToken": "eyJ..." }`
-- **Respuesta (200 OK):** `{ "token", "accessToken", "refreshToken" }`. Devuelve `401` si el refresh token es inválido/expirado o el usuario ya no existe.
+### `POST /api/v1/auth/refresh`
+Renueva el access token mediante rotación del refresh token.
+- **Acceso:** Cookie `testgenai_refresh` o Bearer token.
+- **Seguridad:** Invalida el token anterior en `AuthSession` e emite uno nuevo.
 
-### `GET /auth/me`
-Obtiene el perfil y rol del usuario autenticado.
-- **Acceso:** Requiere Access Token.
+### `POST /api/v1/auth/logout`
+Cierra la sesión activa.
+- **Acceso:** Autenticado.
+- **Seguridad:** Revoca la sesión en la base de datos y borra las cookies con los mismos atributos `HttpOnly`, `Path` y `SameSite`.
+
+### `GET /api/v1/auth/me`
+Obtiene los datos del usuario autenticado.
 
 ---
 
-## 3. Gestión de Proyectos (`/projects`)
+## 3. Administración de Usuarios (`/api/v1/users`) — Solo ADMIN
 
-### `GET /projects`
-Lista los proyectos **del usuario autenticado** (los ADMIN ven todos), paginados, con métricas consolidadas (conteo de requisitos, casos de prueba, cobertura % y costo total en USD).
-- **Acceso:** Requiere Access Token.
-- **Query params:** `?page=1&pageSize=20` (respuesta incluye `meta`).
-
-### `POST /projects`
-Crea un nuevo proyecto de software.
-- **Body (JSON):**
-```json
-{
-  "name": "Portal E-Commerce & Checkout v2.0",
-  "description": "Plataforma de comercio electrónico"
-}
-```
-
-### `GET /projects/:id`
-Detalle del proyecto con la lista de sus requisitos.
-
-### `PUT /projects/:id`
-Actualiza nombre, descripción o estado (`ACTIVE`, `ARCHIVED`).
-
-### `DELETE /projects/:id`
-Elimina el proyecto y sus requisitos/casos asociados en cascada.
+- `GET /api/v1/users`: Lista paginada de usuarios registrados.
+- `PATCH /api/v1/users/:id/role`: Modifica el rol (`QA_TESTER`, `QA_LEAD`, `DEVELOPER`, `ADMIN`). Impide despojar de rol al último administrador activo.
+- `PATCH /api/v1/users/:id/status`: Activa o desactiva la cuenta (`isActive: boolean`).
 
 ---
 
-## 4. Requisitos Funcionales (`/requirements`)
+## 4. Configuración y Preferencias (`/api/v1/config`)
 
-### `GET /requirements/project/:projectId`
-Lista todos los requisitos de un proyecto con conteo de casos asociados.
-
-### `GET /requirements/:id`
-Obtiene un requisito con todos sus casos de prueba y su historial de llamadas de IA.
-
-### `POST /requirements`
-Crea un nuevo requisito funcional.
-- **Body (JSON):**
-```json
-{
-  "projectId": "uuid-proyecto",
-  "code": "REQ-003",
-  "title": "Recuperación de Contraseña",
-  "description": "Como usuario registrado deseo restablecer mi clave...",
-  "acceptanceCriteria": "1. El correo debe existir.\n2. Se envía un enlace temporal..."
-}
-```
-
-### `PUT /requirements/:id`
-Actualiza el requisito. Si la descripción o los criterios de aceptación cambian, el campo `version` se incrementa automáticamente.
-
-### `DELETE /requirements/:id`
-Elimina el requisito.
-
-### `POST /requirements/import`
-Importación masiva de requisitos por lote.
-- **Body (JSON):**
-```json
-{
-  "projectId": "uuid-proyecto",
-  "requirements": [
-    {
-      "code": "REQ-004",
-      "title": "Registro de nuevos clientes",
-      "description": "...",
-      "acceptanceCriteria": "..."
-    }
-  ]
-}
-```
+- `GET /api/v1/config/ai-providers`: Retorna proveedores reales (`gemini`, `openai`), modelos permitidos y si la API key está configurada (sin revelar las claves).
+- `GET /api/v1/config/preferences`: Obtiene preferencias del usuario.
+- `PUT /api/v1/config/preferences`: Guarda preferencias (proveedor y modelo preferido).
 
 ---
 
-## 5. Orquestación de Inteligencia Artificial (`/ai`)
+## 5. Proyectos (`/api/v1/projects`)
 
-### `POST /ai/generate`
-Dispara la generación de casos de prueba asistida por IA para un requisito.
-- **Body (JSON):**
-```json
-{
-  "requirementId": "uuid-del-requisito",
-  "provider": "mock", // "gemini" | "openai" | "mock"
-  "model": "mock-istqb-v1", // Opcional (ej. "gemini-1.5-flash", "gpt-4o-mini")
-  "temperature": 0.2, // Opcional (0.0 a 1.0)
-  "clearPreviousUnapproved": false // Opcional (eliminar casos pendientes previos)
-}
-```
-- **Flujo Interno:**
-  1. Ensambla el prompt versionado con directivas ISTQB y mitigación de alucinaciones.
-  2. Ejecuta la inferencia contra el adaptador seleccionado.
-  3. Inserta registro de auditoría en `ai_generations` (tokens, latencia en ms, costo en USD).
-  4. Crea los casos en `test_cases` con estado `PENDING` y clasificación de evidencia (`derived` o `suggested`).
-  5. Actualiza el estado del requisito a `GENERATED`.
-
-### `GET /ai/history/:requirementId`
-Consulta el historial de todas las ejecuciones de IA sobre un requisito para comparar modelos, latencia y costos.
+- `GET /api/v1/projects`: Lista paginada de proyectos accesibles por el usuario.
+- `POST /api/v1/projects`: Crea un proyecto nuevo.
+- `GET /api/v1/projects/:id`: Detalle del proyecto.
+- `PUT /api/v1/projects/:id`: Actualiza nombre o descripción.
+- `PATCH /api/v1/projects/:id/archive`: Archiva o reactiva un proyecto.
 
 ---
 
-## 5.b Motor Heurístico Determinista — Sin IA (`/heuristics`)
+## 6. Requisitos Funcionales (`/api/v1/requirements`)
 
-### `POST /heuristics/generate`
-Genera casos de prueba automáticamente aplicando técnicas formales ISTQB (Partición de Equivalencia, Análisis de Valores Límite y Reglas de Decisión) **sin invocar modelos de lenguaje, con 0 consumo de tokens y 100% offline**.
-- **Body (JSON):**
-```json
-{
-  "requirementId": "uuid-del-requisito",
-  "clearPrevious": false // Opcional
-}
-```
-- **Respuesta (201 Created):** Retorna los casos con `source: "RULE_BASED"`, `tokensConsumed: 0`, `costUsd: 0` y la lista de patrones de prueba identificados (`rulesMatched`).
+- `GET /api/v1/requirements`: Lista paginada de requisitos del proyecto activo.
+- `POST /api/v1/requirements`: Crea un requisito con código secuencial atómico (`REQ-001`).
+- `GET /api/v1/requirements/:id`: Detalle del requisito con análisis de ambigüedad (RF-13).
+- `PUT /api/v1/requirements/:id`: Edición versionada. Exige `expectedVersion`. Incrementa la versión, guarda snapshot en `RequirementVersion` y marca casos previos como obsoletos.
+- `GET /api/v1/requirements/:id/versions`: Historial de versiones del requisito.
+- `POST /api/v1/requirements/import`: Importación atómica de requisitos vía CSV o JSON con validación completa por fila.
 
 ---
 
-## 6. Casos de Prueba, Diseño Manual y Revisión (`/test-cases`)
+## 7. Generación de Casos de Prueba con IA (`/api/v1/ai`)
 
-### `GET /test-cases/requirement/:requirementId`
-Lista todos los casos de prueba de un requisito con sus precondiciones, pasos estructurados, origen (`source`: `MANUAL`, `RULE_BASED`, `AI_GENERATED`) y revisiones previas.
-
-### `GET /test-cases/:id`
-Obtiene un caso específico con su requisito padre y el historial completo de auditoría de revisiones.
-
-### `POST /test-cases` — Creación 100% Manual (Humano)
-Permite al QA redactar casos de prueba desde cero sin depender de IA ni generadores automáticos.
-- **Body (JSON):**
-```json
-{
-  "requirementId": "uuid-del-requisito",
-  "type": "negative", // positive, negative, alternative, boundary, validation
-  "title": "Verificación de inyección SQL en formulario de login",
-  "preconditions": ["Servidor web con WAF activo"],
-  "steps": [
-    "Ingresar payload malicioso en campo de usuario",
-    "Ingresar contraseña cualquiera",
-    "Hacer clic en Iniciar Sesión"
-  ],
-  "testData": "usuario=' OR 1=1 --",
-  "expectedResult": "El sistema rechaza la petición con código 400 y bloquea la consulta",
-  "priority": "high",
-  "evidenceStatus": "derived",
-  "status": "APPROVED" // O PENDING
-}
-```
-- **Respuesta (201 Created):** Retorna el caso creado con código asignado correlativamente y `source: "MANUAL"`.
-
-### `PUT /test-cases/:id` — Edición Integral Manual
-Modifica cualquier campo del caso de prueba en cualquier momento.
-
-### `POST /test-cases/:id/clone` — Clonación para Variantes Manuales
-Duplica un caso de prueba existente para que el QA pueda crear variaciones de prueba rápidamente sin tener que reescribir todos los pasos.
-
-### `PATCH /test-cases/:id/review`
-Acción del revisor humano (*Human-in-the-Loop*).
-- **Body (JSON):**
-```json
-{
-  "decision": "APPROVED", // "APPROVED" | "MODIFIED" | "REJECTED"
-  "comments": "Caso verificado con el analista de negocio.",
-  // Campos opcionales si se selecciona "MODIFIED" para corregir pasos o datos:
-  "title": "Nuevo título corregido",
-  "steps": ["Paso 1 corregido", "Paso 2..."],
-  "expectedResult": "Resultado esperado ajustado"
-}
-```
-- **Auditoría:** Guarda automáticamente una instantánea del caso antes (`previousContent`) y después (`newContent`) en la tabla `test_case_reviews` con el usuario revisor.
+- `POST /api/v1/ai/generate`: Invoca a Gemini u OpenAI real para generar casos a partir de un requisito activo. Valida la salida con Zod, enmascara PII, detecta duplicados y persiste casos en estado `PENDING`. Si falta la API key, responde con error HTTP 502/503.
+- `POST /api/v1/ai/regenerate`: Vuelve a generar casos para el requisito preservando el historial anterior (sin borrar ejecuciones ni casos previos).
+- `GET /api/v1/ai/generations/:requirementId`: Historial de ejecuciones de IA con tokens, costo y latencia.
 
 ---
 
-## 7. Matriz de Trazabilidad (`/traceability`)
+## 8. Casos de Prueba y Auditoría Humana (`/api/v1/test-cases`)
 
-### `GET /traceability/:projectId`
-Genera la matriz bidireccional requisito–caso de prueba.
-- **Métricas calculadas:**
-  - `totalRequirements`
-  - `coveredRequirementsCount` (requisitos con al menos 1 caso aprobado)
-  - `coveragePercent` (%)
-  - Mapeo completo de cada requisito con sus casos y estados.
-
----
-
-## 8. Dashboard y Métricas ISTQB (`/metrics`)
-
-### `GET /metrics/project/:projectId`
-Retorna todos los indicadores científicos de calidad para la tesis y gestión:
-- **Resumen:** Requisitos totales, cubiertos, total de casos y estados.
-- **Tasas ISTQB:**
-  - Tasa de Aprobación (%)
-  - Tasa de Modificación (%)
-  - Tasa de Rechazo (%)
-- **Desglose de Origen (Independencia de IA):**
-  - Casos `manual` (conteo y %)
-  - Casos `ruleBased` (conteo y %)
-  - Casos `aiGenerated` (conteo y %)
-- **Calidad de Evidencia (Control de Alucinaciones):**
-  - Casos con evidencia `derived` (%)
-  - Casos con evidencia `suggested` (% de supuestos no respaldados)
-- **Distribución de Pruebas:** Conteo por tipo (`positive`, `negative`, `alternative`, `boundary`, `validation`).
-- **Economía de IA:** Tokens de entrada, tokens de salida, costo total acumulado en USD y latencia promedio en ms.
+- `GET /api/v1/test-cases`: Lista paginada de casos con filtros por requisito, tipo, estado y vigencia.
+- `GET /api/v1/test-cases/:id`: Detalle completo del caso de prueba.
+- `POST /api/v1/test-cases/:id/review`: Auditoría humana individual:
+  - Permite editar: `title`, `preconditions`, `steps`, `testData`, `expectedResult`, `priority`.
+  - Exige `expectedVersion` para control de concurrencia optimista (409 en conflicto).
+  - Decisiones: `APPROVED`, `REJECTED`, `MODIFIED`.
+  - Exige comentario obligatorio ante `REJECTED`.
+  - Exige justificación explícita para aprobar casos con evidencia en conflicto (`conflict`).
+  - Guarda snapshot completo en `TestCaseReview`.
+- `GET /api/v1/test-cases/:id/reviews`: Historial inmutable de auditorías del caso.
 
 ---
 
-## 9. Exportación (`/export`)
+## 9. Trazabilidad, Métricas y Exportación
 
-### `GET /export/:projectId?format=json|csv|markdown&onlyApproved=true`
-Exporta los casos de prueba del proyecto:
-- **`format=csv`**: Descarga directa de archivo CSV compatible con Jira (Xray) y TestRail.
-- **`format=markdown`**: Descarga de especificación de casos de prueba formateada para informes formales.
-- **`format=json`**: JSON estructurado para integraciones externas.
+- `GET /api/v1/traceability/:projectId`: Matriz de trazabilidad con cálculo de cobertura sobre casos aprobados vigentes.
+- `GET /api/v1/metrics/:projectId`: Métricas consolidadas del proyecto (cobertura, casos por estado, distribución ISTQB, economía de IA).
+- `GET /api/v1/export/:projectId?format=csv|json|markdown`: Exporta exclusivamente casos aprobados vigentes en el formato especificado.

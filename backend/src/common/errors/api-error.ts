@@ -30,4 +30,16 @@ export class ApiError extends Error {
   static conflict(msg = 'Conflicto con el estado actual del recurso') {
     return new ApiError(409, msg);
   }
+  static unprocessableEntity(msg = 'Entidad no procesable') {
+    return new ApiError(422, msg);
+  }
+  static badGateway(msg = 'Error al comunicarse con el servicio upstream') {
+    return new ApiError(502, msg);
+  }
+  static serviceUnavailable(msg = 'Servicio no disponible') {
+    return new ApiError(503, msg);
+  }
+  static gatewayTimeout(msg = 'Tiempo de espera agotado con el proveedor upstream') {
+    return new ApiError(504, msg);
+  }
 }

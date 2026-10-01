@@ -23,7 +23,8 @@
     "prisma:push": "prisma db push",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
-    "prisma:seed": "tsx prisma/seed.ts"
+    "admin:create": "tsx scripts/create-admin.ts",
+    "data:maintenance": "tsx scripts/data-maintenance.ts"
   },
   "keywords": [
     "qa",
