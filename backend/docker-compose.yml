@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # Base de Datos Relacional PostgreSQL 16
+  postgres:
+    image: postgres:16-alpine
+    container_name: testgenai_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: calidad_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_password_2026
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Ejecuta automáticamente el esquema inicial en el primer arranque
+      - ./prisma/database.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d calidad_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Administrador Visual Web de Base de Datos (Opcional)
+  # Acceso en: http://localhost:5050 (Login: admin@testgenai.com / pgadmin_pass)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: testgenai_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@testgenai.com
+      PGADMIN_DEFAULT_PASSWORD: pgadmin_pass
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:
+    driver: local

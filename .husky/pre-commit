@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# Ejecuta lint-staged sobre el backend antes de cada commit
+# (formatea y corrige con ESLint/Prettier solo los archivos en staging).
+cd backend && npx lint-staged

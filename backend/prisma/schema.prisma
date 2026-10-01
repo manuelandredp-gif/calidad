@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String           @id @default(uuid())
+  email        String           @unique
+  passwordHash String
+  fullName     String
+  role         String           @default("QA_TESTER") // QA_TESTER, QA_LEAD, DEVELOPER, ADMIN
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  projects     Project[]
+  reviews      TestCaseReview[]
+
+  @@map("users")
+}
+
+model Project {
+  id          String        @id @default(uuid())
+  name        String
+  description String?
+  ownerId     String
+  status      String        @default("ACTIVE") // ACTIVE, ARCHIVED
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  owner       User          @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  requirements Requirement[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@map("projects")
+}
+
+model Requirement {
+  id                 String         @id @default(uuid())
+  projectId          String
+  code               String         // ej. REQ-001
+  title              String
+  description        String
+  acceptanceCriteria String
+  version            Int            @default(1)
+  status             String         @default("DRAFT") // DRAFT, READY_FOR_AI, GENERATED, OBSOLETE
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  project            Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  testCases          TestCase[]
+  aiGenerations      AiGeneration[]
+
+  @@unique([projectId, code])
+  @@index([projectId])
+  @@index([status])
+  @@map("requirements")
+}
+
+model TestCase {
+  id             String           @id @default(uuid())
+  requirementId  String
+  code           String           // ej. CP-001
+  type           String           // positive, negative, alternative, boundary, validation
+  title          String
+  preconditions  String           @default("[]") // JSON stringificado de precondiciones
+  steps          String           @default("[]") // JSON stringificado de pasos
+  testData       String?
+  expectedResult String
+  priority       String           @default("medium") // high, medium, low
+  evidenceStatus String           @default("derived") // derived, suggested, ambiguous, conflict
+  evidenceText   String?
+  source         String           @default("MANUAL") // MANUAL, RULE_BASED, AI_GENERATED
+  status         String           @default("PENDING") // PENDING, APPROVED, MODIFIED, REJECTED
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  requirement    Requirement      @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  reviews        TestCaseReview[]
+
+  @@unique([requirementId, code])
+  @@index([requirementId])
+  @@index([status])
+  @@index([source])
+  @@map("test_cases")
+}
+
+model AiGeneration {
+  id             String      @id @default(uuid())
+  requirementId  String
+  provider       String      // gemini, openai, mock
+  model          String      // gemini-2.5-flash-lite, gpt-5-nano, mock-istqb-v1
+  promptVersion  String      @default("v1.0")
+  inputTokens    Int
+  outputTokens   Int
+  estimatedCost  Float       // Costo en USD
+  responseTimeMs Int         // Latencia en ms
+  inputHash      String?     // Hash SHA-256 de las entradas del prompt (caché de generaciones)
+  createdAt      DateTime    @default(now())
+
+  requirement    Requirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+
+  @@index([requirementId])
+  @@index([requirementId, inputHash])
+  @@map("ai_generations")
+}
+
+model TestCaseReview {
+  id              String   @id @default(uuid())
+  testCaseId      String
+  reviewerId      String
+  decision        String   // APPROVED, MODIFIED, REJECTED
+  comments        String?
+  previousContent String?  // JSON snapshot del caso antes del cambio
+  newContent      String?  // JSON snapshot del caso después del cambio
+  createdAt       DateTime @default(now())
+
+  testCase        TestCase @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+  reviewer        User     @relation(fields: [reviewerId], references: [id], onDelete: Restrict)
+
+  @@index([testCaseId])
+  @@index([reviewerId])
+  @@map("test_case_reviews")
+}

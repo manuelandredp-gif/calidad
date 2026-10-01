@@ -1,0 +1,199 @@
+// ============================================================================
+//  Esquema de PRODUCCIÓN (PostgreSQL) con enums nativos e índices.
+//
+//  Uso:
+//    1. Copie este archivo sobre prisma/schema.prisma (o use --schema).
+//    2. Defina DATABASE_URL="postgresql://..." en .env
+//    3. npx prisma migrate deploy   (o migrate dev en desarrollo)
+//
+//  SQLite (schema.prisma) no soporta enums; por eso se mantiene un esquema
+//  separado para el despliegue relacional real.
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  QA_TESTER
+  QA_LEAD
+  DEVELOPER
+  ADMIN
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum RequirementStatus {
+  DRAFT
+  READY_FOR_AI
+  GENERATED
+  OBSOLETE
+}
+
+enum TestCaseType {
+  positive
+  negative
+  alternative
+  boundary
+  validation
+}
+
+enum EvidenceStatus {
+  derived
+  suggested
+  ambiguous
+  conflict
+}
+
+enum Priority {
+  high
+  medium
+  low
+}
+
+enum TestCaseSource {
+  MANUAL
+  RULE_BASED
+  AI_GENERATED
+}
+
+enum TestCaseStatus {
+  PENDING
+  APPROVED
+  MODIFIED
+  REJECTED
+}
+
+enum ReviewDecision {
+  APPROVED
+  MODIFIED
+  REJECTED
+}
+
+model User {
+  id           String           @id @default(uuid())
+  email        String           @unique
+  passwordHash String
+  fullName     String
+  role         UserRole         @default(QA_TESTER)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  projects     Project[]
+  reviews      TestCaseReview[]
+
+  @@map("users")
+}
+
+model Project {
+  id           String        @id @default(uuid())
+  name         String
+  description  String?
+  ownerId      String
+  status       ProjectStatus @default(ACTIVE)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  owner        User          @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  requirements Requirement[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@map("projects")
+}
+
+model Requirement {
+  id                 String            @id @default(uuid())
+  projectId          String
+  code               String
+  title              String
+  description        String
+  acceptanceCriteria String
+  version            Int               @default(1)
+  status             RequirementStatus @default(DRAFT)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  project            Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  testCases          TestCase[]
+  aiGenerations      AiGeneration[]
+
+  @@unique([projectId, code])
+  @@index([projectId])
+  @@index([status])
+  @@map("requirements")
+}
+
+model TestCase {
+  id             String           @id @default(uuid())
+  requirementId  String
+  code           String
+  type           TestCaseType
+  title          String
+  preconditions  Json             @default("[]")
+  steps          Json             @default("[]")
+  testData       String?
+  expectedResult String
+  priority       Priority         @default(medium)
+  evidenceStatus EvidenceStatus   @default(derived)
+  evidenceText   String?
+  source         TestCaseSource   @default(MANUAL)
+  status         TestCaseStatus   @default(PENDING)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  requirement    Requirement      @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  reviews        TestCaseReview[]
+
+  @@unique([requirementId, code])
+  @@index([requirementId])
+  @@index([status])
+  @@index([source])
+  @@map("test_cases")
+}
+
+model AiGeneration {
+  id             String      @id @default(uuid())
+  requirementId  String
+  provider       String
+  model          String
+  promptVersion  String      @default("v1.0")
+  inputTokens    Int
+  outputTokens   Int
+  estimatedCost  Float
+  responseTimeMs Int
+  inputHash      String?
+  createdAt      DateTime    @default(now())
+
+  requirement    Requirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+
+  @@index([requirementId])
+  @@index([requirementId, inputHash])
+  @@map("ai_generations")
+}
+
+model TestCaseReview {
+  id              String         @id @default(uuid())
+  testCaseId      String
+  reviewerId      String
+  decision        ReviewDecision
+  comments        String?
+  previousContent Json?
+  newContent      Json?
+  createdAt       DateTime       @default(now())
+
+  testCase        TestCase       @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+  reviewer        User           @relation(fields: [reviewerId], references: [id], onDelete: Restrict)
+
+  @@index([testCaseId])
+  @@index([reviewerId])
+  @@map("test_case_reviews")
+}

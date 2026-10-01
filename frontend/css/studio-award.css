@@ -1,0 +1,223 @@
+/* ==========================================================================
+   Studio Award-Winning Visual System - TestGenAI
+   Standards: Active Theory, Locomotive, Resn & &Walsh
+   Every pixel matters. Purpose-driven motion & tactile aesthetics.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Typography Display Extensions (Syne & Precision Weights)
+   -------------------------------------------------------------------------- */
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.04em;
+  font-weight: 800;
+}
+
+.brand-title-award {
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #ffffff 30%, var(--color-accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* --------------------------------------------------------------------------
+   2. Organic Noise Grain Overlay (Atmospheric Texture)
+   -------------------------------------------------------------------------- */
+.studio-noise-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+/* --------------------------------------------------------------------------
+   3. Custom Magnetic Cursor System (Inertial Fluid Tracking)
+   -------------------------------------------------------------------------- */
+.studio-cursor {
+  width: 36px;
+  height: 36px;
+  border: 1.5px solid var(--color-accent);
+  border-radius: 50%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 99999;
+  transform: translate3d(-100px, -100px, 0);
+  transition: width 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              height 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.28s ease,
+              background-color 0.28s ease,
+              box-shadow 0.28s ease;
+  will-change: transform;
+}
+
+.studio-cursor-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--color-accent);
+  border-radius: 50%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 100000;
+  transform: translate3d(-100px, -100px, 0);
+  box-shadow: 0 0 10px var(--color-accent);
+}
+
+/* Cursor Hover States */
+body.cursor-hovering .studio-cursor {
+  width: 64px;
+  height: 64px;
+  background: rgba(0, 255, 135, 0.08);
+  border-color: rgba(0, 255, 135, 0.6);
+  box-shadow: 0 0 25px rgba(0, 255, 135, 0.25);
+}
+
+body.cursor-hovering-accent .studio-cursor {
+  width: 72px;
+  height: 72px;
+  background: rgba(0, 255, 135, 0.15);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 35px rgba(0, 255, 135, 0.45);
+}
+
+/* --------------------------------------------------------------------------
+   4. 3D Tilt Card Specular Glare (Physical Reflection)
+   -------------------------------------------------------------------------- */
+.test-case-card,
+.kpi-card,
+.card {
+  position: relative;
+  overflow: hidden;
+  transform-style: preserve-3d;
+}
+
+.card-shine {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  border-radius: inherit;
+  transition: opacity 0.35s ease;
+  z-index: 3;
+}
+
+/* --------------------------------------------------------------------------
+   5. Text Scramble Decoding Glyphs
+   -------------------------------------------------------------------------- */
+.scramble-glyph {
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(0, 255, 135, 0.6);
+  display: inline-block;
+  opacity: 0.85;
+}
+
+/* --------------------------------------------------------------------------
+   6. Kinetic Flip Counter (Mechanical Odometer)
+   -------------------------------------------------------------------------- */
+.kinetic-counter-wrap {
+  display: inline-flex;
+  align-items: baseline;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  height: 1.15em;
+  line-height: 1.15em;
+  vertical-align: middle;
+}
+
+.kinetic-digit {
+  display: inline-block;
+  height: 1.15em;
+  overflow: hidden;
+  position: relative;
+  width: 0.62em;
+  text-align: center;
+}
+
+.kinetic-wheel {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.kinetic-num {
+  height: 1.15em;
+  line-height: 1.15em;
+  display: block;
+}
+
+.kinetic-suffix {
+  margin-left: 2px;
+  font-size: 0.65em;
+  color: var(--color-accent);
+}
+
+/* --------------------------------------------------------------------------
+   7. Physical Tactile Buttons (Zero Plastic, Pure Materiality)
+   -------------------------------------------------------------------------- */
+.btn-physical {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%), #0d1320;
+  box-shadow: 0 4px 0 #05080f, 0 8px 20px rgba(0, 0, 0, 0.4);
+  transform: translateY(0);
+  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.12s ease;
+}
+
+.btn-physical:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #05080f, 0 12px 25px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 255, 135, 0.2);
+  border-color: rgba(0, 255, 135, 0.4);
+}
+
+.btn-physical:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #05080f, 0 4px 10px rgba(0, 0, 0, 0.6);
+}
+
+/* --------------------------------------------------------------------------
+   8. Volumetric Laser Glows & Scanning Bar
+   -------------------------------------------------------------------------- */
+@keyframes laserSweep {
+  0% {
+    transform: translateX(-100%) skewX(-20deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-20deg);
+  }
+}
+
+.laser-scan-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.laser-scan-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 135, 0.2), transparent);
+  animation: laserSweep 3.5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  pointer-events: none;
+}

@@ -1,0 +1,33 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 1,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "title": "Generaciones Totales por Proveedor (Gemini vs OpenAI vs Offline)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [{ "expr": "sum by (provider) (rate(testgenai_generations_total[5m]))", "legendFormat": "{{provider}}" }]
+    },
+    {
+      "title": "Latencia p95 de Respuesta del Motor (ms)",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 0 },
+      "targets": [{ "expr": "histogram_quantile(0.95, rate(testgenai_latency_seconds_bucket[5m])) * 1000" }]
+    },
+    {
+      "title": "Usuarios Activos Concurrentes",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 0 },
+      "targets": [{ "expr": "testgenai_active_users" }]
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "title": "TestGenAI Enterprise — Executive Observability Dashboard",
+  "version": 1
+}

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "testgenai",
+      "runtimeExecutable": "C:/Users/LENOVO/node20/node-v20.18.1-win-x64/node.exe",
+      "runtimeArgs": ["dist/main.js"],
+      "port": 4000
+    }
+  ]
+}
