@@ -343,7 +343,7 @@ function renderTestCaseCard(tc) {
     : '';
 
   return `
-    <div class="card" style="border-left:4px solid ${tc.status === 'APPROVED' ? 'var(--success)' : tc.status === 'REJECTED' ? 'var(--error)' : 'var(--primary)'};">
+    <div class="card test-case-item" data-id="${tc.id}" style="border-left:4px solid ${tc.status === 'APPROVED' ? 'var(--success)' : tc.status === 'REJECTED' ? 'var(--error)' : 'var(--primary)'};">
       ${obsoleteWarning}
       <!-- Cabecera de la Tarjeta -->
       <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:12px;">

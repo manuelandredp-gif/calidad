@@ -109,3 +109,21 @@ projectsRouter.patch(
     return sendSuccess(res, project, 'Proyecto archivado exitosamente');
   })
 );
+
+// POST /api/v1/projects/:id/import-openapi - Mejora 63: Importador OpenAPI 3.0 / Swagger
+import { OpenApiImporterService } from '../../infrastructure/importers/openapi-importer.service';
+
+projectsRouter.post(
+  '/:id/import-openapi',
+  asyncHandler(async (req: Request, res: Response) => {
+    await assertProjectAccess(req.params.id, req.user!.userId, req.user!.role);
+    const schema = z.object({
+      spec: z.record(z.unknown()),
+    });
+    const { spec } = schema.parse(req.body);
+    const result = await OpenApiImporterService.importOpenApiSpec(req.params.id, spec);
+    audit(req, 'OPENAPI_SPEC_IMPORTED', { projectId: req.params.id, count: result.totalEndpointsImported });
+    return sendSuccess(res, result, `Se importaron ${result.totalEndpointsImported} endpoints como requisitos y pruebas`, 201);
+  })
+);
+

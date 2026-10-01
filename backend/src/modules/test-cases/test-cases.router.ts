@@ -4,6 +4,7 @@ import { prisma } from '../../config/prisma';
 import { sendSuccess, sendPaginated, getPagination, buildPaginationMeta } from '../../common/utils/api-response';
 import { authenticateJWT } from '../../common/middleware/auth.middleware';
 import { asyncHandler } from '../../common/middleware/async-handler';
+import { ApiError } from '../../common/errors/api-error';
 import {
   assertProjectAccess,
   assertRequirementAccess,
@@ -13,6 +14,10 @@ import { ReviewTestCaseUseCase } from '../../application/use-cases/review-test-c
 import { CreateManualTestCaseUseCase } from '../../application/use-cases/create-manual-test-case.use-case';
 import { GenerateFromTemplateUseCase } from '../../application/use-cases/generate-from-template.use-case';
 import { GenerateFromBvaUseCase } from '../../application/use-cases/generate-from-bva.use-case';
+import { GenerateFromFormalUseCase } from '../../application/use-cases/generate-from-formal.use-case';
+import { CloneTestCaseUseCase } from '../../application/use-cases/clone-test-case.use-case';
+import { CreateTestCaseFromBugUseCase } from '../../application/use-cases/create-test-case-from-bug.use-case';
+import { ImportTestCasesUseCase } from '../../application/use-cases/import-test-cases.use-case';
 import { SyntheticDataEngine } from '../../core/test-design/synthetic-data';
 import { ISTQB_TEMPLATES } from '../../core/templates/istqb-templates';
 
@@ -42,12 +47,11 @@ const reviewsInclude = {
   },
 };
 
-// GET /api/v1/test-cases/project/:projectId - Casos de prueba de un proyecto (paginado con filtros)
+// GET /api/v1/test-cases/project/:projectId - Casos de prueba con soporte de paginación normal y por cursor (Mejora 69)
 testCasesRouter.get(
   '/project/:projectId',
   asyncHandler(async (req: Request, res: Response) => {
     await assertProjectAccess(req.params.projectId, req.user!.userId, req.user!.role);
-    const { page, pageSize, skip, take } = getPagination(req);
     const statusFilter = req.query.status as string | undefined;
 
     const where: Record<string, unknown> = {
@@ -57,6 +61,32 @@ testCasesRouter.get(
     if (statusFilter && ['PENDING', 'APPROVED', 'MODIFIED', 'REJECTED'].includes(statusFilter)) {
       where.status = statusFilter;
     }
+
+    // Mejora 69: Paginación por cursor para grandes volúmenes
+    if (req.query.cursor) {
+      const cursorId = req.query.cursor as string;
+      const limit = Math.min(parseInt(req.query.limit as string, 10) || 50, 100);
+
+      const cases = await prisma.testCase.findMany({
+        where,
+        cursor: { id: cursorId },
+        skip: 1,
+        take: limit,
+        orderBy: { code: 'asc' },
+        include: {
+          requirement: { select: { id: true, code: true, title: true, version: true } },
+          ...reviewsInclude,
+        },
+      });
+
+      return sendSuccess(res, {
+        items: cases,
+        nextCursor: cases.length === limit ? cases[cases.length - 1].id : null,
+      });
+    }
+
+    // Paginación estándar por página/offset
+    const { page, pageSize, skip, take } = getPagination(req);
 
     const [total, cases] = await Promise.all([
       prisma.testCase.count({ where }),
@@ -95,8 +125,6 @@ testCasesRouter.get(
 
 // ==========================================================================
 // RF-15 & Técnicas ISTQB: Creación de casos SIN IA
-// ==========================================================================
-// RF-15: Creación de casos SIN IA (Manual y Plantillas ISTQB)
 // ==========================================================================
 
 const manualCaseSchema = z.object({
@@ -155,7 +183,7 @@ testCasesRouter.post(
   })
 );
 
-// GET /api/v1/test-cases/templates - Listar plantillas ISTQB disponibles
+// GET /api/v1/test-cases/templates - Listar plantillas ISTQB disponibles (Propuesta 36)
 testCasesRouter.get(
   '/templates',
   asyncHandler(async (_req: Request, res: Response) => {
@@ -206,7 +234,145 @@ testCasesRouter.post(
   })
 );
 
-// GET /api/v1/test-cases/synthetic-data - Generar lote de datos sintéticos de prueba matemáticos
+// POST /api/v1/test-cases/from-formal - Generador Formal (Tablas de Decisión, Transición de Estados, Pairwise, CTM, Casos de Uso, Error Guessing)
+testCasesRouter.post(
+  '/from-formal',
+  asyncHandler(async (req: Request, res: Response) => {
+    const schema = z.object({
+      requirementId: z.string().uuid(),
+      method: z.enum(['decision_table', 'state_transition', 'pairwise', 'error_guessing', 'classification_tree', 'use_case']),
+      payload: z.record(z.unknown()).default({}),
+    });
+
+    const { requirementId, method, payload } = schema.parse(req.body);
+
+    const useCase = new GenerateFromFormalUseCase();
+    const result = await useCase.execute({
+      requirementId,
+      method,
+      payload,
+      userId: req.user!.userId,
+      userRole: req.user!.role,
+    });
+
+    return sendSuccess(res, result, `Se generaron ${result.casesInserted} casos con la técnica ${method}`, 201);
+  })
+);
+
+// POST /api/v1/test-cases/from-bug - Propuesta 38: Generador Bug-to-Test
+testCasesRouter.post(
+  '/from-bug',
+  asyncHandler(async (req: Request, res: Response) => {
+    const bugSchema = z.object({
+      requirementId: z.string().uuid(),
+      defectTitle: z.string().min(3),
+      stepsToReproduce: z.array(z.string().min(1)).min(1),
+      actualBehavior: z.string().min(3),
+      expectedBehavior: z.string().min(3),
+      severity: z.enum(['high', 'medium', 'low']).default('high'),
+    });
+
+    const data = bugSchema.parse(req.body);
+    const useCase = new CreateTestCaseFromBugUseCase();
+    const result = await useCase.execute({
+      ...data,
+      userId: req.user!.userId,
+      userRole: req.user!.role,
+    });
+
+    return sendSuccess(res, result, 'Caso de regresión derivado de defecto exitosamente', 201);
+  })
+);
+
+// POST /api/v1/test-cases/import - Propuesta 35: Importador Universal JSON/CSV
+testCasesRouter.post(
+  '/import',
+  asyncHandler(async (req: Request, res: Response) => {
+    const importSchema = z.object({
+      requirementId: z.string().uuid(),
+      cases: z.array(
+        z.object({
+          title: z.string().min(3),
+          type: z.enum(['positive', 'negative', 'alternative', 'boundary', 'validation']).optional(),
+          preconditions: z.array(z.string()).optional(),
+          steps: z.array(z.string()).min(1),
+          testData: z.string().optional().nullable(),
+          expectedResult: z.string().min(2),
+          priority: z.enum(['high', 'medium', 'low']).optional(),
+        })
+      ).min(1),
+    });
+
+    const data = importSchema.parse(req.body);
+    const useCase = new ImportTestCasesUseCase();
+    const result = await useCase.execute({
+      ...data,
+      userId: req.user!.userId,
+      userRole: req.user!.role,
+    });
+
+    return sendSuccess(res, result, `Se importaron ${result.importedCount} casos exitosamente`, 201);
+  })
+);
+
+// POST /api/v1/test-cases/bulk-update - Propuesta 33: Editor Masivo de Casos en Cuadrícula
+testCasesRouter.post(
+  '/bulk-update',
+  asyncHandler(async (req: Request, res: Response) => {
+    const bulkSchema = z.object({
+      caseIds: z.array(z.string().uuid()).min(1),
+      updates: z.object({
+        priority: z.enum(['high', 'medium', 'low']).optional(),
+        status: z.enum(['PENDING', 'APPROVED', 'MODIFIED', 'REJECTED']).optional(),
+      }),
+    });
+
+    const { caseIds, updates } = bulkSchema.parse(req.body);
+
+    const updated = await prisma.testCase.updateMany({
+      where: { id: { in: caseIds } },
+      data: updates,
+    });
+
+    return sendSuccess(res, { count: updated.count }, `${updated.count} casos actualizados exitosamente`);
+  })
+);
+
+// GET /api/v1/test-cases/regression-suite/:projectId - Propuesta 39: Selector de Casos para Regresión
+testCasesRouter.get(
+  '/regression-suite/:projectId',
+  asyncHandler(async (req: Request, res: Response) => {
+    await assertProjectAccess(req.params.projectId, req.user!.userId, req.user!.role);
+
+    // Selecciona casos de alta prioridad y técnicas de frontera/negativas de requisitos activos
+    const regressionCases = await prisma.testCase.findMany({
+      where: {
+        requirement: { projectId: req.params.projectId, status: { not: 'OBSOLETE' } },
+        isObsolete: false,
+        OR: [
+          { priority: 'high' },
+          { type: 'boundary' },
+          { type: 'negative' },
+        ],
+      },
+      orderBy: [{ priority: 'asc' }, { code: 'asc' }],
+      include: {
+        requirement: { select: { id: true, code: true, title: true, version: true } },
+      },
+    });
+
+    return sendSuccess(
+      res,
+      {
+        totalSelected: regressionCases.length,
+        cases: regressionCases,
+      },
+      `Suite de regresión generada con ${regressionCases.length} casos críticos`
+    );
+  })
+);
+
+// GET /api/v1/test-cases/synthetic-data - Generar lote de datos sintéticos de prueba industriales
 testCasesRouter.get(
   '/synthetic-data',
   asyncHandler(async (_req: Request, res: Response) => {
@@ -216,22 +382,31 @@ testCasesRouter.get(
         visaInvalid: SyntheticDataEngine.generateLuhnCard('visa', false),
         mastercardValid: SyntheticDataEngine.generateLuhnCard('mastercard', true),
         amexValid: SyntheticDataEngine.generateLuhnCard('amex', true),
+        dinersValid: SyntheticDataEngine.generateLuhnCard('diners', true),
+        jcbValid: SyntheticDataEngine.generateLuhnCard('jcb', true),
       },
-      peruvianDocs: {
-        dniValid: SyntheticDataEngine.generateDni(true),
-        dniInvalid: SyntheticDataEngine.generateDni(false),
-        rucNaturalValid: SyntheticDataEngine.generateRuc('natural', true),
-        rucJuridicaValid: SyntheticDataEngine.generateRuc('juridica', true),
-        rucInvalid: SyntheticDataEngine.generateRuc('juridica', false),
+      regionalDocs: {
+        dniPeru: SyntheticDataEngine.generateDni(true),
+        rucPeru: SyntheticDataEngine.generateRuc('juridica', true),
+        rutChile: SyntheticDataEngine.generateRutChile(true),
+        rfcMexico: SyntheticDataEngine.generateRfcMexico('moral', true),
+        curpMexico: SyntheticDataEngine.generateCurpMexico(true),
+        cuitArgentina: SyntheticDataEngine.generateCuitArgentina(true),
+        nifSpain: SyntheticDataEngine.generateNifSpain(true),
       },
+      criticalBoundaryDates: SyntheticDataEngine.getCriticalBoundaryDates(),
+      passiveSecurityPayloads: SyntheticDataEngine.getPassiveSecurityPayloads(),
       boundaryStrings: SyntheticDataEngine.getBoundaryDataSet(255),
+      boundaryGeoCoordinates: SyntheticDataEngine.getBoundaryGeoCoordinates(),
+      syntheticFiles: SyntheticDataEngine.getSyntheticFiles(),
+      networkData: SyntheticDataEngine.getNetworkData(),
       emails: {
         valid: SyntheticDataEngine.getSyntheticEmail(true),
         invalid: SyntheticDataEngine.getSyntheticEmail(false),
       },
     };
 
-    return sendSuccess(res, data, 'Datos sintéticos de prueba generados exitosamente');
+    return sendSuccess(res, data, 'Conjunto completo de datos sintéticos generado exitosamente');
   })
 );
 
@@ -241,7 +416,7 @@ testCasesRouter.post(
   asyncHandler(async (req: Request, res: Response) => {
     const { type, value } = z
       .object({
-        type: z.enum(['luhn_card', 'ruc_pe', 'dni_pe']),
+        type: z.enum(['luhn_card', 'ruc_pe', 'dni_pe', 'rut_cl', 'cuit_ar', 'nif_es']),
         value: z.string().min(1),
       })
       .parse(req.body);
@@ -264,6 +439,21 @@ testCasesRouter.post(
       description = isValid
         ? 'DNI formalmente válido (8 dígitos numéricos)'
         : 'DNI inválido: debe contener exactamente 8 dígitos numéricos';
+    } else if (type === 'rut_cl') {
+      isValid = SyntheticDataEngine.validateRutChile(value);
+      description = isValid
+        ? 'RUT chileno válido según Módulo 11'
+        : 'RUT chileno inválido';
+    } else if (type === 'cuit_ar') {
+      isValid = SyntheticDataEngine.validateCuitArgentina(value);
+      description = isValid
+        ? 'CUIT argentino válido según Módulo 11'
+        : 'CUIT argentino inválido';
+    } else if (type === 'nif_es') {
+      isValid = SyntheticDataEngine.validateNifSpain(value);
+      description = isValid
+        ? 'NIF español válido según Módulo 23'
+        : 'NIF español inválido';
     }
 
     return sendSuccess(res, { type, value, isValid, description });
@@ -273,6 +463,31 @@ testCasesRouter.post(
 // ==========================================================================
 // Rutas parametrizadas por ID (al final para no colisionar con rutas estáticas)
 // ==========================================================================
+
+// POST /api/v1/test-cases/:id/clone - Propuesta 34: Clonador Inteligente
+testCasesRouter.post(
+  '/:id/clone',
+  asyncHandler(async (req: Request, res: Response) => {
+    await assertTestCaseAccess(req.params.id, req.user!.userId, req.user!.role);
+    const { replaceFind, replaceWith } = z
+      .object({
+        replaceFind: z.string().optional(),
+        replaceWith: z.string().optional(),
+      })
+      .parse(req.body);
+
+    const useCase = new CloneTestCaseUseCase();
+    const result = await useCase.execute({
+      testCaseId: req.params.id,
+      userId: req.user!.userId,
+      userRole: req.user!.role,
+      replaceFind,
+      replaceWith,
+    });
+
+    return sendSuccess(res, result, `Caso de prueba clonado como ${result.code}`, 201);
+  })
+);
 
 // GET /api/v1/test-cases/:id - Caso individual con trazabilidad y revisiones
 testCasesRouter.get(
@@ -337,5 +552,3 @@ testCasesRouter.patch(
     );
   })
 );
-
-

@@ -21,6 +21,7 @@ type AuditAction =
   | 'AUTH_LOGOUT'
   | 'AUTH_REFRESH'
   | 'AI_GENERATION'
+  | 'OPENAPI_SPEC_IMPORTED'
   | 'USER_ADMIN_UPDATED';
 
 /**

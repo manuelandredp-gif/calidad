@@ -100,12 +100,147 @@ class App {
     // Comprobación de salud del backend
     this._checkBackendHealth();
 
+    // Atajos de teclado profesionales (Mejora 47 & 51)
+    this._setupKeyboardShortcuts();
+
+    // PWA Offline Service Worker (Mejora 67)
+    this._registerServiceWorker();
+
     // Comprobar sesión actual y arrancar
     const isAuthenticated = await this._bootstrapAuth();
     if (isAuthenticated) {
       await this._loadInitialData();
       this.navigate(this.currentView);
     }
+  }
+
+  _registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch((err) => {
+        console.warn('PWA Service Worker skipped:', err);
+      });
+    }
+  }
+
+  _setupKeyboardShortcuts() {
+    let selectedIndex = -1;
+
+    window.addEventListener('keydown', (e) => {
+      const activeTag = document.activeElement?.tagName?.toLowerCase();
+      if (['input', 'textarea', 'select'].includes(activeTag) && !e.ctrlKey && !e.metaKey) {
+        return;
+      }
+
+      // Mejora 51: Paleta de Comandos Global (Ctrl+K)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        this._openCommandPalette();
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        const palette = document.getElementById('command-palette-backdrop');
+        if (palette) palette.remove();
+        return;
+      }
+
+      // Mejora 47: Atajos profesionales para QA (J/K/A/R/E)
+      const items = Array.from(document.querySelectorAll('.test-case-item'));
+      if (items.length === 0) return;
+
+      const updateHighlight = () => {
+        items.forEach((item, idx) => {
+          if (idx === selectedIndex) {
+            item.classList.add('keyboard-selected');
+            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          } else {
+            item.classList.remove('keyboard-selected');
+          }
+        });
+      };
+
+      if (e.key === 'j' || e.key === 'J') {
+        e.preventDefault();
+        selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+        updateHighlight();
+      } else if (e.key === 'k' || e.key === 'K') {
+        e.preventDefault();
+        selectedIndex = Math.max(selectedIndex - 1, 0);
+        updateHighlight();
+      } else if ((e.key === 'a' || e.key === 'A') && selectedIndex >= 0) {
+        e.preventDefault();
+        const currentItem = items[selectedIndex];
+        const approveBtn = currentItem?.querySelector('.btn-tc-approve');
+        if (approveBtn) {
+          approveBtn.click();
+          toast.info('Atajo [A]: Disparando aprobación de caso...');
+        }
+      } else if ((e.key === 'r' || e.key === 'R') && selectedIndex >= 0) {
+        e.preventDefault();
+        const currentItem = items[selectedIndex];
+        const rejectBtn = currentItem?.querySelector('.btn-tc-reject');
+        if (rejectBtn) {
+          rejectBtn.click();
+          toast.info('Atajo [R]: Abriendo rechazo de caso...');
+        }
+      } else if ((e.key === 'e' || e.key === 'E') && selectedIndex >= 0) {
+        e.preventDefault();
+        const currentItem = items[selectedIndex];
+        const editBtn = currentItem?.querySelector('.btn-tc-edit');
+        if (editBtn) {
+          editBtn.click();
+          toast.info('Atajo [E]: Abriendo editor de caso...');
+        }
+      }
+    });
+  }
+
+  _openCommandPalette() {
+    let existing = document.getElementById('command-palette-backdrop');
+    if (existing) {
+      existing.remove();
+      return;
+    }
+
+    const backdrop = document.createElement('div');
+    backdrop.id = 'command-palette-backdrop';
+    backdrop.className = 'command-palette-backdrop';
+
+    const requirements = store.get('requirements') || [];
+    const testCases = store.get('testCases') || [];
+
+    backdrop.innerHTML = `
+      <div class="command-palette-card" onclick="event.stopPropagation()">
+        <div class="command-palette-input-wrap">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="cmd-palette-input" class="command-palette-input" placeholder="Buscar requisitos, casos o cambiar vista (Esc para salir)..." autocomplete="off" />
+        </div>
+        <div class="command-palette-results" id="cmd-palette-results">
+          <div class="command-palette-item" data-action="view:dashboard"><span>🏠 Ir a Inicio</span><span style="font-size:0.75rem;opacity:0.6;">Vista</span></div>
+          <div class="command-palette-item" data-action="view:requirements"><span>📑 Ir a Requisitos</span><span style="font-size:0.75rem;opacity:0.6;">Vista</span></div>
+          <div class="command-palette-item" data-action="view:test-cases"><span>📋 Ir a Casos de Prueba</span><span style="font-size:0.75rem;opacity:0.6;">Vista</span></div>
+          <div class="command-palette-item" data-action="view:traceability"><span>🔗 Ir a Trazabilidad</span><span style="font-size:0.75rem;opacity:0.6;">Vista</span></div>
+          ${requirements.slice(0, 5).map(r => `<div class="command-palette-item" data-action="view:requirements"><span>[${r.code}] ${r.title}</span><span style="font-size:0.75rem;opacity:0.6;">Requisito</span></div>`).join('')}
+          ${testCases.slice(0, 5).map(tc => `<div class="command-palette-item" data-action="view:test-cases"><span>[${tc.code}] ${tc.title}</span><span style="font-size:0.75rem;opacity:0.6;">Caso</span></div>`).join('')}
+        </div>
+      </div>
+    `;
+
+    backdrop.addEventListener('click', () => backdrop.remove());
+    document.body.appendChild(backdrop);
+
+    const input = document.getElementById('cmd-palette-input');
+    input?.focus();
+
+    backdrop.querySelectorAll('.command-palette-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const action = item.getAttribute('data-action');
+        if (action?.startsWith('view:')) {
+          this.navigate(action.replace('view:', ''));
+        }
+        backdrop.remove();
+      });
+    });
   }
 
   _setupLogout() {

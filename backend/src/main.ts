@@ -109,14 +109,52 @@ const handleAiHealth = (_req: Request, res: Response) => {
   });
 };
 
+// Mejora 70: Monitoreo de Salud Profunda del Sistema (/api/health/deep)
+const handleDeepHealth = async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const mem = process.memoryUsage();
+    const startDb = Date.now();
+    await prisma.$queryRaw`SELECT 1`;
+    const dbLatencyMs = Date.now() - startDb;
+
+    res.status(200).json({
+      status: 'HEALTHY',
+      timestamp: new Date().toISOString(),
+      uptimeSeconds: Math.floor(process.uptime()),
+      memory: {
+        rssMb: parseFloat((mem.rss / (1024 * 1024)).toFixed(2)),
+        heapTotalMb: parseFloat((mem.heapTotal / (1024 * 1024)).toFixed(2)),
+        heapUsedMb: parseFloat((mem.heapUsed / (1024 * 1024)).toFixed(2)),
+        externalMb: parseFloat((mem.external / (1024 * 1024)).toFixed(2)),
+      },
+      database: {
+        engine: 'PostgreSQL',
+        connected: true,
+        latencyMs: dbLatencyMs,
+      },
+      system: {
+        nodeVersion: process.version,
+        platform: process.platform,
+        arch: process.arch,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 app.get('/api/health', handleHealth);
 app.get('/api/health/db', handleDbHealth);
 app.get('/api/health/ai', handleAiHealth);
+app.get('/api/health/deep', handleDeepHealth);
 app.get('/api/v1/health', handleHealth);
 app.get('/api/v1/health/db', handleDbHealth);
 app.get('/api/v1/health/ai', handleAiHealth);
+app.get('/api/v1/health/deep', handleDeepHealth);
 
 // -------------------- API REST versionada (/api/v1) --------------------
+import { testRunsRouter } from './modules/test-runs/test-runs.router';
+
 const api = express.Router();
 api.use('/auth', authLimiter, authRouter);
 api.use('/users', apiLimiter, usersRouter);
@@ -125,6 +163,7 @@ api.use('/projects', apiLimiter, projectsRouter);
 api.use('/requirements', apiLimiter, requirementsRouter);
 api.use('/ai', aiLimiter, aiGenerationRouter);
 api.use('/test-cases', apiLimiter, testCasesRouter);
+api.use('/test-runs', apiLimiter, testRunsRouter);
 api.use('/traceability', apiLimiter, traceabilityRouter);
 api.use('/metrics', apiLimiter, metricsRouter);
 api.use('/export', apiLimiter, exportRouter);

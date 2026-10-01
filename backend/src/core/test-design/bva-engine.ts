@@ -222,6 +222,137 @@ export class BvaEngine {
       });
     }
 
+    // 9. Propuesta 4: BVA Robusto - Desbordamiento Entero de 32 bits (Int32 Overflow)
+    if (type === 'integer' || type === 'decimal') {
+      const int32Max = 2147483647;
+      if (max < int32Max) {
+        cases.push({
+          type: 'negative',
+          title: `[BVA Robusto] Desbordamiento por entero de 32 bits en "${name}" (${int32Max})`,
+          preconditions: ['El backend almacena datos en base de datos relacional (PostgreSQL INTEGER).'],
+          steps: [
+            `1. Ubicar el campo "${name}".`,
+            `2. Ingresar el valor límite de desbordamiento de 32 bits: ${int32Max}.`,
+            '3. Intentar procesar la transacción.',
+          ],
+          testData: `${name} = ${int32Max} (Cota máxima Int32)`,
+          expectedResult: `El sistema valida en capa de aplicación y bloquea la operación antes de provocar error de desbordamiento (SQL Numeric Overflow).`,
+          priority: 'medium',
+          tag: 'BVA_ROBUST_INT32_OVERFLOW',
+          testValue: int32Max,
+        });
+      }
+    }
+
+    return cases;
+  }
+
+  /**
+   * Propuesta 5: Partición de Equivalencia Multivariable.
+   * Modela la interacción determinista entre 2 variables interdependientes:
+   * ej. Fecha Inicio < Fecha Fin, Monto Transferencia <= Saldo Disponible.
+   */
+  public static calculateMultivariate(
+    varA: { name: string; value: number; label: string },
+    varB: { name: string; value: number; label: string },
+    relation: 'LESS_THAN' | 'LESS_EQUAL' | 'SUM_LESS_EQUAL',
+    limit?: number
+  ): BvaCalculatedCase[] {
+    const cases: BvaCalculatedCase[] = [];
+
+    if (relation === 'LESS_THAN' || relation === 'LESS_EQUAL') {
+      // Caso 1: Válido A < B
+      cases.push({
+        type: 'positive',
+        title: `[EP Multivariable] Validación válida de interdependencia: ${varA.name} < ${varB.name}`,
+        preconditions: ['Ambos campos están activos en el mismo contexto transaccional.'],
+        steps: [
+          `1. Configurar "${varA.name}" = ${varA.value}.`,
+          `2. Configurar "${varB.name}" = ${varB.value} (donde ${varA.name} < ${varB.name}).`,
+          '3. Ejecutar la acción de negocio.',
+        ],
+        testData: `${varA.name} = ${varA.value}, ${varB.name} = ${varB.value}`,
+        expectedResult: 'El sistema valida que la relación relacional se cumple y procesa la transacción.',
+        priority: 'high',
+        tag: 'EP_MULTI_VALID',
+        testValue: `${varA.value} < ${varB.value}`,
+      });
+
+      // Caso 2: Frontera A == B
+      const isBoundaryValid = relation === 'LESS_EQUAL';
+      cases.push({
+        type: isBoundaryValid ? 'boundary' : 'negative',
+        title: `[BVA Multivariable] Frontera de igualdad: ${varA.name} == ${varB.name}`,
+        preconditions: ['Ambos campos admiten valores concurrentes.'],
+        steps: [
+          `1. Configurar "${varA.name}" = ${varB.value}.`,
+          `2. Configurar "${varB.name}" = ${varB.value}.`,
+          '3. Enviar datos para validación.',
+        ],
+        testData: `${varA.name} = ${varB.value}, ${varB.name} = ${varB.value}`,
+        expectedResult: isBoundaryValid
+          ? 'El sistema permite valores iguales conforme a la cota menor o igual.'
+          : `El sistema rechaza la operación: "${varA.name}" debe ser estrictamente menor que "${varB.name}".`,
+        priority: 'high',
+        tag: 'BVA_MULTI_EQUAL',
+        testValue: `${varB.value} == ${varB.value}`,
+      });
+
+      // Caso 3: Inválido A > B
+      cases.push({
+        type: 'negative',
+        title: `[EP Multivariable] Violación de invariante: ${varA.name} > ${varB.name}`,
+        preconditions: ['Se ingresan datos que invierten la relación lógica requerida.'],
+        steps: [
+          `1. Configurar "${varA.name}" = ${varB.value + 10}.`,
+          `2. Configurar "${varB.name}" = ${varB.value}.`,
+          '3. Intentar confirmar la transacción.',
+        ],
+        testData: `${varA.name} = ${varB.value + 10}, ${varB.name} = ${varB.value}`,
+        expectedResult: `El sistema detecta inconsistencia relacional y muestra mensaje: "${varA.name}" no puede ser posterior o superior a "${varB.name}".`,
+        priority: 'high',
+        tag: 'EP_MULTI_INVALID',
+        testValue: `${varB.value + 10} > ${varB.value}`,
+      });
+    }
+
+    if (relation === 'SUM_LESS_EQUAL' && limit !== undefined) {
+      // Caso Suma <= Límite
+      const halfLimit = Math.floor(limit / 2);
+      cases.push({
+        type: 'positive',
+        title: `[EP Multivariable] Suma combinada válida (${varA.name} + ${varB.name} <= ${limit})`,
+        preconditions: ['El sistema aplica cuota máxima compartida entre ambos campos.'],
+        steps: [
+          `1. Ingresar "${varA.name}" = ${halfLimit - 1}.`,
+          `2. Ingresar "${varB.name}" = ${halfLimit}.`,
+          '3. Confirmar la operación.',
+        ],
+        testData: `${varA.name}=${halfLimit - 1} + ${varB.name}=${halfLimit} = ${2 * halfLimit - 1} <= ${limit}`,
+        expectedResult: 'La cuota combinada está dentro del límite y es procesada exitosamente.',
+        priority: 'high',
+        tag: 'EP_SUM_VALID',
+        testValue: 2 * halfLimit - 1,
+      });
+
+      // Caso Suma Excedida > Límite
+      cases.push({
+        type: 'negative',
+        title: `[BVA Multivariable] Exceso de cuota combinada (${varA.name} + ${varB.name} > ${limit})`,
+        preconditions: ['La suma de ambos campos supera la cota de negocio.'],
+        steps: [
+          `1. Ingresar "${varA.name}" = ${halfLimit + 1}.`,
+          `2. Ingresar "${varB.name}" = ${limit - halfLimit + 1}.`,
+          '3. Intentar confirmar.',
+        ],
+        testData: `Suma combinada = ${limit + 2} > ${limit}`,
+        expectedResult: `El sistema bloquea la transacción con advertencia de cuota compartida excedida (máximo ${limit}).`,
+        priority: 'high',
+        tag: 'BVA_SUM_EXCEEDED',
+        testValue: limit + 2,
+      });
+    }
+
     return cases;
   }
 

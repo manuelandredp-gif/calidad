@@ -458,3 +458,87 @@ body::after {
     padding: 20px;
   }
 }
+
+/* Mejora 47: Estilo de Foco por Teclado (J/K/A/R/E) */
+.test-case-item.keyboard-selected {
+  outline: 2px solid var(--primary) !important;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25), var(--shadow-md) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transform: translateY(-2px);
+}
+
+/* Mejora 51: Paleta de Comandos Global (Ctrl+K) */
+.command-palette-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 15vh;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.command-palette-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  width: 90%;
+  max-width: 600px;
+  box-shadow: var(--shadow-xl), 0 0 30px rgba(99, 102, 241, 0.2);
+  overflow: hidden;
+}
+
+.command-palette-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.command-palette-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  outline: none;
+}
+
+.command-palette-results {
+  max-height: 350px;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.command-palette-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.command-palette-item:hover,
+.command-palette-item.active {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--primary);
+}
+
+/* Mejora 48: Vista Dividida (Split-View) Widescreen */
+@media (min-width: 1440px) {
+  .widescreen-split-view {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: flex-start;
+  }
+}
+

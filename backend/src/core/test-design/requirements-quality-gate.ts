@@ -215,4 +215,241 @@ export class RequirementsQualityGate {
       improvements,
     };
   }
+
+  // ============================================================================
+  // 9. PARSER SINTÁCTICO DE REGLAS EARS (Easy Approach to Requirements Syntax)
+  // ============================================================================
+  public static parseEarsSyntax(text: string): {
+    pattern: 'UBIQUITOUS' | 'EVENT_DRIVEN' | 'STATE_DRIVEN' | 'UNWANTED_BEHAVIOUR' | 'OPTIONAL' | 'NON_EARS';
+    clause: string;
+    action: string;
+  } {
+    const trimmed = text.trim();
+
+    // 1. Unwanted behaviour: "SI [condición/fallo] ENTONCES el sistema DEBE..."
+    const unwantedMatch = trimmed.match(/^si\s+(.+?)\s+entonces\s+el\s+sistema\s+(?:debe|bloquea|rechaza)\s+(.+)$/i);
+    if (unwantedMatch) {
+      return { pattern: 'UNWANTED_BEHAVIOUR', clause: unwantedMatch[1], action: unwantedMatch[2] };
+    }
+
+    // 2. Event-driven: "CUANDO [evento] el sistema DEBE..."
+    const eventMatch = trimmed.match(/^cuando\s+(.+?)\s*,\s*el\s+sistema\s+debe\s+(.+)$/i);
+    if (eventMatch) {
+      return { pattern: 'EVENT_DRIVEN', clause: eventMatch[1], action: eventMatch[2] };
+    }
+
+    // 3. State-driven: "MIENTRAS [estado] el sistema DEBE..."
+    const stateMatch = trimmed.match(/^mientras\s+(.+?)\s*,\s*el\s+sistema\s+debe\s+(.+)$/i);
+    if (stateMatch) {
+      return { pattern: 'STATE_DRIVEN', clause: stateMatch[1], action: stateMatch[2] };
+    }
+
+    // 4. Optional: "DONDE [opción activa] el sistema DEBE..."
+    const optMatch = trimmed.match(/^donde\s+(.+?)\s*,\s*el\s+sistema\s+debe\s+(.+)$/i);
+    if (optMatch) {
+      return { pattern: 'OPTIONAL', clause: optMatch[1], action: optMatch[2] };
+    }
+
+    // 5. Ubiquitous: "El sistema DEBE..."
+    const ubiMatch = trimmed.match(/^el\s+sistema\s+debe\s+(.+)$/i);
+    if (ubiMatch) {
+      return { pattern: 'UBIQUITOUS', clause: 'Siempre activo', action: ubiMatch[1] };
+    }
+
+    return { pattern: 'NON_EARS', clause: '', action: trimmed };
+  }
+
+  // ============================================================================
+  // 10. COMPILADOR DETERMINISTA BDD GHERKIN A CASOS DE PRUEBA
+  // ============================================================================
+  public static compileGherkinToTestCases(gherkinText: string, reqTitle = 'Requisito'): Array<{
+    title: string;
+    preconditions: string[];
+    steps: string[];
+    expectedResult: string;
+    type: 'positive' | 'negative';
+  }> {
+    const lines = gherkinText.split('\n').map((l) => l.trim()).filter(Boolean);
+    const scenarios: Array<{
+      title: string;
+      preconditions: string[];
+      steps: string[];
+      expectedResult: string;
+      type: 'positive' | 'negative';
+    }> = [];
+
+    let currentTitle = '';
+    let currentPre: string[] = [];
+    let currentSteps: string[] = [];
+    let currentExpected = '';
+    let isNegative = false;
+
+    for (const line of lines) {
+      const scenarioMatch = line.match(/^(?:Escenario|Scenario):\s*(.+)$/i);
+      if (scenarioMatch) {
+        if (currentTitle && (currentSteps.length > 0 || currentExpected)) {
+          scenarios.push({
+            title: `[BDD] ${currentTitle}`,
+            preconditions: currentPre.length > 0 ? currentPre : ['El sistema se encuentra operativo.'],
+            steps: currentSteps.length > 0 ? currentSteps : ['Ejecutar el escenario descrito.'],
+            expectedResult: currentExpected || 'El resultado cumple el criterio de aceptación.',
+            type: isNegative ? 'negative' : 'positive',
+          });
+        }
+        currentTitle = scenarioMatch[1];
+        currentPre = [];
+        currentSteps = [];
+        currentExpected = '';
+        isNegative = /fallo|error|rechaz|inválid|bloque/i.test(currentTitle);
+        continue;
+      }
+
+      const givenMatch = line.match(/^(?:Dado que|Given)\s+(.+)$/i);
+      if (givenMatch) {
+        currentPre.push(givenMatch[1]);
+        continue;
+      }
+
+      const whenMatch = line.match(/^(?:Cuando|When|Y\s+|And\s+)\s+(.+)$/i);
+      if (whenMatch && !currentExpected) {
+        currentSteps.push(whenMatch[1]);
+        if (/inválid|erróne|incomplet/i.test(whenMatch[1])) isNegative = true;
+        continue;
+      }
+
+      const thenMatch = line.match(/^(?:Entonces|Then)\s+(.+)$/i);
+      if (thenMatch) {
+        currentExpected = thenMatch[1];
+        if (/error|rechaz|bloque|400|401|403|422/i.test(currentExpected)) isNegative = true;
+      }
+    }
+
+    if (currentTitle || currentSteps.length > 0 || currentExpected) {
+      scenarios.push({
+        title: `[BDD] ${currentTitle || reqTitle}`,
+        preconditions: currentPre.length > 0 ? currentPre : ['El sistema se encuentra operativo.'],
+        steps: currentSteps.length > 0 ? currentSteps : ['1. Ejecutar las acciones de prueba.'],
+        expectedResult: currentExpected || 'Comportamiento verificado satisfactoriamente.',
+        type: isNegative ? 'negative' : 'positive',
+      });
+    }
+
+    return scenarios;
+  }
+
+  // ============================================================================
+  // 11. EXTRACTOR DETERMINISTA DE VARIABLES MEDIANTE EXPRESIONES REGULARES
+  // ============================================================================
+  public static extractDeterministicVariables(text: string): Array<{
+    name: string;
+    type: 'integer' | 'decimal' | 'string_length';
+    min: number;
+    max: number;
+    unit?: string;
+  }> {
+    const extracted: Array<{
+      name: string;
+      type: 'integer' | 'decimal' | 'string_length';
+      min: number;
+      max: number;
+      unit?: string;
+    }> = [];
+
+    // Rango numérico: "entre X e Y" / "entre X y Y"
+    const rangeRegex = /(?:entre|de)\s+(\d+(?:\.\d+)?)\s+(?:e|y|a)\s+(\d+(?:\.\d+)?)(?:\s*(soles|d[oó]lares|USD|S\/\.|caracteres|a[ñn]os|d[ií]as|kg))?/gi;
+    let match: RegExpExecArray | null;
+
+    while ((match = rangeRegex.exec(text)) !== null) {
+      const min = parseFloat(match[1]);
+      const max = parseFloat(match[2]);
+      const unit = match[3] || '';
+      const isDecimal = match[1].includes('.') || match[2].includes('.');
+
+      extracted.push({
+        name: `Rango numérico (${min} a ${max} ${unit})`.trim(),
+        type: isDecimal ? 'decimal' : 'integer',
+        min,
+        max,
+        unit,
+      });
+    }
+
+    // Longitud de caracteres: "máximo X caracteres" / "mínimo X y máximo Y caracteres"
+    const lengthRegex = /(?:m[ií]nimo\s+(\d+)\s+y\s+)?m[aá]ximo\s+(\d+)\s+caracteres/gi;
+    while ((match = lengthRegex.exec(text)) !== null) {
+      const min = match[1] ? parseInt(match[1], 10) : 1;
+      const max = parseInt(match[2], 10);
+
+      extracted.push({
+        name: `Longitud de texto (${min}-${max} caracteres)`,
+        type: 'string_length',
+        min,
+        max,
+        unit: 'caracteres',
+      });
+    }
+
+    return extracted;
+  }
+
+  // ============================================================================
+  // 12. ANALIZADOR DE SEVERIDAD RFC 2119 (DEBE, DEBERÍA, PUEDE)
+  // ============================================================================
+  public static analyzeRfc2119Priority(text: string): 'high' | 'medium' | 'low' {
+    if (/\b(debe|obligatorio|shall|must|cr[ií]tico|indispensable)\b/i.test(text)) {
+      return 'high';
+    }
+    if (/\b(deber[ií]a|should|recomendado|deseable)\b/i.test(text)) {
+      return 'medium';
+    }
+    return 'low';
+  }
+
+  // ============================================================================
+  // 13. DETECTOR DE DEPENDENCIAS CRUZADAS (REQ-XXX)
+  // ============================================================================
+  public static detectCrossRequirementDependencies(text: string): string[] {
+    const matches = text.match(/\b(REQ-\d{3,4})\b/gi) || [];
+    return Array.from(new Set(matches.map((m) => m.toUpperCase())));
+  }
+
+  // ============================================================================
+  // 16. TRANSFORMADOR DE HISTORIAS DE USUARIO A MATRIZ DE ROLES (RBAC CASES)
+  // ============================================================================
+  public static transformUserStoryToRoleMatrix(userStory: string): Array<{
+    role: string;
+    isAuthorized: boolean;
+    title: string;
+    expectedStatus: number;
+    description: string;
+  }> {
+    const match = userStory.match(/como\s+([a-záéíóúñ\s]+?)\s+quiero\s+([a-záéíóúñ\s]+?)\s+para\s+(.+)/i);
+    const actorRole = match ? match[1].trim() : 'Usuario Autorizado';
+    const action = match ? match[2].trim() : 'ejecutar la acción';
+
+    return [
+      {
+        role: actorRole,
+        isAuthorized: true,
+        title: `[RBAC Autorizado] Acceso permitido para "${actorRole}" al ${action}`,
+        expectedStatus: 200,
+        description: `El usuario con rol "${actorRole}" cuenta con los permisos necesarios para ejecutar la acción.`,
+      },
+      {
+        role: 'Usuario No Autenticado (Anónimo)',
+        isAuthorized: false,
+        title: `[RBAC Seguridad] Rechazo 401 Unauthorized sin credenciales al ${action}`,
+        expectedStatus: 401,
+        description: 'Petición sin token de sesión JWT es bloqueada en gateway.',
+      },
+      {
+        role: 'Usuario con Rol Inferior (Sin Permisos)',
+        isAuthorized: false,
+        title: `[RBAC Seguridad] Rechazo 403 Forbidden para rol no privilegiado al ${action}`,
+        expectedStatus: 403,
+        description: `El sistema deniega el acceso a usuarios que no posean el rol "${actorRole}".`,
+      },
+    ];
+  }
 }
+
