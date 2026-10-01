@@ -214,6 +214,9 @@ function renderSelectedRequirement(req) {
 
       ${ambiguityBox}
 
+      <!-- Quality Gate & Test Rigor Index Panel -->
+      <div id="qg-panel-${req.id}" style="margin-bottom:20px;"></div>
+
       <!-- Description -->
       <div style="margin-bottom:20px;">
         <h4 style="font-size:0.76rem; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;">
@@ -262,6 +265,89 @@ function renderSelectedRequirement(req) {
 function setupRequirementDetailEvents(container) {
   const activeReq = store.get('activeRequirement') || (store.get('requirements') || [])[0];
   if (activeReq) {
+    // Quality Gate & Test Rigor Index
+    const qgBox = container.querySelector(`#qg-panel-${activeReq.id}`);
+    if (qgBox) {
+      api
+        .getRequirementQualityGate(activeReq.id)
+        .then((res) => {
+          const data = res.data;
+          if (!data) return;
+
+          const qg = data.qualityGate;
+          const rigor = data.testRigor;
+
+          const scoreColor =
+            qg.testabilityScore >= 75
+              ? '#10b981'
+              : qg.testabilityScore >= 50
+              ? '#f59e0b'
+              : '#ef4444';
+
+          const rigorColor =
+            rigor.score >= 80
+              ? '#10b981'
+              : rigor.score >= 50
+              ? '#f59e0b'
+              : '#ef4444';
+
+          qgBox.innerHTML = `
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; background:rgba(255,255,255,0.02); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:14px;">
+              <!-- Quality Gate Requisito -->
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:var(--text-muted);">
+                    🛡️ Quality Gate (ISO 29119-3 / EARS)
+                  </span>
+                  <span style="font-size:0.78rem; font-weight:700; color:${scoreColor};">
+                    Testability: ${qg.testabilityScore}/100 (${qg.testabilityLevel})
+                  </span>
+                </div>
+                <div style="background:rgba(255,255,255,0.08); height:6px; border-radius:3px; overflow:hidden; margin-bottom:10px;">
+                  <div style="width:${qg.testabilityScore}%; height:100%; background:${scoreColor}; transition:width 0.4s ease;"></div>
+                </div>
+                <div style="font-size:0.78rem; color:var(--text-secondary); line-height:1.4; margin-bottom:8px;">
+                  <span style="color:#60a5fa; font-weight:600;">💡 Técnica Sugerida:</span> ${escapeHtml(qg.recommendedTechnique.name)}
+                </div>
+                ${
+                  qg.improvements.length > 0
+                    ? `<div style="font-size:0.74rem; color:#fca5a5; line-height:1.3;">⚠️ ${escapeHtml(qg.improvements[0])}</div>`
+                    : `<div style="font-size:0.74rem; color:#86efac; line-height:1.3;">✓ Cumple criterios de comprobabilidad formal.</div>`
+                }
+              </div>
+
+              <!-- Test Rigor Index -->
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:var(--text-muted);">
+                    📊 Test Rigor Index (ISTQB CTFL v4)
+                  </span>
+                  <span style="font-size:0.78rem; font-weight:700; color:${rigorColor};">
+                    Rigor: ${rigor.score}% (${rigor.level})
+                  </span>
+                </div>
+                <div style="background:rgba(255,255,255,0.08); height:6px; border-radius:3px; overflow:hidden; margin-bottom:10px;">
+                  <div style="width:${rigor.score}%; height:100%; background:${rigorColor}; transition:width 0.4s ease;"></div>
+                </div>
+                <div style="display:flex; flex-wrap:wrap; gap:4px; font-size:0.72rem; margin-bottom:8px;">
+                  <span class="badge ${rigor.typesPresent.includes('positive') ? 'badge-approved' : 'badge-outline'}">Positivo</span>
+                  <span class="badge ${rigor.typesPresent.includes('negative') ? 'badge-danger' : 'badge-outline'}">Negativo</span>
+                  <span class="badge ${rigor.typesPresent.includes('boundary') ? 'badge-derived' : 'badge-outline'}">Frontera</span>
+                  <span class="badge ${rigor.typesPresent.includes('validation') ? 'badge-source-rule' : 'badge-outline'}">Validación</span>
+                  <span class="badge ${rigor.typesPresent.includes('alternative') ? 'badge-suggested' : 'badge-outline'}">Alternativo</span>
+                </div>
+                <div style="font-size:0.74rem; color:var(--text-muted);">
+                  Total: <strong>${rigor.totalCases} casos</strong> (${Object.entries(rigor.sourceBreakdown).filter(([_, c]) => c > 0).map(([k, c]) => `${k === 'ISTQB_BVA' ? 'BVA' : k}: ${c}`).join(', ') || 'sin casos'})
+                </div>
+              </div>
+            </div>
+          `;
+        })
+        .catch((err) => {
+          console.warn('[QualityGate] Error cargando Quality Gate:', err);
+        });
+    }
+
     const historyBox = container.querySelector(`#ai-history-box-${activeReq.id}`);
     if (historyBox) {
       api

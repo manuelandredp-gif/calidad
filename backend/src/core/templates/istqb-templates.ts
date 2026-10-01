@@ -642,4 +642,246 @@ export const ISTQB_TEMPLATES: TemplateCategory[] = [
       },
     ],
   },
+  // ──────────────────────────────────────────────────────────────────
+  // 8. Integración de APIs REST y Servicios Web
+  // ──────────────────────────────────────────────────────────────────
+  {
+    key: 'api_rest',
+    name: 'Integración de APIs REST y Webhooks',
+    description: 'Validación de contratos HTTP, códigos de estado (200, 201, 400, 401, 404, 422), headers y payloads JSON.',
+    icon: '🔌',
+    cases: [
+      {
+        type: 'positive',
+        titleTemplate: 'Petición GET exitosa con cabeceras y status 200 OK — {REQ}',
+        preconditions: ['El servicio API está desplegado y con token válido'],
+        steps: [
+          'Enviar petición GET al endpoint con cabecera Authorization: Bearer <token>',
+          'Verificar la respuesta HTTP',
+        ],
+        expectedResultTemplate: 'Retorna código 200 OK, Content-Type application/json y estructura conforme a OpenAPI',
+        priority: 'high',
+        evidenceStatus: 'derived',
+      },
+      {
+        type: 'positive',
+        titleTemplate: 'Creación POST con payload JSON estructurado y status 201 — {REQ}',
+        preconditions: ['El usuario posee credenciales con permiso de escritura'],
+        steps: [
+          'Enviar petición POST con body JSON con campos requeridos',
+          'Inspeccionar cabeceras y cuerpo de respuesta',
+        ],
+        expectedResultTemplate: 'Retorna status 201 Created con el recurso creado y su identificador unívoco',
+        priority: 'high',
+        evidenceStatus: 'derived',
+      },
+      {
+        type: 'negative',
+        titleTemplate: 'Petición POST con JSON malformado o sintaxis inválida (400) — {REQ}',
+        preconditions: ['El endpoint espera Content-Type application/json'],
+        steps: [
+          'Enviar petición POST con sintaxis JSON rota (ej. llaves sin cerrar)',
+          'Verificar respuesta del parser',
+        ],
+        expectedResultTemplate: 'El servidor retorna 400 Bad Request indicando error en el cuerpo de la solicitud',
+        priority: 'high',
+        evidenceStatus: 'derived',
+      },
+      {
+        type: 'negative',
+        titleTemplate: 'Llamada a endpoint sin cabecera de autenticación (401) — {REQ}',
+        preconditions: ['El endpoint requiere autenticación JWT obligatoria'],
+        steps: [
+          'Enviar petición omitiendo el token Bearer o cookie de sesión',
+          'Verificar control de acceso',
+        ],
+        expectedResultTemplate: 'Retorna 401 Unauthorized impidiendo el procesamiento del requerimiento',
+        priority: 'high',
+        evidenceStatus: 'derived',
+      },
+      {
+        type: 'validation',
+        titleTemplate: 'Validación semántica de campos con código 422 Unprocessable — {REQ}',
+        preconditions: ['El endpoint implementa validación con schema Zod o Joi'],
+        steps: [
+          'Enviar payload con tipos incompatibles (ej. string en campo numérico)',
+          'Verificar detalle del error',
+        ],
+        expectedResultTemplate: 'Retorna 422 o 400 con lista detallada de errores por campo sin exponer stacktraces',
+        priority: 'medium',
+        evidenceStatus: 'suggested',
+      },
+    ],
+  },
+  // ──────────────────────────────────────────────────────────────────
+  // 9. Concurrencia y Condiciones de Carrera
+  // ──────────────────────────────────────────────────────────────────
+  {
+    key: 'concurrency_race',
+    name: 'Concurrencia y Condiciones de Carrera',
+    description: 'Pruebas de doble clic simultáneo, idempotencia, bloqueos optimistas y consistencia de datos transaccionales.',
+    icon: '⚡',
+    cases: [
+      {
+        type: 'boundary',
+        titleTemplate: 'Doble clic simultáneo en botón transaccional — {REQ}',
+        preconditions: ['El usuario se encuentra en la pantalla de confirmación'],
+        steps: [
+          'Hacer doble clic muy rápido en el botón de confirmación/pago',
+          'Inspeccionar peticiones de red enviadas',
+        ],
+        expectedResultTemplate: 'El sistema procesa una sola transacción y desactiva el botón ante el primer clic (Idempotencia)',
+        priority: 'high',
+        evidenceStatus: 'derived',
+      },
+      {
+        type: 'alternative',
+        titleTemplate: 'Modificación concurrente de la misma entidad (Bloqueo Optimista 409) — {REQ}',
+        preconditions: ['Dos analistas QA tienen abierto el mismo registro simultáneamente'],
+        steps: [
+          'El Usuario 1 guarda una modificación',
+          'El Usuario 2 intenta guardar su versión previa',
+        ],
+        expectedResultTemplate: 'El sistema detecta colisión de versión, rechaza con 409 Conflict y pide recargar',
+        priority: 'high',
+        evidenceStatus: 'derived',
+      },
+      {
+        type: 'positive',
+        titleTemplate: 'Idempotencia en reintentos con la misma clave de idempotencia — {REQ}',
+        preconditions: ['El endpoint soporta cabecera Idempotency-Key'],
+        steps: [
+          'Enviar la misma petición POST con idéntica clave de idempotencia 2 veces consecutivas',
+        ],
+        expectedResultTemplate: 'La segunda llamada retorna el mismo resultado de la primera sin duplicar registros en base de datos',
+        priority: 'medium',
+        evidenceStatus: 'suggested',
+      },
+    ],
+  },
+  // ──────────────────────────────────────────────────────────────────
+  // 10. Seguridad Defensiva en Capa de Entrada
+  // ──────────────────────────────────────────────────────────────────
+  {
+    key: 'defensive_security',
+    name: 'Seguridad Defensiva en Inputs (OWASP Top 10)',
+    description: 'Sanitización de inyección SQL, Cross-Site Scripting (XSS), bytes nulos y parámetros alterados.',
+    icon: '🛡️',
+    cases: [
+      {
+        type: 'validation',
+        titleTemplate: 'Inyección SQL pasiva en campos de entrada — {REQ}',
+        preconditions: ['El usuario tiene acceso al formulario de consulta o registro'],
+        steps: [
+          'Ingresar el payload de prueba "\' OR \'1\'=\'1" en los campos de texto',
+          'Ejecutar la consulta o guardado',
+        ],
+        expectedResultTemplate: 'El sistema utiliza consultas parametrizadas (ORM); el payload se guarda como texto literal sin alterar la consulta',
+        priority: 'high',
+        evidenceStatus: 'derived',
+      },
+      {
+        type: 'validation',
+        titleTemplate: 'Escape de Cross-Site Scripting (XSS) en renderizado HTML — {REQ}',
+        preconditions: ['El sistema renderiza en pantalla el texto ingresado por el usuario'],
+        steps: [
+          'Ingresar payload "<script>alert(1)</script>" en el título o descripción',
+          'Guardar y visualizar el registro en la interfaz de usuario',
+        ],
+        expectedResultTemplate: 'El script se escapa como entidades HTML (&lt;script&gt;) y NO se ejecuta en el navegador',
+        priority: 'high',
+        evidenceStatus: 'derived',
+      },
+      {
+        type: 'negative',
+        titleTemplate: 'Rechazo de método HTTP no soportado (405 Method Not Allowed) — {REQ}',
+        preconditions: ['El recurso está protegido por el router de API'],
+        steps: [
+          'Enviar petición DELETE a un endpoint de solo lectura',
+        ],
+        expectedResultTemplate: 'El servidor retorna 405 Method Not Allowed o 404 Not Found de forma segura',
+        priority: 'medium',
+        evidenceStatus: 'suggested',
+      },
+    ],
+  },
+  // ──────────────────────────────────────────────────────────────────
+  // 11. Rendimiento, Timeouts y Límites de Carga
+  // ──────────────────────────────────────────────────────────────────
+  {
+    key: 'performance_limits',
+    name: 'Rendimiento, Timeouts y Límites',
+    description: 'Respuesta bajo SLA, cortes controlados por timeout, paginación masiva y rate limiting.',
+    icon: '⏱️',
+    cases: [
+      {
+        type: 'boundary',
+        titleTemplate: 'Tiempo de respuesta bajo carga nominal dentro del SLA (< 1500ms) — {REQ}',
+        preconditions: ['El sistema opera en condiciones normales de infraestructura'],
+        steps: [
+          'Ejecutar la consulta principal del módulo midiendo la latencia de red',
+        ],
+        expectedResultTemplate: 'El tiempo de respuesta se mantiene por debajo del umbral de 1500ms estipulado en el SLA',
+        priority: 'medium',
+        evidenceStatus: 'suggested',
+      },
+      {
+        type: 'negative',
+        titleTemplate: 'Corte por timeout ante latencia excesiva de proveedor externo — {REQ}',
+        preconditions: ['El módulo se comunica con una API externa'],
+        steps: [
+          'Simular un retardo del proveedor externo superior al timeout configurado (ej. > 15s)',
+        ],
+        expectedResultTemplate: 'El backend cancela la espera, libera recursos y retorna mensaje claro de servicio no disponible temporalmente',
+        priority: 'high',
+        evidenceStatus: 'derived',
+      },
+      {
+        type: 'boundary',
+        titleTemplate: 'Petición con límite de paginación máximo permitido — {REQ}',
+        preconditions: ['Existen registros suficientes en el catálogo'],
+        steps: [
+          'Solicitar consulta con parámetro pageSize=100 (límite máximo permitido)',
+          'Intentar luego solicitar pageSize=10000',
+        ],
+        expectedResultTemplate: 'El sistema limita pageSize al tope seguro (ej. 100) previniendo desbordamiento de memoria',
+        priority: 'medium',
+        evidenceStatus: 'suggested',
+      },
+    ],
+  },
+  // ──────────────────────────────────────────────────────────────────
+  // 12. Resiliencia, Fallos de Red y Degradación Graciosa
+  // ──────────────────────────────────────────────────────────────────
+  {
+    key: 'resilience_offline',
+    name: 'Resiliencia y Tolerancia a Fallos de Red',
+    description: 'Pérdida de conectividad en vuelo, reintentos idempotentes, errores 503 y preservación de estado.',
+    icon: '🌐',
+    cases: [
+      {
+        type: 'negative',
+        titleTemplate: 'Pérdida de conexión de red durante el envío del formulario — {REQ}',
+        preconditions: ['El usuario completó un formulario extenso'],
+        steps: [
+          'Desconectar la red e intentar enviar el formulario',
+        ],
+        expectedResultTemplate: 'La aplicación muestra notificación de conexión perdida sin borrar los datos digitados por el usuario',
+        priority: 'high',
+        evidenceStatus: 'derived',
+      },
+      {
+        type: 'alternative',
+        titleTemplate: 'Degradación graciosa ante indisponibilidad del servicio de IA — {REQ}',
+        preconditions: ['El servicio externo de IA no responde o no cuenta con API key configurada'],
+        steps: [
+          'Acceder a la función de diseño de pruebas del requisito',
+        ],
+        expectedResultTemplate: 'El sistema permite utilizar las opciones alternas (BVA, Plantillas, Manual) sin bloquear el flujo operativo',
+        priority: 'high',
+        evidenceStatus: 'derived',
+      },
+    ],
+  },
 ];
+

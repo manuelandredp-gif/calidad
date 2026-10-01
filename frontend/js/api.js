@@ -218,6 +218,10 @@ class ApiClient {
     });
   }
 
+  async getRequirementQualityGate(id) {
+    return this.request(`/requirements/${id}/quality-gate`);
+  }
+
   // --- Configuración e IA Real ---
   async getAiConfig() {
     return this.request('/config/ai-providers');

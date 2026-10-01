@@ -9,6 +9,7 @@ import { assertProjectAccess, assertRequirementAccess } from '../../common/utils
 import { audit } from '../../common/utils/audit';
 import { AmbiguityDetector } from './ambiguity-detector';
 import { RequirementImportService, requirementImportRowSchema } from './import.service';
+import { RequirementsQualityGate } from '../../core/test-design/requirements-quality-gate';
 
 export const requirementsRouter = Router();
 
@@ -107,6 +108,68 @@ requirementsRouter.get(
     return sendSuccess(res, analysis);
   })
 );
+
+// GET /api/v1/requirements/:id/quality-gate - Evaluación integral de Quality Gate, Testability Score y Test Rigor Index
+requirementsRouter.get(
+  '/:id/quality-gate',
+  asyncHandler(async (req: Request, res: Response) => {
+    await assertRequirementAccess(req.params.id, req.user!.userId, req.user!.role);
+    const requirement = await prisma.requirement.findUniqueOrThrow({
+      where: { id: req.params.id },
+      include: {
+        testCases: {
+          select: { id: true, code: true, type: true, status: true, source: true },
+        },
+      },
+    });
+
+    const qgEvaluation = RequirementsQualityGate.evaluate({
+      title: requirement.title,
+      description: requirement.description,
+      acceptanceCriteria: requirement.acceptanceCriteria,
+    });
+
+    // Calcular Test Rigor Index (0-100%) sobre casos existentes
+    const cases = requirement.testCases;
+    const typesPresent = new Set(cases.map((c) => c.type.toLowerCase()));
+
+    let rigorScore = 0;
+    if (typesPresent.has('positive')) rigorScore += 20;
+    if (typesPresent.has('negative')) rigorScore += 25;
+    if (typesPresent.has('boundary')) rigorScore += 25;
+    if (typesPresent.has('validation')) rigorScore += 15;
+    if (typesPresent.has('alternative')) rigorScore += 15;
+
+    let rigorLevel: 'POOR' | 'FAIR' | 'GOOD' | 'EXCELLENT' = 'POOR';
+    if (rigorScore >= 85) rigorLevel = 'EXCELLENT';
+    else if (rigorScore >= 60) rigorLevel = 'GOOD';
+    else if (rigorScore >= 40) rigorLevel = 'FAIR';
+
+    const sourceCounts = {
+      AI_GENERATED: cases.filter((c) => c.source === 'AI_GENERATED').length,
+      ISTQB_BVA: cases.filter((c) => c.source === 'ISTQB_BVA').length,
+      TEMPLATE: cases.filter((c) => c.source === 'TEMPLATE').length,
+      MANUAL: cases.filter((c) => c.source === 'MANUAL').length,
+    };
+
+    return sendSuccess(res, {
+      requirementId: requirement.id,
+      code: requirement.code,
+      qualityGate: qgEvaluation,
+      testRigor: {
+        score: rigorScore,
+        level: rigorLevel,
+        typesPresent: Array.from(typesPresent),
+        missingTypes: ['positive', 'negative', 'boundary', 'validation', 'alternative'].filter(
+          (t) => !typesPresent.has(t)
+        ),
+        totalCases: cases.length,
+        sourceBreakdown: sourceCounts,
+      },
+    });
+  })
+);
+
 
 // GET /api/v1/requirements/:id/versions - Historial de versiones del requisito
 requirementsRouter.get(
