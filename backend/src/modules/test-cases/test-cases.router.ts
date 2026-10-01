@@ -10,6 +10,9 @@ import {
   assertTestCaseAccess,
 } from '../../common/utils/ownership';
 import { ReviewTestCaseUseCase } from '../../application/use-cases/review-test-case.use-case';
+import { CreateManualTestCaseUseCase } from '../../application/use-cases/create-manual-test-case.use-case';
+import { GenerateFromTemplateUseCase } from '../../application/use-cases/generate-from-template.use-case';
+import { ISTQB_TEMPLATES } from '../../core/templates/istqb-templates';
 
 export const testCasesRouter = Router();
 
@@ -149,5 +152,81 @@ testCasesRouter.patch(
       result,
       `Caso de prueba procesado como '${decision}' exitosamente`
     );
+  })
+);
+
+// ==========================================================================
+// RF-15: Creación de casos SIN IA (Manual y Plantillas ISTQB)
+// ==========================================================================
+
+const manualCaseSchema = z.object({
+  requirementId: z.string().uuid('ID de requisito inválido'),
+  type: z.enum(['positive', 'negative', 'alternative', 'boundary', 'validation']),
+  title: z.string().min(3, 'El título debe tener al menos 3 caracteres'),
+  preconditions: z.array(z.string()).optional().default([]),
+  steps: z.array(z.string().min(1)).min(1, 'Se requiere al menos un paso'),
+  testData: z.string().optional().nullable(),
+  expectedResult: z.string().min(3, 'El resultado esperado debe tener al menos 3 caracteres'),
+  priority: z.enum(['high', 'medium', 'low']),
+});
+
+const templateSchema = z.object({
+  requirementId: z.string().uuid('ID de requisito inválido'),
+  templateCategory: z.string().min(1, 'La categoría de plantilla es obligatoria'),
+});
+
+// POST /api/v1/test-cases/manual - Crear un caso de prueba manualmente (sin IA)
+testCasesRouter.post(
+  '/manual',
+  asyncHandler(async (req: Request, res: Response) => {
+    const input = manualCaseSchema.parse(req.body);
+
+    const useCase = new CreateManualTestCaseUseCase();
+    const result = await useCase.execute({
+      ...input,
+      userId: req.user!.userId,
+      userRole: req.user!.role,
+    });
+
+    return sendSuccess(res, result, 'Caso de prueba creado manualmente', 201);
+  })
+);
+
+// POST /api/v1/test-cases/from-template - Generar casos desde plantilla ISTQB (sin IA)
+testCasesRouter.post(
+  '/from-template',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { requirementId, templateCategory } = templateSchema.parse(req.body);
+
+    const useCase = new GenerateFromTemplateUseCase();
+    const result = await useCase.execute({
+      requirementId,
+      templateCategory,
+      userId: req.user!.userId,
+      userRole: req.user!.role,
+    });
+
+    return sendSuccess(
+      res,
+      result,
+      `Se generaron ${result.templateUsed.casesGenerated} casos desde la plantilla "${result.templateUsed.name}"`,
+      201
+    );
+  })
+);
+
+// GET /api/v1/test-cases/templates - Listar plantillas ISTQB disponibles
+testCasesRouter.get(
+  '/templates',
+  asyncHandler(async (_req: Request, res: Response) => {
+    const templates = ISTQB_TEMPLATES.map((t) => ({
+      key: t.key,
+      name: t.name,
+      description: t.description,
+      icon: t.icon,
+      casesCount: t.cases.length,
+    }));
+
+    return sendSuccess(res, templates, `${templates.length} plantillas ISTQB disponibles`);
   })
 );

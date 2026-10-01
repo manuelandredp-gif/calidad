@@ -266,6 +266,25 @@ class ApiClient {
     });
   }
 
+  // --- RF-15: Creación de casos SIN IA ---
+  async createManualTestCase(payload) {
+    return this.request('/test-cases/manual', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async generateFromTemplate(requirementId, templateCategory) {
+    return this.request('/test-cases/from-template', {
+      method: 'POST',
+      body: JSON.stringify({ requirementId, templateCategory }),
+    });
+  }
+
+  async getTemplates() {
+    return this.request('/test-cases/templates');
+  }
+
   // --- Trazabilidad & Métricas ---
   async getTraceability(projectId) {
     return this.request(`/traceability/${projectId}`);

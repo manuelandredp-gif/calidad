@@ -67,6 +67,11 @@ class App {
       this.logout();
     });
 
+    // RF-15: Refresh de vista después de crear casos sin IA
+    window.addEventListener('navigate:refresh', () => {
+      this.refresh();
+    });
+
     // Configurar modales
     modals.setupEventListeners();
 

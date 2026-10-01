@@ -20,11 +20,13 @@ dist/
 build/
 *.tsbuildinfo
 
-# Base de datos local SQLite (datos efímeros de desarrollo)
+# Base de datos local (datos efímeros de desarrollo)
 *.db
 *.db-shm
 *.db-wal
 **/prisma/dev.db*
+pgdata/
+**/pgdata/
 
 # Prisma (artefactos generados)
 **/.prisma/

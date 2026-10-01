@@ -55,6 +55,9 @@ export function errorHandler(
   } else if (err instanceof Prisma.PrismaClientValidationError) {
     statusCode = 400;
     message = 'Parámetros de consulta a la base de datos inválidos';
+  } else if (err instanceof Prisma.PrismaClientInitializationError) {
+    statusCode = 503;
+    message = 'No se pudo conectar a la base de datos PostgreSQL (localhost:5432). Verifique que el servicio esté activo o configure DATABASE_URL.';
   }
 
   // Registramos SIEMPRE el detalle real en el servidor (con requestId para trazar).

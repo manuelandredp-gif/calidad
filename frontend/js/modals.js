@@ -7,6 +7,7 @@ import { ProjectModalHandler } from './modals/project-modals.js';
 import { RequirementModalHandler } from './modals/requirement-modals.js';
 import { AiModalHandler } from './modals/ai-modals.js';
 import { TestCaseModalHandler } from './modals/testcase-modals.js';
+import { NoAiModalHandler } from './modals/noai-modals.js';
 
 export class ModalManager {
   constructor() {
@@ -15,6 +16,7 @@ export class ModalManager {
     this.requirementModals = new RequirementModalHandler(this);
     this.aiModals = new AiModalHandler(this);
     this.testCaseModals = new TestCaseModalHandler(this);
+    this.noAiModals = new NoAiModalHandler(this);
   }
 
   open(modalId) {
@@ -66,6 +68,7 @@ export class ModalManager {
     this.requirementModals.setup();
     this.aiModals.setup();
     this.testCaseModals.setup();
+    this.noAiModals.setup();
   }
 
   // Pre-fill Façade Methods
@@ -87,6 +90,15 @@ export class ModalManager {
 
   populateRejectTestCase(testCase) {
     this.testCaseModals.populateRejectTestCase(testCase);
+  }
+
+  // RF-15: Modals sin IA
+  openManualModal(requirement) {
+    this.noAiModals.openManualModal(requirement);
+  }
+
+  openTemplateModal(requirement) {
+    this.noAiModals.openTemplateModal(requirement);
   }
 }
 

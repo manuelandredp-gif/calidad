@@ -580,6 +580,111 @@
     </div>
   </div>
 
+  <!-- Modal: Create Manual Test Case (RF-15) -->
+  <div class="modal-overlay" id="modal-manual-testcase">
+    <div class="modal-dialog" style="max-width:620px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+          Crear Caso de Prueba Manual
+        </div>
+        <button class="btn-icon modal-close" title="Cerrar">&times;</button>
+      </div>
+      <form id="form-manual-testcase">
+        <input type="hidden" id="manual-tc-req-id" />
+        <div class="modal-body">
+          <p id="manual-tc-req-label" style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:16px;"></p>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="manual-tc-type">Tipo ISTQB *</label>
+              <select class="form-select" id="manual-tc-type" required>
+                <option value="positive">✅ Positivo</option>
+                <option value="negative">❌ Negativo</option>
+                <option value="alternative">🔀 Alternativo</option>
+                <option value="boundary">📐 Valor Límite</option>
+                <option value="validation">✔️ Validación</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="manual-tc-priority">Prioridad *</label>
+              <select class="form-select" id="manual-tc-priority" required>
+                <option value="high">🔴 Alta</option>
+                <option value="medium" selected>🟡 Media</option>
+                <option value="low">🟢 Baja</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="manual-tc-title">Título del Caso *</label>
+            <input type="text" class="form-input" id="manual-tc-title" placeholder="Ej: Login exitoso con credenciales válidas" required minlength="3" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="manual-tc-preconditions">Precondiciones <span style="color:var(--text-muted);">(una por línea)</span></label>
+            <textarea id="manual-tc-preconditions" class="form-textarea" rows="2" placeholder="El usuario está registrado&#10;El sistema está disponible"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="manual-tc-steps">Pasos * <span style="color:var(--text-muted);">(uno por línea)</span></label>
+            <textarea id="manual-tc-steps" class="form-textarea" rows="3" placeholder="Navegar a la página de login&#10;Ingresar email válido&#10;Presionar Iniciar Sesión" required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="manual-tc-testdata">Datos de Prueba</label>
+            <input type="text" class="form-input" id="manual-tc-testdata" placeholder="Ej: email=admin@test.com, password=Test123!" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="manual-tc-expected">Resultado Esperado *</label>
+            <textarea id="manual-tc-expected" class="form-textarea" rows="2" placeholder="El sistema autentica al usuario y redirige al dashboard" required minlength="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary modal-close">Cancelar</button>
+          <button type="submit" class="btn btn-primary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+            Crear Caso Manual
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Generate from ISTQB Template (RF-15) -->
+  <div class="modal-overlay" id="modal-template-generate">
+    <div class="modal-dialog" style="max-width:680px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+          Generar desde Plantilla ISTQB
+        </div>
+        <button class="btn-icon modal-close" title="Cerrar">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="template-req-id" />
+        <p id="template-req-label" style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:16px;"></p>
+        <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:18px;">
+          Selecciona una categoría de plantilla. Se generarán casos de prueba deterministas (sin IA) como punto de partida para tu revisión.
+        </p>
+        <div id="template-categories-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <!-- Se llena dinámicamente -->
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content:space-between;">
+        <span id="template-selection-label" style="font-size:0.82rem; color:var(--text-muted);">Selecciona una categoría</span>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn btn-secondary modal-close">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="btn-confirm-template" disabled>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            Generar Casos
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   </section> <!-- /#modals-container -->
 
   <!-- Toast Notification Container -->

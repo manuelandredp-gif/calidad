@@ -71,10 +71,25 @@ export function renderProjects(container) {
                   </div>
                 </div>
 
+                ${
+                  reqCount === 0
+                    ? `
+                  <div style="margin-top:10px; margin-bottom:12px; padding:10px 12px; background:rgba(99,102,241,0.08); border-left:3px solid var(--primary); border-radius:var(--radius-sm); font-size:0.8rem; color:var(--text-secondary); display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                    <div><strong>Siguiente paso:</strong> Registra requisitos funcionales para generar casos de prueba con IA.</div>
+                    <button class="btn btn-xs btn-primary btn-quick-new-req" data-id="${p.id}" style="white-space:nowrap;">+ Crear Requisito</button>
+                  </div>
+                `
+                    : ''
+                }
+
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                   <div style="display:flex; gap:6px;">
                     <button class="btn btn-sm ${isActive ? 'btn-secondary' : 'btn-primary'} btn-select-project" data-id="${p.id}">
                       ${isActive ? '✓ Activo' : 'Seleccionar'}
+                    </button>
+                    <button class="btn btn-sm btn-outline btn-open-reqs" data-id="${p.id}" title="Ver Requisitos">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                      Requisitos
                     </button>
                     <button class="btn btn-sm btn-outline btn-open-trace" data-id="${p.id}" title="Ver Matriz de Trazabilidad">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
@@ -144,6 +159,33 @@ export function renderProjects(container) {
 
         renderProjects(container);
       }
+    });
+  });
+
+  container.querySelectorAll('.btn-open-reqs').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-id');
+      const selected = projects.find((p) => p.id === id);
+      if (selected) {
+        store.set('activeProjectId', id);
+        store.set('activeProject', selected);
+      }
+      document.querySelector('[data-view="requirements"]')?.click();
+    });
+  });
+
+  container.querySelectorAll('.btn-quick-new-req').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-id');
+      const selected = projects.find((p) => p.id === id);
+      if (selected) {
+        store.set('activeProjectId', id);
+        store.set('activeProject', selected);
+      }
+      document.querySelector('[data-view="requirements"]')?.click();
+      setTimeout(() => {
+        modals.open('modal-new-requirement');
+      }, 100);
     });
   });
 

@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -67,7 +67,7 @@ app.use(
 mountSwagger(app);
 
 // -------------------- Healthchecks --------------------
-app.get('/api/health', (_req: Request, res: Response) => {
+const handleHealth = (_req: Request, res: Response) => {
   res.status(200).json({
     status: 'online',
     timestamp: new Date().toISOString(),
@@ -76,9 +76,9 @@ app.get('/api/health', (_req: Request, res: Response) => {
     environment: env.NODE_ENV,
     aiDefaultProvider: env.AI_PROVIDER_DEFAULT,
   });
-});
+};
 
-app.get('/api/health/db', async (_req: Request, res: Response, next) => {
+const handleDbHealth = async (_req: Request, res: Response, next: NextFunction) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
     res.status(200).json({
@@ -89,9 +89,9 @@ app.get('/api/health/db', async (_req: Request, res: Response, next) => {
   } catch (err) {
     next(err);
   }
-});
+};
 
-app.get('/api/health/ai', (_req: Request, res: Response) => {
+const handleAiHealth = (_req: Request, res: Response) => {
   const provider = env.AI_PROVIDER_DEFAULT;
   const keyPresent =
     provider === 'gemini'
@@ -107,7 +107,14 @@ app.get('/api/health/ai', (_req: Request, res: Response) => {
       ? `Proveedor '${provider}' configurado con credenciales activas.`
       : `Proveedor '${provider}' no cuenta con API Key configurada en backend/.env.`,
   });
-});
+};
+
+app.get('/api/health', handleHealth);
+app.get('/api/health/db', handleDbHealth);
+app.get('/api/health/ai', handleAiHealth);
+app.get('/api/v1/health', handleHealth);
+app.get('/api/v1/health/db', handleDbHealth);
+app.get('/api/v1/health/ai', handleAiHealth);
 
 // -------------------- API REST versionada (/api/v1) --------------------
 const api = express.Router();
