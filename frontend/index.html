@@ -634,6 +634,16 @@
           <div class="form-group">
             <label class="form-label" for="manual-tc-testdata">Datos de Prueba</label>
             <input type="text" class="form-input" id="manual-tc-testdata" placeholder="Ej: email=admin@test.com, password=Test123!" />
+            <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;" id="synth-data-buttons">
+              <span style="font-size:0.75rem; color:var(--text-muted); align-self:center;">🎲 Asistente de Datos Sintéticos:</span>
+              <button type="button" class="btn-synth-data" data-type="ruc_valid" style="font-size:0.72rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border-subtle); background:rgba(255,255,255,0.04); color:var(--text-secondary); cursor:pointer;">RUC Válido (SUNAT Mód 11)</button>
+              <button type="button" class="btn-synth-data" data-type="ruc_invalid" style="font-size:0.72rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border-subtle); background:rgba(255,255,255,0.04); color:var(--text-secondary); cursor:pointer;">RUC Inválido</button>
+              <button type="button" class="btn-synth-data" data-type="dni" style="font-size:0.72rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border-subtle); background:rgba(255,255,255,0.04); color:var(--text-secondary); cursor:pointer;">DNI (8 dígitos)</button>
+              <button type="button" class="btn-synth-data" data-type="card_luhn" style="font-size:0.72rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border-subtle); background:rgba(255,255,255,0.04); color:var(--text-secondary); cursor:pointer;">Tarjeta Visa (Luhn)</button>
+              <button type="button" class="btn-synth-data" data-type="boundary_255" style="font-size:0.72rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border-subtle); background:rgba(255,255,255,0.04); color:var(--text-secondary); cursor:pointer;">String 255 chars</button>
+              <button type="button" class="btn-synth-data" data-type="sqli" style="font-size:0.72rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border-subtle); background:rgba(255,255,255,0.04); color:var(--text-secondary); cursor:pointer;">SQLi Pasivo</button>
+              <button type="button" class="btn-synth-data" data-type="xss" style="font-size:0.72rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border-subtle); background:rgba(255,255,255,0.04); color:var(--text-secondary); cursor:pointer;">XSS Pasivo</button>
+            </div>
           </div>
 
           <div class="form-group">
@@ -682,6 +692,82 @@
           </button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal: Generate from BVA (Boundary Value Analysis ISTQB) -->
+  <div class="modal-overlay" id="modal-bva-generate">
+    <div class="modal-dialog" style="max-width:720px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+          Análisis de Valores Límite (ISTQB 3-Point BVA & EP)
+        </div>
+        <button class="btn-icon modal-close" title="Cerrar">&times;</button>
+      </div>
+      <form id="form-bva-generate">
+        <div class="modal-body">
+          <input type="hidden" id="bva-req-id" />
+          <p id="bva-req-label" style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:12px;"></p>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:16px;">
+            Diseño formal de pruebas deterministas de caja negra. Define la variable a probar y el sistema calculará matemáticamente los límites exactos (min, max), valores adyacentes (min-1, min+1, max-1, max+1), partición nominal y casos negativos.
+          </p>
+
+          <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; margin-bottom:12px;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="bva-var-name">Nombre de la Variable / Campo *</label>
+              <input type="text" class="form-input" id="bva-var-name" placeholder="Ej: Monto de transferencia, Edad, Longitud de clave" required minlength="2" value="Monto de Transferencia" />
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="bva-var-type">Tipo de Variable *</label>
+              <select class="form-select" id="bva-var-type" required>
+                <option value="decimal" selected>Decimal / Moneda</option>
+                <option value="integer">Entero / Cantidad</option>
+                <option value="string_length">Longitud de Texto</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; margin-bottom:16px;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="bva-var-min">Límite Mínimo (Min) *</label>
+              <input type="number" step="any" class="form-input" id="bva-var-min" value="1.00" required />
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="bva-var-max">Límite Máximo (Max) *</label>
+              <input type="number" step="any" class="form-input" id="bva-var-max" value="5000.00" required />
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="bva-var-unit">Unidad (Opcional)</label>
+              <input type="text" class="form-input" id="bva-var-unit" placeholder="Ej: USD, PEN, años" value="USD" />
+            </div>
+          </div>
+
+          <!-- Live Preview -->
+          <div style="margin-top:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:0.78rem; font-weight:700; text-transform:uppercase; color:var(--text-muted);">
+                Previsualización en Vivo de Casos Calculados (ISTQB CTFL v4.0)
+              </span>
+              <span id="bva-preview-count" class="badge badge-derived" style="font-size:0.75rem;">8 casos</span>
+            </div>
+            <div id="bva-live-preview-list" style="max-height:220px; overflow-y:auto; border:1px solid var(--border-subtle); border-radius:var(--radius-sm); background:rgba(0,0,0,0.2); padding:8px;">
+              <!-- Se calcula dinámicamente en tiempo real -->
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer" style="justify-content:space-between;">
+          <span style="font-size:0.8rem; color:var(--text-muted);">Técnica de Caja Negra: BVA 3-Point + Equivalence Partitioning</span>
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="btn btn-secondary modal-close">Cancelar</button>
+            <button type="submit" class="btn btn-primary" id="btn-submit-bva">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+              Generar Casos BVA
+            </button>
+          </div>
+        </div>
+      </form>
     </div>
   </div>
 

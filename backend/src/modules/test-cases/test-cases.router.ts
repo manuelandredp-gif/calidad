@@ -12,6 +12,8 @@ import {
 import { ReviewTestCaseUseCase } from '../../application/use-cases/review-test-case.use-case';
 import { CreateManualTestCaseUseCase } from '../../application/use-cases/create-manual-test-case.use-case';
 import { GenerateFromTemplateUseCase } from '../../application/use-cases/generate-from-template.use-case';
+import { GenerateFromBvaUseCase } from '../../application/use-cases/generate-from-bva.use-case';
+import { SyntheticDataEngine } from '../../core/test-design/synthetic-data';
 import { ISTQB_TEMPLATES } from '../../core/templates/istqb-templates';
 
 export const testCasesRouter = Router();
@@ -91,70 +93,8 @@ testCasesRouter.get(
   })
 );
 
-// GET /api/v1/test-cases/:id - Caso individual con trazabilidad y revisiones
-testCasesRouter.get(
-  '/:id',
-  asyncHandler(async (req: Request, res: Response) => {
-    await assertTestCaseAccess(req.params.id, req.user!.userId, req.user!.role);
-    const testCase = await prisma.testCase.findUnique({
-      where: { id: req.params.id },
-      include: {
-        requirement: {
-          select: { id: true, code: true, title: true, description: true, acceptanceCriteria: true, version: true, projectId: true },
-        },
-        generation: {
-          select: { id: true, provider: true, model: true, inputTokens: true, outputTokens: true, estimatedCost: true, responseTimeMs: true, createdAt: true },
-        },
-        ...reviewsInclude,
-      },
-    });
-    return sendSuccess(res, testCase);
-  })
-);
-
-// GET /api/v1/test-cases/:id/history - Historial de revisiones (antes vs después del mismo caso)
-testCasesRouter.get(
-  '/:id/history',
-  asyncHandler(async (req: Request, res: Response) => {
-    await assertTestCaseAccess(req.params.id, req.user!.userId, req.user!.role);
-    const reviews = await prisma.testCaseReview.findMany({
-      where: { testCaseId: req.params.id },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        reviewer: { select: { id: true, fullName: true, role: true } },
-      },
-    });
-    return sendSuccess(res, reviews);
-  })
-);
-
-// PATCH /api/v1/test-cases/:id/review - Punto Único de Revisión, Edición y Aprobación/Rechazo
-testCasesRouter.patch(
-  '/:id/review',
-  asyncHandler(async (req: Request, res: Response) => {
-    await assertTestCaseAccess(req.params.id, req.user!.userId, req.user!.role);
-    const { decision, comments, justification, expectedVersion, ...updates } = reviewSchema.parse(req.body);
-
-    const useCase = new ReviewTestCaseUseCase();
-    const result = await useCase.execute({
-      testCaseId: req.params.id,
-      reviewerId: req.user!.userId,
-      reviewerRole: req.user!.role,
-      decision,
-      comments,
-      justification,
-      expectedVersion,
-      updates: Object.keys(updates).length > 0 ? updates : undefined,
-    });
-
-    return sendSuccess(
-      res,
-      result,
-      `Caso de prueba procesado como '${decision}' exitosamente`
-    );
-  })
-);
-
+// ==========================================================================
+// RF-15 & Técnicas ISTQB: Creación de casos SIN IA
 // ==========================================================================
 // RF-15: Creación de casos SIN IA (Manual y Plantillas ISTQB)
 // ==========================================================================
@@ -230,3 +170,172 @@ testCasesRouter.get(
     return sendSuccess(res, templates, `${templates.length} plantillas ISTQB disponibles`);
   })
 );
+
+const bvaSchema = z.object({
+  requirementId: z.string().uuid('ID de requisito inválido'),
+  variable: z.object({
+    name: z.string().min(2, 'El nombre de la variable debe tener al menos 2 caracteres'),
+    type: z.enum(['integer', 'decimal', 'string_length']),
+    min: z.number(),
+    max: z.number(),
+    unit: z.string().optional(),
+    decimals: z.number().int().min(1).max(6).optional(),
+  }),
+});
+
+// POST /api/v1/test-cases/from-bva - Generar casos deterministas con Análisis de Valores Límite
+testCasesRouter.post(
+  '/from-bva',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { requirementId, variable } = bvaSchema.parse(req.body);
+
+    const useCase = new GenerateFromBvaUseCase();
+    const result = await useCase.execute({
+      requirementId,
+      variable,
+      userId: req.user!.userId,
+      userRole: req.user!.role,
+    });
+
+    return sendSuccess(
+      res,
+      result,
+      `Se generaron ${result.bvaSummary.casesInserted} casos formales de BVA para "${variable.name}"`,
+      201
+    );
+  })
+);
+
+// GET /api/v1/test-cases/synthetic-data - Generar lote de datos sintéticos de prueba matemáticos
+testCasesRouter.get(
+  '/synthetic-data',
+  asyncHandler(async (_req: Request, res: Response) => {
+    const data = {
+      luhnCards: {
+        visaValid: SyntheticDataEngine.generateLuhnCard('visa', true),
+        visaInvalid: SyntheticDataEngine.generateLuhnCard('visa', false),
+        mastercardValid: SyntheticDataEngine.generateLuhnCard('mastercard', true),
+        amexValid: SyntheticDataEngine.generateLuhnCard('amex', true),
+      },
+      peruvianDocs: {
+        dniValid: SyntheticDataEngine.generateDni(true),
+        dniInvalid: SyntheticDataEngine.generateDni(false),
+        rucNaturalValid: SyntheticDataEngine.generateRuc('natural', true),
+        rucJuridicaValid: SyntheticDataEngine.generateRuc('juridica', true),
+        rucInvalid: SyntheticDataEngine.generateRuc('juridica', false),
+      },
+      boundaryStrings: SyntheticDataEngine.getBoundaryDataSet(255),
+      emails: {
+        valid: SyntheticDataEngine.getSyntheticEmail(true),
+        invalid: SyntheticDataEngine.getSyntheticEmail(false),
+      },
+    };
+
+    return sendSuccess(res, data, 'Datos sintéticos de prueba generados exitosamente');
+  })
+);
+
+// POST /api/v1/test-cases/synthetic-data/validate - Validar dato contra algoritmos oficiales
+testCasesRouter.post(
+  '/synthetic-data/validate',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { type, value } = z
+      .object({
+        type: z.enum(['luhn_card', 'ruc_pe', 'dni_pe']),
+        value: z.string().min(1),
+      })
+      .parse(req.body);
+
+    let isValid = false;
+    let description = '';
+
+    if (type === 'luhn_card') {
+      isValid = SyntheticDataEngine.validateLuhn(value);
+      description = isValid
+        ? 'Tarjeta válida según el algoritmo de Luhn (ISO/IEC 7812)'
+        : 'Tarjeta inválida: no cumple el algoritmo de Luhn';
+    } else if (type === 'ruc_pe') {
+      isValid = SyntheticDataEngine.validateRuc(value);
+      description = isValid
+        ? 'RUC válido según Módulo 11 de SUNAT'
+        : 'RUC inválido: prefijo no reconocido o dígito verificador incorrecto';
+    } else if (type === 'dni_pe') {
+      isValid = /^\d{8}$/.test(value.trim());
+      description = isValid
+        ? 'DNI formalmente válido (8 dígitos numéricos)'
+        : 'DNI inválido: debe contener exactamente 8 dígitos numéricos';
+    }
+
+    return sendSuccess(res, { type, value, isValid, description });
+  })
+);
+
+// ==========================================================================
+// Rutas parametrizadas por ID (al final para no colisionar con rutas estáticas)
+// ==========================================================================
+
+// GET /api/v1/test-cases/:id - Caso individual con trazabilidad y revisiones
+testCasesRouter.get(
+  '/:id',
+  asyncHandler(async (req: Request, res: Response) => {
+    await assertTestCaseAccess(req.params.id, req.user!.userId, req.user!.role);
+    const testCase = await prisma.testCase.findUnique({
+      where: { id: req.params.id },
+      include: {
+        requirement: {
+          select: { id: true, code: true, title: true, description: true, acceptanceCriteria: true, version: true, projectId: true },
+        },
+        generation: {
+          select: { id: true, provider: true, model: true, inputTokens: true, outputTokens: true, estimatedCost: true, responseTimeMs: true, createdAt: true },
+        },
+        ...reviewsInclude,
+      },
+    });
+    return sendSuccess(res, testCase);
+  })
+);
+
+// GET /api/v1/test-cases/:id/history - Historial de revisiones (antes vs después del mismo caso)
+testCasesRouter.get(
+  '/:id/history',
+  asyncHandler(async (req: Request, res: Response) => {
+    await assertTestCaseAccess(req.params.id, req.user!.userId, req.user!.role);
+    const reviews = await prisma.testCaseReview.findMany({
+      where: { testCaseId: req.params.id },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        reviewer: { select: { id: true, fullName: true, role: true } },
+      },
+    });
+    return sendSuccess(res, reviews);
+  })
+);
+
+// PATCH /api/v1/test-cases/:id/review - Punto Único de Revisión, Edición y Aprobación/Rechazo
+testCasesRouter.patch(
+  '/:id/review',
+  asyncHandler(async (req: Request, res: Response) => {
+    await assertTestCaseAccess(req.params.id, req.user!.userId, req.user!.role);
+    const { decision, comments, justification, expectedVersion, ...updates } = reviewSchema.parse(req.body);
+
+    const useCase = new ReviewTestCaseUseCase();
+    const result = await useCase.execute({
+      testCaseId: req.params.id,
+      reviewerId: req.user!.userId,
+      reviewerRole: req.user!.role,
+      decision,
+      comments,
+      justification,
+      expectedVersion,
+      updates: Object.keys(updates).length > 0 ? updates : undefined,
+    });
+
+    return sendSuccess(
+      res,
+      result,
+      `Caso de prueba procesado como '${decision}' exitosamente`
+    );
+  })
+);
+
+

@@ -92,13 +92,17 @@ export class ModalManager {
     this.testCaseModals.populateRejectTestCase(testCase);
   }
 
-  // RF-15: Modals sin IA
+  // RF-15 & ISTQB Formal: Modals sin IA
   openManualModal(requirement) {
     this.noAiModals.openManualModal(requirement);
   }
 
   openTemplateModal(requirement) {
     this.noAiModals.openTemplateModal(requirement);
+  }
+
+  openBvaModal(requirement) {
+    this.noAiModals.openBvaModal(requirement);
   }
 }
 

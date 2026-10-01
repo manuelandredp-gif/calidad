@@ -201,6 +201,10 @@ function renderSelectedRequirement(req) {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
             📋 Plantilla
           </button>
+          <button class="btn btn-sm btn-launch-bva" data-req-id="${req.id}" style="background:rgba(59,130,246,0.15); color:#60a5fa; border:1px solid rgba(59,130,246,0.3);" title="Diseño formal determinista por Análisis de Valores Límite (ISTQB BVA 3-Point)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            📐 BVA Límites
+          </button>
           <button class="btn btn-sm btn-launch-manual" data-req-id="${req.id}" style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.3);" title="Crear caso de prueba manualmente (sin IA)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
             ✍️ Manual
@@ -331,6 +335,17 @@ function setupRequirementDetailEvents(container) {
       const req = reqs.find((r) => r.id === reqId);
       if (req) {
         modals.openTemplateModal(req);
+      }
+    });
+  });
+
+  container.querySelectorAll('.btn-launch-bva').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const reqId = btn.getAttribute('data-req-id');
+      const reqs = store.get('requirements') || [];
+      const req = reqs.find((r) => r.id === reqId);
+      if (req) {
+        modals.openBvaModal(req);
       }
     });
   });

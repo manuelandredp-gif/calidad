@@ -325,6 +325,15 @@ function renderTestCaseCard(tc) {
   if (tc.status === 'MODIFIED') statusBadge = `<span class="badge badge-source-rule">✏️ MODIFICADO</span>`;
   if (tc.status === 'REJECTED') statusBadge = `<span class="badge badge-danger">✕ RECHAZADO</span>`;
 
+  let sourceBadge = `<span class="badge" style="background:rgba(99,102,241,0.15); color:#818cf8; border:1px solid rgba(99,102,241,0.3);" title="Generado mediante Modelo de Lenguaje">🤖 IA</span>`;
+  if (tc.source === 'ISTQB_BVA') {
+    sourceBadge = `<span class="badge" style="background:rgba(59,130,246,0.15); color:#60a5fa; border:1px solid rgba(59,130,246,0.3);" title="Técnica Formal ISTQB: Valores Límite de 3 Puntos">📐 BVA</span>`;
+  } else if (tc.source === 'TEMPLATE') {
+    sourceBadge = `<span class="badge" style="background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.3);" title="Generado desde Patrón / Plantilla ISTQB">📋 Plantilla</span>`;
+  } else if (tc.source === 'MANUAL') {
+    sourceBadge = `<span class="badge" style="background:rgba(245,158,11,0.15); color:#fbbf24; border:1px solid rgba(245,158,11,0.3);" title="Diseñado manualmente por analista QA">✍️ Manual</span>`;
+  }
+
   const evidenceBadge = `<span class="badge badge-${tc.evidenceStatus || 'derived'}">Evidencia: ${tc.evidenceStatus || 'derived'}</span>`;
 
   const obsoleteWarning = tc.isObsolete
@@ -343,6 +352,7 @@ function renderTestCaseCard(tc) {
           <span class="badge badge-outline">v${tc.version || 1}</span>
           <span class="badge badge-type-${tc.type}">${tc.type}</span>
           <span class="badge badge-outline">Prioridad: ${tc.priority}</span>
+          ${sourceBadge}
           ${evidenceBadge}
         </div>
         <div>

@@ -285,6 +285,25 @@ class ApiClient {
     return this.request('/test-cases/templates');
   }
 
+  // --- Técnicas Formales ISTQB: Análisis de Valores Límite (BVA) & Datos Sintéticos ---
+  async generateFromBva(requirementId, variable) {
+    return this.request('/test-cases/from-bva', {
+      method: 'POST',
+      body: JSON.stringify({ requirementId, variable }),
+    });
+  }
+
+  async getSyntheticData() {
+    return this.request('/test-cases/synthetic-data');
+  }
+
+  async validateSyntheticData(type, value) {
+    return this.request('/test-cases/synthetic-data/validate', {
+      method: 'POST',
+      body: JSON.stringify({ type, value }),
+    });
+  }
+
   // --- Trazabilidad & Métricas ---
   async getTraceability(projectId) {
     return this.request(`/traceability/${projectId}`);

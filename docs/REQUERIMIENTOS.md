@@ -25,6 +25,7 @@
 | **RF-12** | Historial de Revisiones y Generaciones | Consulta inmutable de ejecuciones de IA por requisito y revisiones históricas del caso de prueba con comparador visual de cambios (antes vs. después). |
 | **RF-13** | Detección Básica de Ambigüedad | Análisis estático de términos vagos, cláusulas abiertas y criterios de aceptación insuficientes en el detalle del requisito para advertir al analista QA antes de generar pruebas. |
 | **RF-14** | Detección Básica de Duplicados | Comparación normalizada de títulos, pasos y resultados entre casos del mismo requisito para advertir sobre posibles redundancias sin eliminarlas automáticamente. |
+| **RF-15** | Diseño Formal ISTQB y Creación Sin IA | Plataforma Dual de Calidad: generación y diseño de casos mediante tres modalidades independientes de IA: 1) **Análisis de Valores Límite (BVA de 3 puntos) y Partición de Equivalencia (EP)** con cálculo matemático automático para variables cuantitativas y longitud de caracteres; 2) **Catálogo de Patrones ISTQB** predefinidos; 3) **Diseño Manual Estructurado** asistido por generador de datos sintéticos reales (Luhn, Módulo 11 SUNAT, DNI, boundary strings). Todos los casos se integran con códigos correlativos atómicos (`CP-XXX`), trazabilidad completa y revisión humana obligatoria (RF-06). |
 
 ---
 
@@ -32,7 +33,6 @@
 
 Conforme a la sección 3.2 del plan de consolidación, los siguientes elementos quedan expresamente excluidos del MVP:
 
-- Generación offline de casos mediante reglas heurísticas, tablas de decisión, árboles de clasificación o pairwise sin IA.
 - Adaptadores simulados (`mock`) en producción, backend o frontend.
 - Cuentas de demostración pre-cargadas o seeds destructivos.
 - Aprobación masiva de casos en lote (se exige revisión humana individual).
