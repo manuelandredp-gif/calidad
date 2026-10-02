@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 import { Prisma } from '@prisma/client';
+import { DomainSecurityException, ResourceNotFoundDomainException } from '../../core/domain/security/security-policy';
 import { ApiError } from '../errors/api-error';
 import { logger } from '../utils/logger';
 import { isProduction } from '../../config/env';
@@ -33,6 +34,10 @@ export function errorHandler(
   if (err instanceof ApiError) {
     statusCode = err.statusCode;
     message = err.message;
+  } else if (err instanceof DomainSecurityException) {
+    statusCode = 403; message = err.message;
+  } else if (err instanceof ResourceNotFoundDomainException) {
+    statusCode = 404; message = err.message;
   } else if (err instanceof ZodError) {
     statusCode = 400;
     message = err.errors[0]?.message ?? 'Datos de entrada inválidos';

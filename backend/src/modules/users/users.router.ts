@@ -54,14 +54,16 @@ usersRouter.patch(
     const { id } = req.params;
     const { role, isActive } = updateUserSchema.parse(req.body);
 
-    const targetUser = await prisma.user.findUnique({ where: { id } });
+    const updated = await prisma.$transaction(async tx => {
+      await tx.$queryRaw`SELECT 1 AS locked FROM pg_advisory_xact_lock(731904)`;
+    const targetUser = await tx.user.findUnique({ where: { id } });
     if (!targetUser) {
       throw ApiError.notFound('Usuario no encontrado');
     }
 
     // Regla de seguridad: Impedir desactivar o degradar la última cuenta ADMIN activa
     if (targetUser.role === 'ADMIN' && (isActive === false || (role && role !== 'ADMIN'))) {
-      const activeAdminCount = await prisma.user.count({
+      const activeAdminCount = await tx.user.count({
         where: { role: 'ADMIN', isActive: true },
       });
 
@@ -72,7 +74,7 @@ usersRouter.patch(
       }
     }
 
-    const updated = await prisma.user.update({
+    return tx.user.update({
       where: { id },
       data: {
         ...(role !== undefined ? { role } : {}),
@@ -88,6 +90,7 @@ usersRouter.patch(
       },
     });
 
+    });
     audit(req, 'USER_ADMIN_UPDATED', { targetUserId: id, role, isActive });
 
     return sendSuccess(res, updated, 'Usuario actualizado exitosamente');

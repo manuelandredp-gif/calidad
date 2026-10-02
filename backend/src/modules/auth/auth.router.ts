@@ -105,6 +105,7 @@ authRouter.post(
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
+
     if (!isMatch) {
       throw ApiError.unauthorized('Credenciales inválidas');
     }

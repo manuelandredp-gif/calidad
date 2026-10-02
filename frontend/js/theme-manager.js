@@ -8,8 +8,7 @@ export class ThemeManager {
   static STORAGE_KEY = 'testgenai_theme';
 
   static init() {
-    const saved = localStorage.getItem(this.STORAGE_KEY) || 'dark';
-    this.applyTheme(saved);
+    this.applyTheme(this.getTheme());
 
     // Bind theme toggle buttons
     document.querySelectorAll('.btn-toggle-theme').forEach((btn) => {
@@ -26,7 +25,7 @@ export class ThemeManager {
   static applyTheme(theme) {
     const target = theme === 'light' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', target);
-    localStorage.setItem(this.STORAGE_KEY, target);
+    try { localStorage.setItem(this.STORAGE_KEY, target); } catch { /* Keep switching available without storage. */ }
 
     // Update icon states across the app
     this.updateIcons(target);
@@ -36,17 +35,26 @@ export class ThemeManager {
   static toggle() {
     const current = this.getTheme();
     const next = current === 'light' ? 'dark' : 'light';
+    clearTimeout(this.transitionTimer);
+    document.documentElement.classList.add('theme-changing');
     this.applyTheme(next);
+    this.transitionTimer = setTimeout(() => document.documentElement.classList.remove('theme-changing'), 350);
     return next;
   }
 
   static updateIcons(theme) {
     const isLight = theme === 'light';
     document.querySelectorAll('.theme-icon-sun').forEach((el) => {
-      el.style.display = isLight ? 'none' : 'inline-block';
+      el.hidden = isLight;
     });
     document.querySelectorAll('.theme-icon-moon').forEach((el) => {
-      el.style.display = isLight ? 'inline-block' : 'none';
+      el.hidden = !isLight;
+    });
+    document.querySelectorAll('.btn-toggle-theme').forEach(btn => {
+      const label = isLight ? 'Modo oscuro' : 'Modo claro';
+      btn.setAttribute('aria-label', `Activar ${label.toLowerCase()}`);
+      btn.title = `Activar ${label.toLowerCase()}`;
+      btn.querySelector('.theme-toggle-label').textContent = label;
     });
   }
 }

@@ -27,6 +27,11 @@ build/
 **/prisma/dev.db*
 pgdata/
 **/pgdata/
+backend/data/
+.vercel/
+.vercel-deploy/
+.vercel-frontend/
+**/data/postgres/
 
 # Prisma (artefactos generados)
 **/.prisma/

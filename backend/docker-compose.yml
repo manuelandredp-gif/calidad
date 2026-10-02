@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -8,9 +6,9 @@ services:
     environment:
       POSTGRES_DB: calidad_db
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres_password_2026
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -30,16 +28,17 @@ services:
     environment:
       NODE_ENV: production
       PORT: 4000
-      DATABASE_URL: postgresql://postgres:postgres_password_2026@postgres:5432/calidad_db?schema=public
-      JWT_SECRET: super_secure_production_jwt_secret_testgenai_2026_minimum_32_chars
-      JWT_EXPIRES_IN: 1h
-      JWT_REFRESH_EXPIRES_IN: 7d
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD}@postgres:5432/calidad_db?schema=public
+      DIRECT_URL: postgresql://postgres:${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD}@postgres:5432/calidad_db?schema=public
+      JWT_SECRET: ${JWT_SECRET:?Configure JWT_SECRET aleatorio}
+      ACCESS_TOKEN_EXPIRES_IN: 1h
+      REFRESH_TOKEN_EXPIRES_IN: 7d
       AI_PROVIDER_DEFAULT: gemini
-      AI_GEMINI_MODEL: gemini-1.5-flash
-      AI_OPENAI_MODEL: gpt-4o-mini
+      AI_GEMINI_MODEL: ${AI_GEMINI_MODEL:-gemini-3.1-flash-lite}
+      AI_OPENAI_MODEL: ${AI_OPENAI_MODEL:-gpt-4o-mini}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      CORS_ORIGINS: http://localhost:4000,http://127.0.0.1:4000
+      CORS_ORIGINS: ${CORS_ORIGINS:?Configure URL publica HTTPS}
     depends_on:
       postgres:
         condition: service_healthy

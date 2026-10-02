@@ -132,7 +132,7 @@
 
 .auth-tab-btn:hover:not(.active) {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.04);
+  background:var(--bg-soft);
 }
 
 .auth-form {
@@ -238,7 +238,7 @@
 }
 
 .chip-role.admin {
-  color: #f59e0b;
+  color:var(--text-warning);
   background: rgba(245, 158, 11, 0.15);
 }
 

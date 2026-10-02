@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -148,7 +149,7 @@ model TestCase {
   testData           String?          @map("test_data")
   expectedResult     String           @map("expected_result")
   priority           String           @default("medium") // high, medium, low
-  evidenceStatus     String           @default("pending") // derived, suggested, ambiguous, conflict, pending
+  evidenceStatus     String           @default("pending") @map("evidence_status") // derived, suggested, ambiguous, conflict, pending
   evidenceText       String?          @map("evidence_text")
   originalContent    Json?            @map("original_content") // Snapshot inmutable de la salida inicial
   version            Int              @default(1) // Versión de revisión (para bloqueo optimista)

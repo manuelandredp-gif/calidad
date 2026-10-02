@@ -3,6 +3,7 @@
 // PostgreSQL Persistence for Test Runs & Executions
 // ==========================================================================
 
+import { ApiError } from '../../common/errors/api-error';
 import { prisma } from '../../config/prisma';
 import { ITestRunRepository } from '../../core/ports/test-run-repository.port';
 import { TestRunEntity, TestExecutionResultProps } from '../../core/domain/entities/test-run.entity';
@@ -140,14 +141,12 @@ export class PrismaTestRunRepository implements ITestRunRepository {
     evidenceText?: string,
     executedBy?: string
   ): Promise<TestExecutionResultProps> {
-    const execution = await prisma.testExecutionResult.findFirstOrThrow({
-      where: {
-        testRunId: runId,
-        testCaseId: caseId,
-      },
-    });
+    const execution = await prisma.testExecutionResult.findFirst({ where: { testRunId: runId, testCaseId: caseId } });
+    if (!execution) throw ApiError.notFound('El caso no pertenece a este ciclo.');
 
-    const updated = await prisma.testExecutionResult.update({
+    const updated = await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM test_runs WHERE id = ${runId} FOR UPDATE`;
+      const result = await tx.testExecutionResult.update({
       where: { id: execution.id },
       data: {
         status,
@@ -158,9 +157,9 @@ export class PrismaTestRunRepository implements ITestRunRepository {
       },
     });
 
-    await prisma.testRun.update({
-      where: { id: runId },
-      data: { updatedAt: new Date() },
+      const pending = await tx.testExecutionResult.count({ where: { testRunId: runId, status: 'PENDING' } });
+      await tx.testRun.update({ where: { id: runId }, data: { status: pending === 0 ? 'COMPLETED' : 'IN_PROGRESS', updatedAt: new Date() } });
+      return result;
     });
 
     return {
@@ -184,13 +183,10 @@ export class PrismaTestRunRepository implements ITestRunRepository {
     caseId: string,
     defectNotes: string
   ): Promise<TestExecutionResultProps> {
-    const execution = await prisma.testExecutionResult.findFirstOrThrow({
-      where: {
-        testRunId: runId,
-        testCaseId: caseId,
-      },
-    });
+    const execution = await prisma.testExecutionResult.findFirst({ where: { testRunId: runId, testCaseId: caseId } });
+    if (!execution) throw ApiError.notFound('El caso no pertenece a este ciclo.');
 
+    if (execution.status !== 'FAILED') throw ApiError.badRequest('Solo se pueden registrar defectos de casos fallidos.');
     const updated = await prisma.testExecutionResult.update({
       where: { id: execution.id },
       data: {

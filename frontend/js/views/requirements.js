@@ -166,7 +166,7 @@ function renderSelectedRequirement(req) {
   const ambiguityBox =
     ambiguityWarnings.length > 0
       ? `
-      <div style="background:rgba(245, 158, 11, 0.1); border:1px solid rgba(245, 158, 11, 0.35); border-radius:var(--radius-md); padding:10px 14px; margin-bottom:18px; font-size:0.82rem; color:#fbbf24;">
+      <div style="background:rgba(245, 158, 11, 0.1); border:1px solid rgba(245, 158, 11, 0.35); border-radius:var(--radius-md); padding:10px 14px; margin-bottom:18px; font-size:0.82rem; color:var(--text-warning);">
         <strong>⚠️ Advertencia de Ambigüedad (RF-13):</strong> Se detectaron términos imprecisos o no cuantificados en el texto: 
         <em>${ambiguityWarnings.map((w) => `"${w}"`).join(', ')}</em>. 
         Se recomienda especificar valores medibles (ej. "menos de 2 segundos" en vez de "rápido") para una mejor derivación de pruebas.
@@ -197,15 +197,15 @@ function renderSelectedRequirement(req) {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
             🤖 IA
           </button>
-          <button class="btn btn-sm btn-launch-template" data-req-id="${req.id}" style="background:rgba(16,185,129,0.15); color:#10b981; border:1px solid rgba(16,185,129,0.3);" title="Generar casos desde plantilla ISTQB (sin IA)">
+          <button class="btn btn-sm btn-launch-template" data-req-id="${req.id}" style="background:rgba(16,185,129,0.15); color:var(--text-success); border:1px solid rgba(16,185,129,0.3);" title="Generar casos desde plantilla ISTQB (sin IA)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
             📋 Plantilla
           </button>
-          <button class="btn btn-sm btn-launch-bva" data-req-id="${req.id}" style="background:rgba(59,130,246,0.15); color:#60a5fa; border:1px solid rgba(59,130,246,0.3);" title="Diseño formal determinista por Análisis de Valores Límite (ISTQB BVA 3-Point)">
+          <button class="btn btn-sm btn-launch-bva" data-req-id="${req.id}" style="background:rgba(59,130,246,0.15); color:var(--text-info); border:1px solid rgba(59,130,246,0.3);" title="Diseño formal determinista por Análisis de Valores Límite (ISTQB BVA 3-Point)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
             📐 BVA Límites
           </button>
-          <button class="btn btn-sm btn-launch-manual" data-req-id="${req.id}" style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.3);" title="Crear caso de prueba manualmente (sin IA)">
+          <button class="btn btn-sm btn-launch-manual" data-req-id="${req.id}" style="background:rgba(245,158,11,0.15); color:var(--text-warning); border:1px solid rgba(245,158,11,0.3);" title="Crear caso de prueba manualmente (sin IA)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
             ✍️ Manual
           </button>
@@ -222,7 +222,7 @@ function renderSelectedRequirement(req) {
         <h4 style="font-size:0.76rem; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;">
           Descripción / Historia de Usuario
         </h4>
-        <p style="font-size:0.88rem; color:var(--text-secondary); line-height:1.6; background:rgba(0,0,0,0.15); padding:12px 14px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+        <p style="font-size:0.88rem; color:var(--text-secondary); line-height:1.6; background:var(--bg-panel); padding:12px 14px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
           ${escapeHtml(req.description || 'Sin descripción detallada.')}
         </p>
       </div>
@@ -244,7 +244,7 @@ function renderSelectedRequirement(req) {
             Historial de Ejecuciones IA
           </h4>
         </div>
-        <div id="ai-history-box-${req.id}" style="font-size:0.82rem; color:var(--text-secondary); background:rgba(0,0,0,0.2); padding:12px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+        <div id="ai-history-box-${req.id}" style="font-size:0.82rem; color:var(--text-secondary); background:var(--bg-panel); padding:12px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
           <span class="spinner-inline"></span> Cargando historial...
         </div>
       </div>
@@ -292,7 +292,7 @@ function setupRequirementDetailEvents(container) {
               : '#ef4444';
 
           qgBox.innerHTML = `
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; background:rgba(255,255,255,0.02); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:14px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; background:var(--bg-soft); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:14px;">
               <!-- Quality Gate Requisito -->
               <div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
@@ -303,16 +303,16 @@ function setupRequirementDetailEvents(container) {
                     Testability: ${qg.testabilityScore}/100 (${qg.testabilityLevel})
                   </span>
                 </div>
-                <div style="background:rgba(255,255,255,0.08); height:6px; border-radius:3px; overflow:hidden; margin-bottom:10px;">
+                <div style="background:var(--bg-soft); height:6px; border-radius:3px; overflow:hidden; margin-bottom:10px;">
                   <div style="width:${qg.testabilityScore}%; height:100%; background:${scoreColor}; transition:width 0.4s ease;"></div>
                 </div>
                 <div style="font-size:0.78rem; color:var(--text-secondary); line-height:1.4; margin-bottom:8px;">
-                  <span style="color:#60a5fa; font-weight:600;">💡 Técnica Sugerida:</span> ${escapeHtml(qg.recommendedTechnique.name)}
+                  <span style="color:var(--text-info); font-weight:600;">💡 Técnica Sugerida:</span> ${escapeHtml(qg.recommendedTechnique.name)}
                 </div>
                 ${
                   qg.improvements.length > 0
-                    ? `<div style="font-size:0.74rem; color:#fca5a5; line-height:1.3;">⚠️ ${escapeHtml(qg.improvements[0])}</div>`
-                    : `<div style="font-size:0.74rem; color:#86efac; line-height:1.3;">✓ Cumple criterios de comprobabilidad formal.</div>`
+                    ? `<div style="font-size:0.74rem; color:var(--text-error); line-height:1.3;">⚠️ ${escapeHtml(qg.improvements[0])}</div>`
+                    : `<div style="font-size:0.74rem; color:var(--text-success); line-height:1.3;">✓ Cumple criterios de comprobabilidad formal.</div>`
                 }
               </div>
 
@@ -326,7 +326,7 @@ function setupRequirementDetailEvents(container) {
                     Rigor: ${rigor.score}% (${rigor.level})
                   </span>
                 </div>
-                <div style="background:rgba(255,255,255,0.08); height:6px; border-radius:3px; overflow:hidden; margin-bottom:10px;">
+                <div style="background:var(--bg-soft); height:6px; border-radius:3px; overflow:hidden; margin-bottom:10px;">
                   <div style="width:${rigor.score}%; height:100%; background:${rigorColor}; transition:width 0.4s ease;"></div>
                 </div>
                 <div style="display:flex; flex-wrap:wrap; gap:4px; font-size:0.72rem; margin-bottom:8px;">
@@ -368,7 +368,7 @@ function setupRequirementDetailEvents(container) {
                 .slice(0, 5)
                 .map(
                   (h) => `
-                <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:rgba(255,255,255,0.02); border-radius:var(--radius-sm); font-size:0.78rem; flex-wrap:wrap; gap:6px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:var(--bg-soft); border-radius:var(--radius-sm); font-size:0.78rem; flex-wrap:wrap; gap:6px;">
                   <div style="display:flex; align-items:center; gap:8px;">
                     <span class="badge badge-source-ai">${escapeHtml(h.provider)} / ${escapeHtml(h.model)}</span>
                     <span style="color:${h.status === 'SUCCEEDED' ? 'var(--success)' : 'var(--error)'}; font-weight:600;">${h.status}</span>

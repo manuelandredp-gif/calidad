@@ -26,7 +26,7 @@ export class OpenAIAdapter implements IAIProvider {
       );
     }
 
-    const modelName = options?.model || 'gpt-4o-mini';
+    const modelName = options?.model || env.AI_OPENAI_MODEL;
     const { systemPrompt, userPrompt, version } = buildPromptForRequirement(
       requirementCode,
       requirementTitle,
@@ -47,7 +47,7 @@ export class OpenAIAdapter implements IAIProvider {
           body: JSON.stringify({
             model: modelName,
             response_format: { type: 'json_object' },
-            temperature: options?.temperature ?? 0.2,
+            ...(!modelName.startsWith('gpt-5') ? { temperature: options?.temperature ?? 0.2 } : {}),
             messages: [
               { role: 'system', content: systemPrompt },
               { role: 'user', content: userPrompt },

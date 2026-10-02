@@ -10,6 +10,7 @@ export interface ModelPricing {
 }
 
 export const AI_PRICING_TABLE: Record<string, ModelPricing> = {
+  'gemini-3.1-flash-lite': { inputPerMillion: 0.25, outputPerMillion: 1.50 },
   // Modelos de Google Gemini (tarifas oficiales vigentes)
   'gemini-2.5-flash-lite': { inputPerMillion: 0.10, outputPerMillion: 0.40 },
   'gemini-1.5-flash': { inputPerMillion: 0.075, outputPerMillion: 0.30 },

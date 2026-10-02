@@ -61,10 +61,12 @@ export class CloneTestCaseUseCase {
     const newExpectedResult = applyReplace(sourceCase.expectedResult);
 
     const cloned = await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM requirements WHERE id = ${requirementId} FOR UPDATE`;
       const currentReq = await tx.requirement.findUniqueOrThrow({
         where: { id: requirementId },
-        select: { nextCaseNumber: true, version: true },
+        select: { nextCaseNumber: true, version: true, status: true },
       });
+      if (currentReq.status === 'OBSOLETE') throw ApiError.forbidden('El requisito está archivado.');
 
       const codeNum = currentReq.nextCaseNumber;
       const code = `CP-${String(codeNum).padStart(3, '0')}`;

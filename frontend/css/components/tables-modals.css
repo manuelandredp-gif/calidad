@@ -38,7 +38,7 @@
 }
 
 .data-table tr:hover td {
-  background: rgba(255, 255, 255, 0.02);
+  background:var(--bg-soft);
 }
 
 /* Modals */
@@ -114,7 +114,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
-  background: rgba(0, 0, 0, 0.15);
+  background:var(--bg-panel);
 }
 
 /* Toast Notifications */

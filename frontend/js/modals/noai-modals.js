@@ -125,7 +125,7 @@ export class NoAiModalHandler {
             padding:14px;
             border-radius:var(--radius-md);
             border:1px solid var(--border-subtle);
-            background:rgba(255,255,255,0.02);
+            background:var(--bg-soft);
             cursor:pointer;
             transition:all var(--transition-fast);
           ">
@@ -394,12 +394,12 @@ export class NoAiModalHandler {
         (c) => `
         <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 8px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.8rem;">
           <div style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:0.68rem; font-weight:700; text-transform:uppercase; padding:2px 6px; border-radius:3px; background:${c.badgeColor}22; color:${c.badgeColor}; border:1px solid ${c.badgeColor}44;">
+            <span style="font-size:0.68rem; font-weight:700; text-transform:uppercase; padding:2px 6px; border-radius:3px; background:${c.badgeColor}22; color:${({ '#10b981': 'var(--text-success)', '#6366f1': 'var(--text-accent)', '#ef4444': 'var(--text-error)', '#f59e0b': 'var(--text-warning)' })[c.badgeColor]}; border:1px solid ${c.badgeColor}44;">
               ${c.badge}
             </span>
             <span style="color:var(--text-secondary);">${c.title}</span>
           </div>
-          <code style="font-size:0.75rem; color:var(--text-muted); background:rgba(0,0,0,0.3); padding:1px 5px; border-radius:3px;">
+          <code style="font-size:0.75rem; color:var(--text-muted); background:var(--bg-panel); padding:1px 5px; border-radius:3px;">
             ${c.value}
           </code>
         </div>

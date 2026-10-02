@@ -104,7 +104,11 @@ export class CookieSessionManager {
       return next();
     }
 
-    const matches = allowed.some((allowedOrigin) => origin.startsWith(allowedOrigin));
+    let matches = false;
+    try {
+      const requestOrigin = new URL(origin).origin;
+      matches = allowed.some((allowedOrigin) => new URL(allowedOrigin).origin === requestOrigin);
+    } catch { matches = false; }
     if (!matches && isProduction) {
       throw ApiError.forbidden('Petición bloqueada por verificación de seguridad de origen (CSRF)');
     }

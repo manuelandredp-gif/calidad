@@ -6,6 +6,7 @@
 
 # ---------- Etapa 1: build ----------
 FROM node:20-alpine AS builder
+RUN apk add --no-cache openssl
 WORKDIR /app/backend
 
 # Instala dependencias (incluye dev para compilar y generar Prisma)
@@ -18,6 +19,7 @@ RUN npx prisma generate && npm run build
 
 # ---------- Etapa 2: runtime ----------
 FROM node:20-alpine AS runtime
+RUN apk add --no-cache openssl
 ENV NODE_ENV=production
 WORKDIR /app/backend
 
@@ -41,4 +43,4 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD node -e "fetch('http://localhost:4000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
-CMD ["node", "dist/main.js"]
+CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && node dist/main.js"]

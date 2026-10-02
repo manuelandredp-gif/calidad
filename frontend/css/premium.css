@@ -69,7 +69,7 @@
 }
 
 .quick-filter-tab {
-  background: rgba(255, 255, 255, 0.04);
+  background:var(--bg-soft);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-full);
   padding: 7px 16px;
@@ -84,7 +84,7 @@
 }
 
 .quick-filter-tab:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background:var(--bg-soft);
   color: var(--text-primary);
 }
 
@@ -99,7 +99,7 @@
   font-size: 0.72rem;
   padding: 1px 6px;
   border-radius: var(--radius-full);
-  background: rgba(0, 0, 0, 0.25);
+  background:var(--bg-panel);
 }
 
 /* --------------------------------------------------------------------------
@@ -133,7 +133,7 @@
 }
 
 .diff-pane {
-  background: rgba(0, 0, 0, 0.3);
+  background:var(--bg-panel);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 14px;
@@ -157,7 +157,7 @@
 
 ins.diff-add {
   background: rgba(16, 185, 129, 0.25);
-  color: #6ee7b7;
+  color:var(--text-success);
   text-decoration: none;
   border-radius: 2px;
   padding: 1px 2px;
@@ -165,7 +165,7 @@ ins.diff-add {
 
 del.diff-del {
   background: rgba(239, 68, 68, 0.25);
-  color: #fca5a5;
+  color:var(--text-error);
   text-decoration: line-through;
   border-radius: 2px;
   padding: 1px 2px;
@@ -175,7 +175,7 @@ del.diff-del {
    4. BDD / Gherkin Highlight Box
    -------------------------------------------------------------------------- */
 .bdd-box {
-  background: rgba(0, 0, 0, 0.3);
+  background:var(--bg-panel);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 14px 18px;

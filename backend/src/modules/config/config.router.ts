@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { prisma } from '../../config/prisma';
 import { env } from '../../config/env';
 import { sendSuccess } from '../../common/utils/api-response';
 import { authenticateJWT } from '../../common/middleware/auth.middleware';
@@ -17,52 +18,8 @@ configRouter.get(
     const openaiAvailable = Boolean(env.OPENAI_API_KEY && env.OPENAI_API_KEY.trim().length > 0);
 
     const providers = [
-      {
-        id: 'gemini',
-        name: 'Google Gemini',
-        isConfigured: geminiAvailable,
-        isDefault: env.AI_PROVIDER_DEFAULT === 'gemini',
-        supportedModels: [
-          {
-            id: 'gemini-2.5-flash-lite',
-            name: 'Gemini 2.5 Flash-Lite (Económico y Rápido)',
-            pricing: AI_PRICING_TABLE['gemini-2.5-flash-lite'],
-          },
-          {
-            id: 'gemini-1.5-flash',
-            name: 'Gemini 1.5 Flash (Equilibrado)',
-            pricing: AI_PRICING_TABLE['gemini-1.5-flash'],
-          },
-          {
-            id: 'gemini-1.5-pro',
-            name: 'Gemini 1.5 Pro (Máximo Razonamiento)',
-            pricing: AI_PRICING_TABLE['gemini-1.5-pro'],
-          },
-        ],
-      },
-      {
-        id: 'openai',
-        name: 'OpenAI GPT',
-        isConfigured: openaiAvailable,
-        isDefault: env.AI_PROVIDER_DEFAULT === 'openai',
-        supportedModels: [
-          {
-            id: 'gpt-5-nano',
-            name: 'GPT-5 Nano (Ultra Compacto)',
-            pricing: AI_PRICING_TABLE['gpt-5-nano'],
-          },
-          {
-            id: 'gpt-4o-mini',
-            name: 'GPT-4o Mini (Ágil y Económico)',
-            pricing: AI_PRICING_TABLE['gpt-4o-mini'],
-          },
-          {
-            id: 'gpt-4o',
-            name: 'GPT-4o (Completo y Multimodal)',
-            pricing: AI_PRICING_TABLE['gpt-4o'],
-          },
-        ],
-      },
+      { id: 'gemini', name: 'Google Gemini', isConfigured: geminiAvailable, isDefault: env.AI_PROVIDER_DEFAULT === 'gemini', supportedModels: [{ id: env.AI_GEMINI_MODEL, name: env.AI_GEMINI_MODEL, pricing: AI_PRICING_TABLE[env.AI_GEMINI_MODEL] ?? null }] },
+      { id: 'openai', name: 'OpenAI', isConfigured: openaiAvailable, isDefault: env.AI_PROVIDER_DEFAULT === 'openai', supportedModels: [{ id: env.AI_OPENAI_MODEL, name: env.AI_OPENAI_MODEL, pricing: AI_PRICING_TABLE[env.AI_OPENAI_MODEL] ?? null }] },
     ];
 
     return sendSuccess(res, {
@@ -72,3 +29,15 @@ configRouter.get(
     });
   })
 );
+
+configRouter.get('/database', asyncHandler(async (req: Request, res: Response) => {
+  await prisma.$queryRaw`SELECT 1`;
+  const scope = req.user!.role === 'ADMIN' ? {} : { ownerId: req.user!.userId };
+  const [projects, requirements, testCases] = await Promise.all([
+    prisma.project.count({ where: scope }),
+    prisma.requirement.count({ where: { project: scope } }),
+    prisma.testCase.count({ where: { requirement: { project: scope } } }),
+  ]);
+  const users = req.user!.role === 'ADMIN' ? await prisma.user.count() : null;
+  return sendSuccess(res, { engine: 'PostgreSQL', status: 'connected', counts: { users, projects, requirements, testCases } });
+}));

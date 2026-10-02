@@ -77,7 +77,7 @@ export class GenerateTestCasesUseCase {
       throw ApiError.badRequest(`Proveedor '${selectedProvider}' inválido. Solo se admiten 'gemini' u 'openai'.`);
     }
 
-    const selectedModel = model?.trim() || (selectedProvider === 'gemini' ? 'gemini-1.5-flash' : 'gpt-4o-mini');
+    const selectedModel = model?.trim() || (selectedProvider === 'gemini' ? env.AI_GEMINI_MODEL : env.AI_OPENAI_MODEL);
 
     // 2. Control de presupuesto del proyecto
     const budgetLimit = requirement.project.budgetUsd ?? env.AI_PROJECT_BUDGET_USD;
@@ -245,12 +245,15 @@ export class GenerateTestCasesUseCase {
 
     // 7. Persistencia transaccional corta con reserva atómica de códigos CP-XXX
     const { createdCases, generationRecord } = await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM requirements WHERE id = ${requirementId} FOR UPDATE`;
       // Bloquear fila del requisito para reservar códigos secuenciales atómicamente
       const currentReq = await tx.requirement.findUniqueOrThrow({
         where: { id: requirementId },
-        select: { nextCaseNumber: true, version: true },
+        select: { nextCaseNumber: true, version: true, status: true },
       });
+      if (currentReq.status === 'OBSOLETE') throw ApiError.forbidden('El requisito está archivado.');
 
+      if (currentReq.version !== requirement.version) throw ApiError.conflict('El requisito cambió durante la generación. Genere nuevamente con su versión actual.');
       const startCodeNum = currentReq.nextCaseNumber;
       const nextCodeNum = startCodeNum + result.cases.length;
 

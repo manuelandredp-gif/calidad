@@ -101,7 +101,7 @@ export function computeProjectMetrics(project: ProjectMetricInput) {
         pendingCases++;
       }
 
-      const evKey = (tc.evidenceStatus || 'derived') as keyof typeof evidenceDistribution;
+      const evKey = (tc.evidenceStatus || 'pending') as keyof typeof evidenceDistribution;
       if (evidenceDistribution[evKey] !== undefined) {
         evidenceDistribution[evKey]++;
       } else {
@@ -168,7 +168,7 @@ export function computeProjectMetrics(project: ProjectMetricInput) {
     totalInputTokens,
     totalOutputTokens,
     totalTokens: totalInputTokens + totalOutputTokens,
-    totalCostUsd: hasKnownCost ? Math.round(totalCostUsd * 10000) / 10000 : 0,
+    totalCostUsd: hasKnownCost ? Math.round(totalCostUsd * 10000) / 10000 : (successfulGenerations === 0 ? 0 : null),
     averageLatencyMs,
     distinctRequirementsProcessed,
     costPerProcessedRequirement,
