@@ -54,3 +54,7 @@ coverage/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Scripts y temporales
+scratch/
+
