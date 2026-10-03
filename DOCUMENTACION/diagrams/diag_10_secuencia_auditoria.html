@@ -1,0 +1,30 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"/><style>body{margin:0;padding:0;background:#ffffff;}</style></head><body>
+      <div style="font-family:'Segoe UI', Arial, sans-serif; background:#ffffff; padding:25px;">
+        <h2 style="color:#0f766e; text-align:center; margin-bottom:20px; font-size:22px; font-weight:700;">Diagrama de Secuencia: Auditoría Humana y Bloqueo Optimista (CU-06)</h2>
+
+        <!-- Participantes -->
+        <div style="display:flex; justify-content:space-between; margin-bottom:20px; border-bottom:2px solid #cbd5e1; padding-bottom:12px;">
+          <div style="background:#e0f2fe; padding:8px 14px; border-radius:6px; font-weight:bold; font-size:13px; color:#0369a1;">QA Tester (Modal Revisión)</div>
+          <div style="background:#f1f5f9; padding:8px 14px; border-radius:6px; font-weight:bold; font-size:13px; color:#334155;">TestCases Router</div>
+          <div style="background:#dcfce7; padding:8px 14px; border-radius:6px; font-weight:bold; font-size:13px; color:#15803d;">ReviewTestCaseUseCase</div>
+          <div style="background:#f3e8ff; padding:8px 14px; border-radius:6px; font-weight:bold; font-size:13px; color:#7e22ce;">PostgreSQL Transaction (Prisma)</div>
+        </div>
+
+        <!-- Mensajes -->
+        <div style="font-size:12.5px; color:#1e293b; line-height:1.7; padding:0 20px;">
+          <p><b>1.</b> Tester inspecciona caso individual, edita pasos o resultado y presiona <i>"Aprobar"</i> o <i>"Rechazar"</i></p>
+          <p><b>2.</b> Modal envía: <code>PATCH /api/v1/test-cases/:id/review { decision, comments, justification, expectedVersion }</code></p>
+          <p><b>3.</b> Router valida DTO con Zod y llama a <code>ReviewTestCaseUseCase.execute()</code></p>
+          <p><b>4.</b> UseCase verifica regla de negocio: si <code>decision === 'REJECTED'</code>, exige <code>comments</code> no vacío.</p>
+          <p><b>5.</b> UseCase verifica regla de conflicto: si <code>evidenceStatus === 'conflict'</code> y se aprueba, exige <code>justification</code> técnica.</p>
+          <p><b>6.</b> UseCase abre <code>prisma.$transaction()</code>:</p>
+          <div style="background:#f8fafc; border-left:4px solid #0f766e; padding:8px 15px; margin:6px 0;">
+            • Comprueba <code>case.version === expectedVersion</code>. Si no coincide ➔ <b>HTTP 409 Conflict</b> (Bloqueo optimista)<br/>
+            • Actualiza <code>TestCase</code>: estado (APPROVED/MODIFIED/REJECTED), version = version + 1<br/>
+            • Inserta registro inmutable en <code>TestCaseReview</code> con snapshot completo <b>previousContent</b> y <b>newContent</b>
+          </div>
+          <p><b>7.</b> Transacción efectúa commit atómico en PostgreSQL</p>
+          <p><b>8.</b> Backend retorna caso actualizado y recalcula matriz de cobertura automáticamente en el Frontend</p>
+        </div>
+      </div>
+    </body></html>

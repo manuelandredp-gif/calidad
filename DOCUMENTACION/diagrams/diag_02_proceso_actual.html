@@ -1,0 +1,62 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"/><style>body{margin:0;padding:0;background:#ffffff;}</style></head><body>
+      <div style="font-family:'Segoe UI', Arial, sans-serif; background:#ffffff; padding:25px;">
+        <h2 style="color:#b91c1c; text-align:center; margin-bottom:20px; font-size:22px; font-weight:700;">Diagrama de Actividades: Proceso Tradicional Manual de Diseño de Pruebas</h2>
+        
+        <div style="display:flex; justify-content:center; align-items:flex-start; gap:20px;">
+          <!-- Columna Tester -->
+          <div style="width:480px; border:2px solid #cbd5e1; border-radius:8px; overflow:hidden;">
+            <div style="background:#e2e8f0; padding:10px; font-weight:bold; text-align:center; color:#1e293b; font-size:16px;">
+              Analista de Calidad / Tester QA (Manual)
+            </div>
+            <div style="padding:20px; display:flex; flex-direction:column; align-items:center; gap:16px;">
+              <div style="width:24px; height:24px; background:#1e293b; border-radius:50%;"></div>
+              
+              <div style="background:#ffffff; border:1.5px solid #64748b; border-radius:6px; padding:10px 16px; text-align:center; font-size:13px; width:340px;">
+                <b>1. Recepción y lectura manual</b> de especificaciones de requisitos o historias de usuario
+              </div>
+              <div style="color:#64748b; font-size:18px;">↓</div>
+
+              <div style="background:#ffffff; border:1.5px solid #64748b; border-radius:6px; padding:10px 16px; text-align:center; font-size:13px; width:340px;">
+                <b>2. Interpretación subjetiva</b> de criterios de aceptación y reglas de negocio
+              </div>
+              <div style="color:#64748b; font-size:18px;">↓</div>
+
+              <div style="background:#fef2f2; border:1.5px solid #ef4444; border-radius:6px; padding:10px 16px; text-align:center; font-size:13px; width:340px; color:#991b1b;">
+                ⚠️ <b>Redacción manual en Excel/Word</b><br/>
+                <span style="font-size:11px;">Frecuente omisión de valores límite, validaciones y escenarios negativos</span>
+              </div>
+              <div style="color:#64748b; font-size:18px;">↓</div>
+
+              <div style="background:#fef2f2; border:1.5px solid #ef4444; border-radius:6px; padding:10px 16px; text-align:center; font-size:13px; width:340px; color:#991b1b;">
+                ⚠️ <b>Vinculación manual de trazabilidad</b><br/>
+                <span style="font-size:11px;">Mantenimiento artesanal propenso a desactualización y enlaces rotos</span>
+              </div>
+              <div style="color:#64748b; font-size:18px;">↓</div>
+
+              <div style="background:#ffffff; border:1.5px solid #64748b; border-radius:6px; padding:10px 16px; text-align:center; font-size:13px; width:340px;">
+                <b>3. Consolidación de informe de pruebas</b> y entrega manual al equipo de desarrollo
+              </div>
+              <div style="color:#64748b; font-size:18px;">↓</div>
+
+              <div style="width:26px; height:26px; border:2px solid #1e293b; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                <div style="width:16px; height:16px; background:#1e293b; border-radius:50%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Columna Problemas Detectados -->
+          <div style="width:480px; border:2px solid #fecaca; border-radius:8px; overflow:hidden; background:#fffaf0;">
+            <div style="background:#fee2e2; padding:10px; font-weight:bold; text-align:center; color:#991b1b; font-size:16px;">
+              Cuellos de Botella y Deficiencias del Proceso Actual
+            </div>
+            <div style="padding:20px; font-size:13px; color:#334155; line-height:1.6;">
+              <p><b>1. Consumo Excesivo de Tiempo:</b> Más del 60% del tiempo de QA se invierte en redactar casos rutinarios en vez de analizar riesgos del negocio.</p>
+              <p><b>2. Cobertura Asimétrica:</b> Concentración en flujos positivos (*Happy Path*); casi nula cobertura de frontera (*Boundary Value Analysis*) y valores atípicos.</p>
+              <p><b>3. Ambigüedad Trasladada:</b> Criterios vagos o contradictorios en requisitos no se detectan tempranamente y se convierten en pruebas inválidas.</p>
+              <p><b>4. Duplicidad y Dispersión:</b> Casos redactados con diferente redacción por distintos testers generan redundancia y costos de ejecución innecesarios.</p>
+              <p><b>5. Trazabilidad Frágil:</b> Ante cambios de versión en los requisitos, las matrices en hojas de cálculo quedan obsoletas de forma inmediata.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </body></html>

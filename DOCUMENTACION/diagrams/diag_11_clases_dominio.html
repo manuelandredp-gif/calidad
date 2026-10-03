@@ -1,0 +1,121 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"/><style>body{margin:0;padding:0;background:#ffffff;}</style></head><body>
+      <div style="font-family:'Segoe UI', Arial, sans-serif; background:#ffffff; padding:20px;">
+        <h2 style="color:#1e3a8a; text-align:center; margin-bottom:20px; font-size:22px; font-weight:700;">Diagrama de Clases del Dominio (Domain Entities & Value Objects)</h2>
+
+        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px;">
+          <!-- Clase User -->
+          <div style="border:1.5px solid #64748b; border-radius:6px; overflow:hidden; font-size:11.5px;">
+            <div style="background:#1e3a8a; color:#ffffff; padding:6px; font-weight:bold; text-align:center;">User</div>
+            <div style="padding:8px; background:#f8fafc; border-bottom:1px solid #cbd5e1; font-family:monospace;">
+              + id: string (UUID)<br/>
+              + email: string<br/>
+              + passwordHash: string<br/>
+              + fullName: string<br/>
+              + role: UserRole<br/>
+              + isActive: boolean
+            </div>
+            <div style="padding:6px; font-size:11px; color:#475569;">
+              + validatePassword(pwd): boolean<br/>
+              + hasPermission(action): boolean
+            </div>
+          </div>
+
+          <!-- Clase Project -->
+          <div style="border:1.5px solid #64748b; border-radius:6px; overflow:hidden; font-size:11.5px;">
+            <div style="background:#1e3a8a; color:#ffffff; padding:6px; font-weight:bold; text-align:center;">Project</div>
+            <div style="padding:8px; background:#f8fafc; border-bottom:1px solid #cbd5e1; font-family:monospace;">
+              + id: string (UUID)<br/>
+              + name: string<br/>
+              + description: string<br/>
+              + status: ProjectStatus<br/>
+              + budgetUsd: number<br/>
+              + nextRequirementNumber: int
+            </div>
+            <div style="padding:6px; font-size:11px; color:#475569;">
+              + getNextRequirementCode(): string<br/>
+              + isBudgetExceeded(spent): boolean
+            </div>
+          </div>
+
+          <!-- Clase Requirement -->
+          <div style="border:1.5px solid #64748b; border-radius:6px; overflow:hidden; font-size:11.5px;">
+            <div style="background:#0f766e; color:#ffffff; padding:6px; font-weight:bold; text-align:center;">Requirement</div>
+            <div style="padding:8px; background:#f8fafc; border-bottom:1px solid #cbd5e1; font-family:monospace;">
+              + id: string (UUID)<br/>
+              + projectId: string<br/>
+              + code: string (REQ-001)<br/>
+              + title: string<br/>
+              + description: string<br/>
+              + acceptanceCriteria: string<br/>
+              + version: int<br/>
+              + nextCaseNumber: int
+            </div>
+            <div style="padding:6px; font-size:11px; color:#475569;">
+              + createVersionSnapshot(): ReqVersion<br/>
+              + getNextCaseCode(): string
+            </div>
+          </div>
+
+          <!-- Clase TestCase -->
+          <div style="border:1.5px solid #64748b; border-radius:6px; overflow:hidden; font-size:11.5px;">
+            <div style="background:#0f766e; color:#ffffff; padding:6px; font-weight:bold; text-align:center;">TestCase</div>
+            <div style="padding:8px; background:#f8fafc; border-bottom:1px solid #cbd5e1; font-family:monospace;">
+              + id: string (UUID)<br/>
+              + requirementId: string<br/>
+              + generationId: string<br/>
+              + code: string (CP-001)<br/>
+              + type: ISTQBTechnique<br/>
+              + title: string<br/>
+              + preconditions: string[] (JSON)<br/>
+              + steps: string[] (JSON)<br/>
+              + testData: string<br/>
+              + expectedResult: string<br/>
+              + version: int (optimistic)<br/>
+              + status: TestCaseStatus
+            </div>
+            <div style="padding:6px; font-size:11px; color:#475569;">
+              + approve(reviewerId, just): void<br/>
+              + reject(reviewerId, comment): void
+            </div>
+          </div>
+
+          <!-- Clase TestCaseReview -->
+          <div style="border:1.5px solid #64748b; border-radius:6px; overflow:hidden; font-size:11.5px;">
+            <div style="background:#0f766e; color:#ffffff; padding:6px; font-weight:bold; text-align:center;">TestCaseReview</div>
+            <div style="padding:8px; background:#f8fafc; border-bottom:1px solid #cbd5e1; font-family:monospace;">
+              + id: string (UUID)<br/>
+              + testCaseId: string<br/>
+              + reviewerId: string<br/>
+              + decision: ReviewDecision<br/>
+              + comments: string<br/>
+              + justification: string<br/>
+              + previousContent: JSON<br/>
+              + newContent: JSON
+            </div>
+            <div style="padding:6px; font-size:11px; color:#475569;">
+              + getAuditSnapshot(): SnapshotDiff
+            </div>
+          </div>
+
+          <!-- Clase AiGeneration -->
+          <div style="border:1.5px solid #64748b; border-radius:6px; overflow:hidden; font-size:11.5px;">
+            <div style="background:#475569; color:#ffffff; padding:6px; font-weight:bold; text-align:center;">AiGeneration</div>
+            <div style="padding:8px; background:#f8fafc; border-bottom:1px solid #cbd5e1; font-family:monospace;">
+              + id: string (UUID)<br/>
+              + requirementId: string<br/>
+              + provider: string (gemini/openai)<br/>
+              + model: string<br/>
+              + inputTokens: int<br/>
+              + outputTokens: int<br/>
+              + estimatedCost: float<br/>
+              + responseTimeMs: int<br/>
+              + inputHash: string<br/>
+              + status: GenStatus
+            </div>
+            <div style="padding:6px; font-size:11px; color:#475569;">
+              + calculateCost(pricing): float
+            </div>
+          </div>
+        </div>
+      </div>
+    </body></html>

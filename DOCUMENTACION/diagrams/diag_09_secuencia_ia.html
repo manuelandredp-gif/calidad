@@ -1,0 +1,28 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"/><style>body{margin:0;padding:0;background:#ffffff;}</style></head><body>
+      <div style="font-family:'Segoe UI', Arial, sans-serif; background:#ffffff; padding:25px;">
+        <h2 style="color:#1e3a8a; text-align:center; margin-bottom:20px; font-size:22px; font-weight:700;">Diagrama de Secuencia: Invocación y Generación con IA Real (CU-05)</h2>
+
+        <!-- Participantes -->
+        <div style="display:flex; justify-content:space-between; margin-bottom:20px; border-bottom:2px solid #cbd5e1; padding-bottom:12px;">
+          <div style="background:#e0f2fe; padding:8px 14px; border-radius:6px; font-weight:bold; font-size:13px; color:#0369a1;">QA Tester (UI)</div>
+          <div style="background:#f1f5f9; padding:8px 14px; border-radius:6px; font-weight:bold; font-size:13px; color:#334155;">Backend Router /api/v1/ai</div>
+          <div style="background:#dcfce7; padding:8px 14px; border-radius:6px; font-weight:bold; font-size:13px; color:#15803d;">GenerateTestCasesUseCase</div>
+          <div style="background:#fef3c7; padding:8px 14px; border-radius:6px; font-weight:bold; font-size:13px; color:#b45309;">PromptGuard & PIIMasker</div>
+          <div style="background:#fee2e2; padding:8px 14px; border-radius:6px; font-weight:bold; font-size:13px; color:#b91c1c;">AI Provider (Gemini/OpenAI)</div>
+          <div style="background:#f3e8ff; padding:8px 14px; border-radius:6px; font-weight:bold; font-size:13px; color:#7e22ce;">PostgreSQL (Prisma)</div>
+        </div>
+
+        <!-- Mensajes en cascada -->
+        <div style="font-size:12.5px; color:#1e293b; line-height:1.7; padding:0 20px;">
+          <p><b>1.</b> Tester pulsa <i>"Generar Casos con IA"</i> ➔ <code>POST /api/v1/ai/generate { requirementId, provider }</code></p>
+          <p><b>2.</b> Router autentica JWT mediante Cookie HttpOnly y delega en <code>GenerateTestCasesUseCase.execute()</code></p>
+          <p><b>3.</b> UseCase consulta Requisito y verifica presupuesto del Proyecto en <code>PostgreSQL</code></p>
+          <p><b>4.</b> UseCase invoca <code>PromptGuard.assertSafe()</code> y <code>PIIMasker.maskMultiple()</code> (anonimiza DNI, correos, etc.)</p>
+          <p><b>5.</b> UseCase envía especificación enmascarada a <code>AIProvider.generateTestCases()</code></p>
+          <p><b>6.</b> Proveedor LLM procesa en lenguaje natural y retorna JSON con casos en las 5 técnicas ISTQB</p>
+          <p><b>7.</b> UseCase valida esquema estricto con <code>Zod</code> y restaura datos personales con <code>PIIMasker.unmask()</code></p>
+          <p><b>8.</b> UseCase inicia transacción corta en <code>PostgreSQL</code>: registra <code>AiGeneration</code> (tokens, ms, USD) y guarda <code>TestCase</code> en estado <b>PENDING</b> con correlativos <b>CP-001...</b></p>
+          <p><b>9.</b> Backend retorna código HTTP 201 con casos y advertencias de duplicidad al Frontend SPA</p>
+        </div>
+      </div>
+    </body></html>

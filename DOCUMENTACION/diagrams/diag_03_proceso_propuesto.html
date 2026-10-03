@@ -1,0 +1,113 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"/><style>body{margin:0;padding:0;background:#ffffff;}</style></head><body>
+      <div style="font-family:'Segoe UI', Arial, sans-serif; background:#ffffff; padding:20px;">
+        <h2 style="color:#0f766e; text-align:center; margin-bottom:20px; font-size:22px; font-weight:700;">Diagrama de Actividades: Proceso Propuesto Asistido por IA con Auditoría Humana (TestGenAI)</h2>
+
+        <div style="display:flex; justify-content:center; gap:15px;">
+          <!-- Carril 1: Analista QA -->
+          <div style="width:340px; border:1.5px solid #cbd5e1; border-radius:8px; overflow:hidden;">
+            <div style="background:#0284c7; color:#ffffff; padding:8px; font-weight:bold; text-align:center; font-size:14px;">
+              Analista de Pruebas (QA Tester)
+            </div>
+            <div style="padding:15px; display:flex; flex-direction:column; align-items:center; gap:14px; font-size:12.5px;">
+              <div style="width:20px; height:20px; background:#0284c7; border-radius:50%;"></div>
+              
+              <div style="background:#f0f9ff; border:1px solid #7dd3fc; border-radius:6px; padding:8px 12px; text-align:center; width:280px;">
+                <b>Registra o importa requisitos</b><br/>
+                (CSV/JSON con criterios de aceptación)
+              </div>
+              <div style="color:#64748b;">↓</div>
+
+              <div style="background:#f0fdf4; border:1px solid #86efac; border-radius:6px; padding:8px 12px; text-align:center; width:280px;">
+                <b>Evalúa advertencias de ambigüedad</b><br/>
+                (Detector estático ISO 29148)
+              </div>
+              <div style="color:#64748b;">↓</div>
+
+              <div style="background:#f0f9ff; border:1px solid #7dd3fc; border-radius:6px; padding:8px 12px; text-align:center; width:280px;">
+                <b>Solicita generación con IA</b><br/>
+                (Selecciona proveedor Gemini / OpenAI)
+              </div>
+              <div style="color:#64748b; font-size:20px;">➔ [Pasa a TestGenAI Engine]</div>
+
+              <div style="background:#fef3c7; border:1.5px solid #f59e0b; border-radius:6px; padding:10px 12px; text-align:center; width:280px; margin-top:110px;">
+                <b>AUDITORÍA HUMANA INDIVIDUAL</b><br/>
+                • Revisa caso por caso<br/>
+                • Aprueba flujos válidos<br/>
+                • Edita precondiciones o pasos<br/>
+                • Rechaza con justificación obligatoria
+              </div>
+              <div style="color:#64748b;">↓</div>
+
+              <div style="background:#f0f9ff; border:1px solid #7dd3fc; border-radius:6px; padding:8px 12px; text-align:center; width:280px;">
+                <b>Consulta trazabilidad y exporta</b><br/>
+                (CSV, JSON, Markdown, Gherkin)
+              </div>
+              <div style="color:#64748b;">↓</div>
+
+              <div style="width:22px; height:22px; border:2px solid #0f766e; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                <div style="width:14px; height:14px; background:#0f766e; border-radius:50%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Carril 2: Motor Backend & Seguridad -->
+          <div style="width:400px; border:1.5px solid #cbd5e1; border-radius:8px; overflow:hidden;">
+            <div style="background:#0f766e; color:#ffffff; padding:8px; font-weight:bold; text-align:center; font-size:14px;">
+              TestGenAI Core Backend (Seguridad & Dominio)
+            </div>
+            <div style="padding:15px; display:flex; flex-direction:column; align-items:center; gap:12px; font-size:12px;">
+              <div style="background:#ffffff; border:1px solid #94a3b8; border-radius:6px; padding:8px 12px; text-align:center; width:340px; margin-top:125px;">
+                <b>1. Control de Guardrails:</b><br/>
+                • PromptGuard (Anti-Inyección)<br/>
+                • PIIMasker (Enmascaramiento de datos personales)<br/>
+                • Validación de presupuesto de IA ($ USD)
+              </div>
+              <div style="color:#64748b;">↓</div>
+
+              <div style="background:#ffffff; border:1px solid #94a3b8; border-radius:6px; padding:8px 12px; text-align:center; width:340px;">
+                <b>2. Verificación de Caché SHA-256:</b><br/>
+                Si existe fingerprint idéntica ➔ Retorna 0 tokens
+              </div>
+              <div style="color:#64748b;">↓ (Si no está en caché)</div>
+
+              <div style="background:#ffffff; border:1px solid #94a3b8; border-radius:6px; padding:8px 12px; text-align:center; width:340px;">
+                <b>3. Envía Prompt estructurado a la IA</b>
+              </div>
+              <div style="color:#64748b; font-size:18px;">➔ [Invocación Externa] ➔</div>
+
+              <div style="background:#ffffff; border:1px solid #94a3b8; border-radius:6px; padding:8px 12px; text-align:center; width:340px; margin-top:10px;">
+                <b>4. Validación Estricta con Zod:</b><br/>
+                Verifica esquema JSON de las 5 categorías ISTQB.<br/>
+                Restaura PII desenmascarando tokens.
+              </div>
+              <div style="color:#64748b;">↓</div>
+
+              <div style="background:#ffffff; border:1px solid #94a3b8; border-radius:6px; padding:8px 12px; text-align:center; width:340px;">
+                <b>5. Persistencia Transaccional:</b><br/>
+                Asigna códigos CP-001 atómicos y guarda en estado PENDING
+              </div>
+              <div style="color:#64748b; font-size:18px;">➔ [Notifica a UI de Auditoría]</div>
+            </div>
+          </div>
+
+          <!-- Carril 3: Proveedor de IA Real -->
+          <div style="width:330px; border:1.5px solid #cbd5e1; border-radius:8px; overflow:hidden;">
+            <div style="background:#475569; color:#ffffff; padding:8px; font-weight:bold; text-align:center; font-size:14px;">
+              Proveedor de IA (Google Gemini / OpenAI)
+            </div>
+            <div style="padding:15px; display:flex; flex-direction:column; align-items:center; gap:12px; font-size:12px; margin-top:240px;">
+              <div style="background:#f8fafc; border:1.5px solid #64748b; border-radius:6px; padding:12px; text-align:center; width:280px;">
+                <b>Inferencia LLM Fundacional:</b><br/>
+                • Procesa especificación anonimizada<br/>
+                • Deduce casos: Positivo, Negativo, Límite, Alternativa y Validación<br/>
+                • Devuelve JSON estructurado + tokens
+              </div>
+              <div style="color:#64748b;">↓</div>
+              <div style="font-size:11px; color:#475569; text-align:center;">
+                Retorno de respuesta HTTP con metadatos reales de latencia y uso
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </body></html>

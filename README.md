@@ -15,7 +15,10 @@ TestGenAI ha sido consolidado como un MVP real, libre de simuladores (`mock`), g
 | **Backend API** | Node.js, Express, TypeScript | Arquitectura hexagonal / modular limpia. Prefijo unificado `/api/v1`. |
 | **Persistencia** | PostgreSQL 16 + Prisma ORM | Esquema único consolidado, campos nativos `Json`, versionado atómico de requisitos y casos, sesiones persistidas. |
 | **Inteligencia Artificial** | Google Gemini / OpenAI (`IAIProvider`) | Adaptadores reales con validación estricta de salida Zod, enmascaramiento bidireccional de PII y errores explícitos (sin fallback simulado). |
+| **Motor determinista (sin IA)** | TypeScript puro (`backend/src/core/spec-engine`) | Genera casos de uso, requisitos y casos de prueba a partir del tema y la descripción del proyecto mediante análisis léxico y técnicas ISTQB, de forma 100% reproducible y sin llamadas externas. |
 | **Seguridad de Sesión** | Cookies HttpOnly + JWT | Access token corto (1h) y Refresh token persistido y rotado en BD (7d). El registro público fija el rol `QA_TESTER`. |
+
+> **Documentación del proyecto:** los diagramas y entregables (organigrama, procesos actual/propuesto, casos de uso, paquetes) se encuentran en la carpeta [`DOCUMENTACION/`](./DOCUMENTACION).
 
 ---
 

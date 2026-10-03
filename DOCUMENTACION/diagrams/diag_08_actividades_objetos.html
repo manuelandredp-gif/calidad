@@ -1,0 +1,80 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"/><style>body{margin:0;padding:0;background:#ffffff;}</style></head><body>
+      <div style="font-family:'Segoe UI', Arial, sans-serif; background:#ffffff; padding:25px;">
+        <h2 style="color:#0f766e; text-align:center; margin-bottom:20px; font-size:22px; font-weight:700;">Diagrama de Actividades con Objetos (Object Flow Diagram)</h2>
+
+        <div style="display:flex; justify-content:center; align-items:center; gap:20px; flex-wrap:wrap; margin-top:20px;">
+          <!-- Nodo 1 -->
+          <div style="text-align:center;">
+            <div style="background:#f0f9ff; border:1.5px solid #0284c7; padding:10px 16px; border-radius:8px; font-size:13px; font-weight:bold; color:#0369a1;">
+              Actividad:<br/>Registrar Requisito
+            </div>
+            <div style="margin:10px 0; font-size:18px; color:#64748b;">↓</div>
+            <div style="background:#fef3c7; border:1.5px dashed #d97706; padding:8px 14px; border-radius:4px; font-size:12px; color:#92400e;">
+              [Objeto: Requirement]<br/>
+              estado = ACTIVE<br/>
+              version = 1
+            </div>
+          </div>
+
+          <div style="font-size:24px; color:#64748b;">➔</div>
+
+          <!-- Nodo 2 -->
+          <div style="text-align:center;">
+            <div style="background:#f0fdf4; border:1.5px solid #059669; padding:10px 16px; border-radius:8px; font-size:13px; font-weight:bold; color:#047857;">
+              Actividad:<br/>Invocación LLM & Validación
+            </div>
+            <div style="margin:10px 0; font-size:18px; color:#64748b;">↓</div>
+            <div style="background:#fef3c7; border:1.5px dashed #d97706; padding:8px 14px; border-radius:4px; font-size:12px; color:#92400e;">
+              [Objeto: AiGeneration]<br/>
+              status = SUCCEEDED<br/>
+              tokens, latency, cost
+            </div>
+          </div>
+
+          <div style="font-size:24px; color:#64748b;">➔</div>
+
+          <!-- Nodo 3 -->
+          <div style="text-align:center;">
+            <div style="background:#f0f9ff; border:1.5px solid #0284c7; padding:10px 16px; border-radius:8px; font-size:13px; font-weight:bold; color:#0369a1;">
+              Actividad:<br/>Persistencia Inicial
+            </div>
+            <div style="margin:10px 0; font-size:18px; color:#64748b;">↓</div>
+            <div style="background:#fee2e2; border:1.5px dashed #dc2626; padding:8px 14px; border-radius:4px; font-size:12px; color:#991b1b;">
+              [Objeto: TestCase]<br/>
+              status = PENDING<br/>
+              version = 1
+            </div>
+          </div>
+
+          <div style="font-size:24px; color:#64748b;">➔</div>
+
+          <!-- Nodo 4 -->
+          <div style="text-align:center;">
+            <div style="background:#fef3c7; border:1.5px solid #f59e0b; padding:10px 16px; border-radius:8px; font-size:13px; font-weight:bold; color:#b45309;">
+              Actividad:<br/>Auditoría Humana (QA)
+            </div>
+            <div style="margin:10px 0; font-size:18px; color:#64748b;">↓</div>
+            <div style="background:#f0fdf4; border:1.5px dashed #059669; padding:8px 14px; border-radius:4px; font-size:12px; color:#065f46;">
+              [Objeto: TestCaseReview]<br/>
+              decision = APPROVED<br/>
+              snapshots inmutables
+            </div>
+          </div>
+
+          <div style="font-size:24px; color:#64748b;">➔</div>
+
+          <!-- Nodo 5 -->
+          <div style="text-align:center;">
+            <div style="background:#f0fdf4; border:1.5px solid #059669; padding:10px 16px; border-radius:8px; font-size:13px; font-weight:bold; color:#047857;">
+              Actividad:<br/>Trazabilidad & Suite
+            </div>
+            <div style="margin:10px 0; font-size:18px; color:#64748b;">↓</div>
+            <div style="background:#dcfce7; border:1.5px dashed #16a34a; padding:8px 14px; border-radius:4px; font-size:12px; color:#14532d;">
+              [Objeto: TestCase]<br/>
+              status = APPROVED<br/>
+              incorporado a cobertura
+            </div>
+          </div>
+        </div>
+      </div>
+    </body></html>
