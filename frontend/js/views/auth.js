@@ -92,19 +92,39 @@ class AuthController {
     // Formulario de Registro (Sin selector de rol público: servidor asigna QA_TESTER)
     const registerForm = document.getElementById('form-register');
     if (registerForm) {
+      const passwordInput = document.getElementById('reg-password');
+      const confirmationInput = document.getElementById('reg-password-confirm');
+      const confirmationError = document.getElementById('reg-password-confirm-error');
+      const validateConfirmation = () => {
+        const mismatch = Boolean(confirmationInput.value && confirmationInput.value !== passwordInput.value);
+        const message = mismatch ? 'Las contraseñas no coinciden.' : '';
+        confirmationInput.setCustomValidity(message);
+        confirmationInput.setAttribute('aria-invalid', String(mismatch));
+        confirmationError.textContent = message;
+        confirmationError.hidden = !mismatch;
+        return !mismatch;
+      };
+      passwordInput.addEventListener('input', validateConfirmation);
+      confirmationInput.addEventListener('input', validateConfirmation);
       registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const fullName = document.getElementById('reg-fullname')?.value.trim();
         const email = document.getElementById('reg-email')?.value.trim();
         const password = document.getElementById('reg-password')?.value;
+        const confirmation = confirmationInput.value;
 
-        if (!fullName || !email || !password) {
+        if (!fullName || !email || !password || !confirmation) {
           toast.error('Completa todos los campos obligatorios');
           return;
         }
 
-        if (password.length < 6) {
-          toast.error('La contraseña debe tener mínimo 6 caracteres');
+        if (!validateConfirmation() || password !== confirmation) {
+          confirmationInput.reportValidity();
+          return;
+        }
+
+        if (password.length < 8 || !/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+          toast.error('La contraseña debe tener mínimo 8 caracteres, mayúscula, minúscula y número');
           return;
         }
 
@@ -117,6 +137,8 @@ class AuthController {
 
         try {
           const res = await api.register(email, password, fullName);
+          registerForm.reset();
+          validateConfirmation();
           toast.success(`¡Cuenta creada con éxito! Bienvenido, ${fullName}`);
           this.hide();
           if (this.onAuthSuccessCallback) {

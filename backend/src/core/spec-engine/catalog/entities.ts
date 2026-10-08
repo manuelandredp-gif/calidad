@@ -778,7 +778,7 @@ export const ENTITY_CATALOG: EntityDefinition[] = [
     [
       text('nombre', 3, 120),
       date('fecha'),
-      decimal('resultado', 0, 100000, false),
+      decimal('resultado', 0, 100000, undefined, false),
       enumField('estado', ['pendiente', 'en proceso', 'completado']),
     ]
   ),

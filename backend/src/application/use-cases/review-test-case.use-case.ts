@@ -58,6 +58,7 @@ export class ReviewTestCaseUseCase {
       throw ApiError.notFound(`Caso de prueba con ID ${testCaseId} no encontrado.`);
     }
 
+    if (currentCase.requirement.status === 'OBSOLETE') throw ApiError.forbidden('El requisito está archivado.');
     if (currentCase.requirement.project.status === 'ARCHIVED') {
       throw ApiError.forbidden('El proyecto está archivado. Reactívelo para realizar revisiones.');
     }

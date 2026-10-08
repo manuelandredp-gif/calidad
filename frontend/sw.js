@@ -3,7 +3,7 @@
 // Caching estático y estrategia Network-First con fallback en caché.
 // ==============================================================================
 
-const CACHE_NAME = 'testgenai-v1';
+const CACHE_NAME = 'testgenai-v5';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -40,17 +40,14 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET' || new URL(event.request.url).origin !== self.location.origin) return;
   // Ignorar peticiones a la API o extensiones
   if (event.request.url.includes('/api/')) {
     return;
   }
 
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then((response) => {
+    fetch(event.request, { cache: 'no-cache' }).then((response) => {
         if (!response || response.status !== 200 || response.type !== 'basic') {
           return response;
         }
@@ -59,10 +56,14 @@ self.addEventListener('fetch', (event) => {
           cache.put(event.request, responseToCache);
         });
         return response;
-      }).catch(() => {
-        // Fallback a index.html offline
-        return caches.match('/index.html');
-      });
-    })
+      }).catch(async () => {
+        const cached = await caches.match(event.request);
+        if (cached) return cached;
+        if (event.request.mode === 'navigate') {
+          const page = await caches.match('/index.html');
+          if (page) return page;
+        }
+        return Response.error();
+      })
   );
 });

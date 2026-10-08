@@ -15,9 +15,9 @@ function go(view) {
 export function renderDashboard(container) {
   const user = store.get('user');
   const project = store.get('activeProject');
-  const requirements = store.get('requirements') || [];
-  const testCases = store.get('testCases') || [];
-  const metrics = store.get('metrics');
+  const requirements = (store.get('requirements') || []).filter(r => r.status !== 'OBSOLETE');
+  const activeIds = new Set(requirements.map(r => r.id));
+  const testCases = (store.get('testCases') || []).filter(tc => !tc.isObsolete && activeIds.has(tc.requirementId));
 
   const totalReqs = requirements.length;
   const totalCases = testCases.length;
@@ -26,7 +26,8 @@ export function renderDashboard(container) {
   const modifiedCases = testCases.filter((tc) => tc.status === 'MODIFIED').length;
   const rejectedCases = testCases.filter((tc) => tc.status === 'REJECTED').length;
 
-  const coveragePct = metrics?.coverage?.percentage ?? (totalReqs > 0 ? Math.round((approvedCases > 0 ? 1 : 0) / totalReqs * 100) : 0);
+  const covered = new Set(testCases.filter(tc => tc.status === 'APPROVED').map(tc => tc.requirementId)).size;
+  const coveragePct = totalReqs > 0 ? Math.round(covered / totalReqs * 1000) / 10 : 0;
 
   const displayName = user?.fullName || user?.email ? (user.fullName || user.email).split(' ')[0] : 'Usuario';
 
@@ -60,8 +61,8 @@ export function renderDashboard(container) {
       <div class="card" style="margin-bottom:24px;">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
           <div>
-            <h2 style="font-size:1.3rem; font-weight:700;">Proyecto: ${project.name}</h2>
-            <p style="color:var(--text-secondary); font-size:0.85rem;">${project.description || 'Sin descripción'}</p>
+            <h2 style="font-size:1.3rem; font-weight:700;">Proyecto: ${escapeHtml(project.name)}</h2>
+            <p style="color:var(--text-secondary); font-size:0.85rem;">${escapeHtml(project.description || 'Sin descripción')}</p>
           </div>
           <button class="btn btn-outline btn-sm" id="btn-dash-new-proj">+ Nuevo Proyecto</button>
         </div>
@@ -97,13 +98,13 @@ export function renderDashboard(container) {
   // Dashboard con datos reales
   container.innerHTML = `
     <!-- Banner de Resumen -->
-    <div class="card" style="margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; border:1px solid rgba(255,255,255,0.08); background:rgba(15,23,42,0.65);">
+    <div class="card" style="margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; border:1px solid rgba(255,255,255,0.08); background:var(--bg-card);">
       <div>
         <h2 style="font-size:1.35rem; font-weight:800; margin-bottom:4px;">
-          <span>¡Hola, ${displayName}! 👋</span>
+          <span>¡Hola, ${escapeHtml(displayName)}! 👋</span>
         </h2>
         <p style="color:var(--text-secondary); font-size:0.88rem;">
-          Proyecto activo: <strong style="color:var(--text-primary);">${project.name}</strong>
+          Proyecto activo: <strong style="color:var(--text-primary);">${escapeHtml(project.name)}</strong>
         </p>
       </div>
       <div style="display:flex; gap:10px; align-items:center;">
@@ -123,12 +124,12 @@ export function renderDashboard(container) {
       <div class="card" style="padding:16px; text-align:center;">
         <div style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Casos Generados</div>
         <div style="font-size:1.8rem; font-weight:800; color:var(--primary); margin:6px 0;">${totalCases}</div>
-        <div style="font-size:0.75rem; color:var(--text-secondary);">Origen: IA Real</div>
+        <div style="font-size:0.75rem; color:var(--text-secondary);">Casos vigentes de todos los orígenes</div>
       </div>
 
       <div class="card" style="padding:16px; text-align:center;">
         <div style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Pendientes de Revisión</div>
-        <div style="font-size:1.8rem; font-weight:800; color:#fbbf24; margin:6px 0;">${pendingCases}</div>
+        <div style="font-size:1.8rem; font-weight:800; color:var(--text-warning); margin:6px 0;">${pendingCases}</div>
         <div style="font-size:0.75rem; color:var(--text-secondary);">Requieren decisión humana</div>
       </div>
 
@@ -163,16 +164,16 @@ export function renderDashboard(container) {
             const reqPending = reqCases.filter((tc) => tc.status === 'PENDING').length;
 
             return `
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:rgba(0,0,0,0.2); border-radius:var(--radius-md); border:1px solid var(--border-subtle); flex-wrap:wrap; gap:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--bg-panel); border-radius:var(--radius-md); border:1px solid var(--border-subtle); flex-wrap:wrap; gap:10px;">
               <div style="display:flex; align-items:center; gap:12px;">
-                <span class="test-case-code">${r.code}</span>
+                <span class="test-case-code">${escapeHtml(r.code)}</span>
                 <div>
-                  <div style="font-weight:600; font-size:0.9rem;">${r.title}</div>
+                  <div style="font-weight:600; font-size:0.9rem;">${escapeHtml(r.title)}</div>
                   <div style="font-size:0.75rem; color:var(--text-muted);">${reqCases.length} casos (${reqApproved} aprobados, ${reqPending} pendientes)</div>
                 </div>
               </div>
               <div style="display:flex; gap:8px;">
-                <button class="btn btn-sm btn-primary btn-dash-gen-ai" data-req-id="${r.id}" data-req-code="${r.code}">
+                <button class="btn btn-sm btn-primary btn-dash-gen-ai" data-req-id="${r.id}" data-req-code="${escapeHtml(r.code)}">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
                   Generar con IA
                 </button>
@@ -203,3 +204,5 @@ export function renderDashboard(container) {
     });
   });
 }
+
+function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char])); }

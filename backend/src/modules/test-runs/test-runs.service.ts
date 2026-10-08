@@ -5,6 +5,7 @@
 // 100% PERSISTENTE EN POSTGRESQL (Sin estado volátil en RAM).
 // ==============================================================================
 
+import { randomUUID } from 'crypto';
 import { prisma } from '../../config/prisma';
 import { ApiError } from '../../common/errors/api-error';
 import { PrismaTestRunRepository } from '../../infrastructure/repositories/prisma-test-run.repository';
@@ -72,43 +73,27 @@ export class TestRunsService {
     environment = 'QA Sandbox',
     caseIds?: string[]
   ): Promise<TestRun> {
-    let where: Record<string, unknown> = {
-      requirement: { projectId },
-      status: 'APPROVED',
-      isObsolete: false,
-    };
-
-    if (caseIds && caseIds.length > 0) {
-      where = {
-        requirement: { projectId },
-        id: { in: caseIds },
-        isObsolete: false,
-      };
-    }
-
-    let testCases = await prisma.testCase.findMany({
-      where,
-      orderBy: { code: 'asc' },
+    const project = await prisma.project.findUnique({ where: { id: projectId } });
+    if (!project) throw ApiError.notFound('Proyecto no encontrado.');
+    if (project.status === 'ARCHIVED') throw ApiError.forbidden('El proyecto está archivado.');
+    const selectedIds = caseIds ? [...new Set(caseIds)] : undefined;
+    if (selectedIds && selectedIds.length === 0) throw ApiError.badRequest('Seleccione al menos un caso.');
+    const testCases = await prisma.testCase.findMany({
+      where: {
+        requirement: { projectId, status: { not: 'OBSOLETE' } },
+        status: 'APPROVED', isObsolete: false,
+        ...(selectedIds ? { id: { in: selectedIds } } : {}),
+      }, orderBy: { code: 'asc' },
     });
-
-    if (testCases.length === 0) {
-      testCases = await prisma.testCase.findMany({
-        where: {
-          requirement: { projectId },
-          isObsolete: false,
-        },
-        take: 50,
-        orderBy: { code: 'asc' },
-      });
+    if (selectedIds && testCases.length !== selectedIds.length) {
+      throw ApiError.badRequest('Todos los casos seleccionados deben pertenecer al proyecto y estar aprobados y vigentes.');
     }
-
     if (testCases.length === 0) {
-      throw ApiError.badRequest('No hay casos de prueba registrados en el proyecto para iniciar la ejecución.');
+      throw ApiError.badRequest('No hay casos aprobados vigentes para iniciar la ejecución.');
     }
-
     const now = new Date();
     const entity = new TestRunEntity({
-      id: `run_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      id: randomUUID(),
       projectId,
       name,
       environment,
@@ -230,15 +215,16 @@ export class TestRunsService {
     if (!entityA) throw ApiError.notFound(`Ciclo '${runIdA}' no encontrado.`);
     if (!entityB) throw ApiError.notFound(`Ciclo '${runIdB}' no encontrado.`);
 
+    if (entityA.projectId !== entityB.projectId) throw ApiError.badRequest('Los ciclos deben pertenecer al mismo proyecto.');
     const metricsA = entityA.getMetrics();
     const metricsB = entityB.getMetrics();
 
     // Detectar casos que pasaron en A pero fallaron en B (Regresiones!)
     const regressions: Array<{ code: string; title: string }> = [];
 
-    const mapA = new Map(entityA.executions.map((c) => [c.code, c.status]));
+    const mapA = new Map(entityA.executions.map((c) => [c.testCaseId, c.status]));
     entityB.executions.forEach((c) => {
-      const prevStatus = mapA.get(c.code);
+      const prevStatus = mapA.get(c.testCaseId);
       if (prevStatus === 'PASSED' && c.status === 'FAILED') {
         regressions.push({ code: c.code, title: c.title });
       }

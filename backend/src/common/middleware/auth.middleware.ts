@@ -23,15 +23,22 @@ declare global {
 // Ya no existe un valor por defecto embebido: si falta, el servidor no inicia.
 export const JWT_SECRET = env.JWT_SECRET;
 
+import crypto from 'crypto';
+import { prisma } from '../../config/prisma';
+
 /** Firma un access token JWT (vida corta). */
 export function signAccessToken(payload: UserTokenPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: env.ACCESS_TOKEN_EXPIRES_IN } as SignOptions);
+  return jwt.sign(payload, JWT_SECRET, {
+    expiresIn: env.ACCESS_TOKEN_EXPIRES_IN,
+    jwtid: crypto.randomUUID(),
+  } as SignOptions);
 }
 
 /** Firma un refresh token JWT (vida larga, secreto independiente). */
 export function signRefreshToken(payload: UserTokenPayload): string {
   return jwt.sign(payload, JWT_REFRESH_SECRET, {
     expiresIn: env.REFRESH_TOKEN_EXPIRES_IN,
+    jwtid: crypto.randomUUID(),
   } as SignOptions);
 }
 
@@ -53,7 +60,7 @@ export function signToken(payload: UserTokenPayload): string {
   return signAccessToken(payload);
 }
 
-export function authenticateJWT(req: Request, res: Response, next: NextFunction) {
+export async function authenticateJWT(req: Request, res: Response, next: NextFunction) {
   const token = CookieSessionManager.extractToken(req);
 
 
@@ -63,7 +70,9 @@ export function authenticateJWT(req: Request, res: Response, next: NextFunction)
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as UserTokenPayload;
-    req.user = decoded;
+    const user = await prisma.user.findUnique({ where: { id: decoded.userId }, select: { id: true, email: true, role: true, isActive: true } });
+    if (!user || !user.isActive) return sendError(res, 'Usuario no válido o inactivo', 401);
+    req.user = { userId: user.id, email: user.email, role: user.role };
     return next();
   } catch {
     return sendError(res, 'Token inválido o expirado', 401);

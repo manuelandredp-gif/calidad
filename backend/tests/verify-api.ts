@@ -1,258 +1,115 @@
+import 'dotenv/config';
+import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import request from 'supertest';
 import app from '../src/main';
-import { Server } from 'http';
+import { prisma } from '../src/config/prisma';
+import { env } from '../src/config/env';
 
-const TEST_PORT = 4005;
-
-async function runTests() {
-  console.log('🧪 Iniciando verificación integral de endpoints de la API...\n');
-
-  const server: Server = app.listen(TEST_PORT);
-  const baseUrl = `http://localhost:${TEST_PORT}`;
-
+async function run() {
+  const ids: string[] = [];
+  const projects: string[] = [];
+  const email = `audit-${randomUUID()}@example.invalid`;
+  const password = `Audit9-${randomUUID()}`;
+  const agent = request.agent(app);
+  let checks = 0;
+  function check(value: unknown, label: string) { assert.ok(value, label); checks++; console.log(`OK ${checks}: ${label}`); }
   try {
-    // 1. Healthcheck
-    console.log('1️⃣ Probando GET /api/health ...');
-    const resHealth = await fetch(`${baseUrl}/api/health`);
-    const healthData = await resHealth.json();
-    if (!resHealth.ok || healthData.status !== 'online') {
-      throw new Error(`Healthcheck falló: ${JSON.stringify(healthData)}`);
+    check((await agent.get('/api/v1/health/db')).status === 200, 'PostgreSQL conectado');
+    const registration = await agent.post('/api/v1/auth/register').send({ email, password, fullName: 'Verificación temporal', role: 'ADMIN' });
+    check(registration.status === 201, 'Registro real'); ids.push(registration.body.data.user.id);
+    check(registration.body.data.user.role === 'QA_TESTER', 'El registro no permite escalar privilegios');
+    const config = await agent.get('/api/v1/config/ai-providers');
+    check(config.body.data.providers.length === 2 && config.body.data.providers.every((p: { supportedModels: Array<{id: string}> }) => p.supportedModels[0].id), 'Ambos proveedores exponen sus modelos reales configurados');
+    const userId = ids[0];
+    const originalToken = registration.body.data.token;
+    for (const role of ['ADMIN', 'QA_LEAD', 'QA_TESTER']) {
+      await prisma.user.update({ where: { id: userId }, data: { role } });
+      for (const wrong of ['admin', 'admin123', 'Admin123*TestGenAI', 'qalead123', 'QALead123*TestGenAI', 'tester123', 'Tester123*TestGenAI']) {
+        check((await agent.post('/api/v1/auth/login').send({ email, password: wrong })).status === 401, `Sin contraseña universal (${role}, ${wrong})`);
+      }
     }
-    console.log('   ✅ Healthcheck OK:', healthData.service);
-
-    // 2. Auth Login
-    console.log('\n2️⃣ Probando POST /api/auth/login ...');
-    const resLogin = await fetch(`${baseUrl}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: 'admin@testgenai.com',
-        password: 'Admin123*TestGenAI',
-      }),
-    });
-    const loginData = await resLogin.json();
-    if (!resLogin.ok || !loginData.data?.token) {
-      throw new Error(`Login falló: ${JSON.stringify(loginData)}`);
+    check((await agent.get('/api/v1/auth/me')).body.data.id === userId, 'Perfil recuperable mediante cookie');
+    const expired = await agent.post('/api/v1/auth/refresh').send({});
+    check(expired.status === 200, 'Renovación de sesión');
+    const login = await agent.post('/api/v1/auth/login').send({ email, password });
+    check(login.status === 200, 'Contraseña real aceptada');
+    const proj = await agent.post('/api/v1/projects').send({ name: 'Auditoría temporal' });
+    check(proj.status === 201, 'Crear proyecto'); const projectId = proj.body.data.id; projects.push(projectId);
+    const req = await agent.post('/api/v1/requirements').send({ projectId, title: 'Acceso autorizado', description: 'Una cuenta válida accede al sistema.', acceptanceCriteria: 'Una contraseña incorrecta se rechaza con HTTP 401.' });
+    check(req.status === 201, 'Crear requisito con versión inicial'); const requirementId = req.body.data.id;
+    const manual = { requirementId, type: 'negative', title: 'Rechazar contraseña incorrecta', preconditions: ['Cuenta existente'], steps: ['Ingresar contraseña incorrecta'], expectedResult: 'Se rechaza con HTTP 401', priority: 'high' };
+    const concurrent = await Promise.all(Array.from({ length: 5 }, () => agent.post('/api/v1/test-cases/manual').send(manual)));
+    check(concurrent.every(r => r.status === 201) && new Set(concurrent.map(r => r.body.data.code)).size === 5, 'Cinco creaciones simultáneas sin colisión de códigos');
+    const tc = concurrent[0].body.data;
+    check((await agent.post('/api/v1/test-runs').send({ projectId, name: 'Ciclo temporal', caseIds: [tc.id] })).status === 400, 'No ejecutar casos pendientes');
+    check((await agent.post('/api/v1/ai/generate').send({ requirementId, provider: 'mock' })).status === 400, 'Proveedor simulado rechazado');
+    if (!env.GEMINI_API_KEY) {
+      const noKey = await agent.post('/api/v1/ai/generate').send({ requirementId, provider: 'gemini' });
+      check(noKey.status === 502, 'IA sin credenciales devuelve error explícito');
+      check(await prisma.testCase.count({ where: { requirementId } }) === 5 && await prisma.aiGeneration.count({ where: { requirementId, status: 'FAILED' } }) === 1, 'Fallo IA auditado sin generar casos ficticios');
     }
-    const token = loginData.data.token;
-    console.log('   ✅ Login exitoso. Token JWT generado.');
-
-    const authHeaders = {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    };
-
-    // 3. Auth Me
-    console.log('\n3️⃣ Probando GET /api/auth/me ...');
-    const resMe = await fetch(`${baseUrl}/api/auth/me`, { headers: authHeaders });
-    const meData = await resMe.json();
-    console.log(`   ✅ Usuario autenticado: ${meData.data.fullName} (${meData.data.role})`);
-
-    // 4. List Projects
-    console.log('\n4️⃣ Probando GET /api/projects ...');
-    const resProjects = await fetch(`${baseUrl}/api/projects`, { headers: authHeaders });
-    const projectsData = await resProjects.json();
-    if (!projectsData.data || projectsData.data.length === 0) {
-      throw new Error('No se encontraron proyectos');
+    check((await agent.patch('/api/v1/test-cases/' + tc.id + '/review').send({ decision: 'REJECTED' })).status === 400, 'Rechazo exige motivo');
+    const approval = await agent.patch(`/api/v1/test-cases/${tc.id}/review`).send({ decision: 'APPROVED', expectedVersion: 1, comments: 'Validado en auditoría temporal' });
+    check(approval.status === 200, 'Aprobar con historial');
+    check((await agent.patch(`/api/v1/test-cases/${tc.id}/review`).send({ decision: 'APPROVED', expectedVersion: 1 })).status === 409, 'Revisión con versión vieja rechazada');
+    const cycle = await agent.post('/api/v1/test-runs').send({ projectId, name: 'Ciclo temporal', caseIds: [tc.id] });
+    check(cycle.status === 201 && cycle.body.data.cases.length === 1, 'Ciclo contiene solo los casos seleccionados aprobados'); const runId = cycle.body.data.id;
+    check((await agent.patch(`/api/v1/test-runs/${runId}/cases/${tc.id}`).send({ status: 'PASSED', durationSeconds: 1.5 })).status === 400, 'Duración fraccionaria rechazada antes de persistir');
+    check((await agent.patch(`/api/v1/test-runs/${runId}/cases/${tc.id}`).send({ status: 'PASSED', durationSeconds: 4 })).status === 200, 'Registrar ejecución real');
+    check((await agent.get(`/api/v1/test-runs/${runId}`)).body.data.status === 'COMPLETED', 'Ciclo completo persistido');
+    check((await agent.post(`/api/v1/test-runs/${runId}/cases/${tc.id}/defect`).send({ defectNotes: 'Fallo temporal' })).status === 400, 'No registrar defecto en caso exitoso');
+    const stranger = request.agent(app);
+    const reg2 = await stranger.post('/api/v1/auth/register').send({ email: `audit-${randomUUID()}@example.invalid`, password, fullName: 'Segunda cuenta temporal' });
+    ids.push(reg2.body.data.user.id);
+    check((await stranger.get(`/api/v1/projects/${projectId}`)).status === 404, 'Aislamiento entre propietarios');
+    check((await stranger.get(`/api/v1/test-runs/compare?runA=${runId}&runB=${runId}`)).status === 404, 'Comparador no expone ejecuciones ajenas');
+    const metrics = await agent.get(`/api/v1/metrics/project/${projectId}`);
+    check(metrics.status === 200 && metrics.body.data.summary.approvedCases === 1, 'Métricas derivadas de registros persistidos');
+    check((await agent.get(`/api/v1/traceability/${projectId}`)).body.data.coveragePercent === 100, 'Cobertura real de requisito aprobado');
+    for (const format of ['csv', 'json', 'markdown', 'gherkin', 'xray', 'testrail', 'testplan', 'report-html']) {
+      const output = await agent.get(`/api/v1/export/${projectId}?format=${format}`);
+      check(output.status === 200 && Boolean(output.headers['x-suite-sha256']), `Exportación ${format}`);
     }
-    const project = projectsData.data[0];
-    console.log(`   ✅ Proyecto obtenido: "${project.name}" (ID: ${project.id})`);
-
-    // 5. List Requirements
-    console.log('\n5️⃣ Probando GET /api/requirements/project/:id ...');
-    const resReqs = await fetch(`${baseUrl}/api/requirements/project/${project.id}`, {
-      headers: authHeaders,
-    });
-    const reqsData = await resReqs.json();
-    const req1 = reqsData.data.find((r: any) => r.code === 'REQ-001');
-    if (!req1) throw new Error('Requisito REQ-001 no encontrado');
-    console.log(`   ✅ Requisito encontrado: [${req1.code}] ${req1.title}`);
-
-    // 6. Generate Test Cases with AI
-    console.log('\n6️⃣ Probando POST /api/ai/generate (Motor de IA)...');
-    const resAi = await fetch(`${baseUrl}/api/ai/generate`, {
-      method: 'POST',
-      headers: authHeaders,
-      body: JSON.stringify({
-        requirementId: req1.id,
-        provider: 'mock',
-        model: 'mock-istqb-v1',
-      }),
-    });
-    const aiData = await resAi.json();
-    if (!resAi.ok || !aiData.data?.testCases) {
-      throw new Error(`Generación falló: ${JSON.stringify(aiData)}`);
+    const update = await agent.put(`/api/v1/requirements/${requirementId}`).send({ description: 'Descripción actualizada con nuevas condiciones de acceso.', expectedVersion: 1 });
+    check(update.status === 200, 'Editar requisito');
+    check((await prisma.testCase.findUniqueOrThrow({ where: { id: tc.id } })).isObsolete, 'Edición invalida casos anteriores');
+    check((await agent.get(`/api/v1/export/${projectId}?format=json`)).status === 400, 'Exportación excluye casos obsoletos');
+    check((await agent.patch(`/api/v1/projects/${projectId}/archive`).send({})).status === 200, 'Archivo lógico conserva proyecto');
+    const project2 = await agent.post('/api/v1/projects').send({ name: 'Importación temporal' });
+    const importId = project2.body.data.id; projects.push(importId);
+    const batch = await agent.post('/api/v1/requirements/import').send({ projectId: importId, requirements: [
+      { code: 'REQ-001', title: 'Código explícito', description: 'Descripción importada real', acceptanceCriteria: 'Criterio importado real' },
+      { title: 'Código automático', description: 'Descripción importada real', acceptanceCriteria: 'Criterio importado real' },
+    ] });
+    check(batch.status === 201 && batch.body.data[1].code === 'REQ-002', 'Importación admite códigos opcionales sin colisión con explícitos');
+    const manualReq = await agent.post('/api/v1/requirements').send({ projectId: importId, title: 'Siguiente requisito', description: 'Descripción posterior real', acceptanceCriteria: 'Criterio posterior real' });
+    check(manualReq.status === 201 && manualReq.body.data.code === 'REQ-003', 'Contador coherente después de importar');
+    const openapi = await agent.post('/api/v1/projects/' + importId + '/import-openapi').send({ spec: { openapi: '3.0.0', paths: { '/public': { get: { responses: { '204': { description: 'Sin contenido' } } } } } } });
+    check(openapi.status === 201, 'Importación OpenAPI transaccional');
+    const contractCases = await prisma.testCase.findMany({ where: { requirementId: openapi.body.data.requirements[0].id } });
+    check(contractCases.length === 1 && contractCases[0].source === 'OPENAPI' && contractCases[0].expectedResult === 'HTTP 204: Sin contenido', 'Contrato sin respuestas o autenticación inventadas');
+    const editCase = await agent.post('/api/v1/test-cases/manual').send({ ...manual, requirementId: manualReq.body.data.id });
+    const edited = await agent.patch('/api/v1/test-cases/' + editCase.body.data.id + '/review').send({ decision: 'MODIFIED', title: 'Título realmente modificado', expectedVersion: 1 });
+    check(edited.status === 200 && edited.body.data.testCase.title === 'Título realmente modificado', 'Cambios de contenido efectivamente persistidos');
+    const dbStats = await agent.get('/api/v1/config/database');
+    check(dbStats.status === 200 && dbStats.body.data.counts.projects === 2, 'Configuración muestra conteos reales del propietario');
+    if (await prisma.user.count({ where: { role: 'ADMIN', isActive: true, id: { notIn: ids } } }) === 0) {
+      await prisma.user.updateMany({ where: { id: { in: ids } }, data: { role: 'ADMIN' } });
+      const demotions = await Promise.all([
+        agent.patch('/api/v1/users/' + userId).send({ role: 'QA_TESTER' }),
+        stranger.patch('/api/v1/users/' + ids[1]).send({ role: 'QA_TESTER' }),
+      ]);
+      check(demotions.filter(r => r.status === 200).length === 1 && demotions.filter(r => r.status === 403).length === 1, 'Cambios concurrentes conservan un administrador activo');
     }
-    console.log(
-      `   ✅ Generados ${aiData.data.testCases.length} casos de prueba con éxito.`
-    );
-    console.log(
-      `   📊 Tokens: ${aiData.data.audit.inputTokens} in / ${aiData.data.audit.outputTokens} out | Latencia: ${aiData.data.audit.responseTimeMs}ms`
-    );
-
-    const firstCase = aiData.data.testCases[0];
-    console.log(`   📝 Caso muestra [${firstCase.code}]: "${firstCase.title}" (${firstCase.type})`);
-
-    // 6b. Motor Heurístico Determinista SIN IA (0 tokens)
-    console.log('\n6️⃣b Probando POST /api/heuristics/generate (Motor Heurístico Determinista SIN IA)...');
-    const req2 = reqsData.data.find((r: any) => r.code === 'REQ-002');
-    const resHeuristic = await fetch(`${baseUrl}/api/heuristics/generate`, {
-      method: 'POST',
-      headers: authHeaders,
-      body: JSON.stringify({
-        requirementId: req2 ? req2.id : req1.id,
-      }),
-    });
-    const heuristicData = await resHeuristic.json();
-    if (!resHeuristic.ok || heuristicData.data.tokensConsumed !== 0) {
-      throw new Error(`Generación heurística falló: ${JSON.stringify(heuristicData)}`);
-    }
-    console.log(`   ✅ Generados ${heuristicData.data.totalGenerated} casos por reglas deterministas (0 tokens, 100% offline).`);
-    console.log(`   📋 Reglas identificadas: ${heuristicData.data.rulesMatched.length} patrones detectados.`);
-
-    // 6b-2. Fórmula A: Parser Determinista BDD / Gherkin (Dado-Cuando-Entonces)
-    console.log('\n6️⃣b-2 Probando FÓRMULA A: Parser BDD / Gherkin Formal (REQ-003)...');
-    const req3 = reqsData.data.find((r: any) => r.code === 'REQ-003');
-    const resGherkin = await fetch(`${baseUrl}/api/heuristics/generate`, {
-      method: 'POST',
-      headers: authHeaders,
-      body: JSON.stringify({
-        requirementId: req3 ? req3.id : req1.id,
-      }),
-    });
-    const gherkinData = await resGherkin.json();
-    if (!resGherkin.ok || gherkinData.data.rulesMatched.every((r: any) => r.ruleType !== 'BDD_GHERKIN')) {
-      throw new Error(`Parser BDD falló: ${JSON.stringify(gherkinData)}`);
-    }
-    console.log(`   ✅ Parser BDD identificó escenarios Dado-Cuando-Entonces y generó ${gherkinData.data.totalGenerated} casos.`);
-
-    // 6c. Creación Manual de Caso por el QA (100% Humano)
-    console.log('\n6️⃣c Probando POST /api/test-cases (Creación Manual de Casos sin IA)...');
-    const resManual = await fetch(`${baseUrl}/api/test-cases`, {
-      method: 'POST',
-      headers: authHeaders,
-      body: JSON.stringify({
-        requirementId: req1.id,
-        type: 'negative',
-        title: 'Bloqueo manual por auditoría de seguridad tras inyección SQL en login',
-        preconditions: ['Servidor con WAF activo'],
-        steps: [
-          'Ingresar "\' OR 1=1 --" en el campo de usuario',
-          'Ingresar contraseña cualquiera',
-          'Hacer clic en Iniciar Sesión',
-        ],
-        testData: 'input="\' OR 1=1 --"',
-        expectedResult: 'El WAF o backend intercepta el ataque, no consulta la BD y rechaza con 400 Bad Request.',
-        priority: 'high',
-        evidenceStatus: 'derived',
-        status: 'APPROVED',
-      }),
-    });
-    const manualData = await resManual.json();
-    if (!resManual.ok || manualData.data.source !== 'MANUAL') {
-      throw new Error(`Creación manual falló: ${JSON.stringify(manualData)}`);
-    }
-    console.log(`   ✅ Caso manual [${manualData.data.code}] creado exitosamente con source="MANUAL".`);
-
-    // 6d. Clonación de Caso de Prueba para Creación de Variantes
-    console.log('\n6️⃣d Probando POST /api/test-cases/:id/clone (Clonación de casos)...');
-    const resClone = await fetch(`${baseUrl}/api/test-cases/${manualData.data.id}/clone`, {
-      method: 'POST',
-      headers: authHeaders,
-    });
-    const cloneData = await resClone.json();
-    if (!resClone.ok || !cloneData.data.title.includes('[Copia]')) {
-      throw new Error(`Clonación falló: ${JSON.stringify(cloneData)}`);
-    }
-    console.log(`   ✅ Caso clonado como [${cloneData.data.code}] para diseño manual de variantes.`);
-
-    // 6e. Fórmula D: Resilient Cascade Fallback (Conmutación automática ante fallo de IA)
-    console.log('\n6️⃣e Probando FÓRMULA D: Resilient Cascade Fallback (Simulando API IA no disponible)...');
-    const resFallback = await fetch(`${baseUrl}/api/ai/generate`, {
-      method: 'POST',
-      headers: authHeaders,
-      body: JSON.stringify({
-        requirementId: req1.id,
-        provider: 'gemini', // Sin API key en .env -> activa fallback automático
-      }),
-    });
-    const fallbackData = await resFallback.json();
-    if (!resFallback.ok || !fallbackData.data?.testCases) {
-      throw new Error(`Cascade fallback falló: ${JSON.stringify(fallbackData)}`);
-    }
-    console.log(`   ✅ Resiliencia confirmada: La API conmutó de forma transparente a ${fallbackData.data.audit.model} (0 errores para el usuario).`);
-
-    // 6f. Control de Concurrencia Optimista (Optimistic Locking)
-    console.log('\n6️⃣f Probando Control de Concurrencia Optimista (Detección de 409 Conflict)...');
-    const resConflict = await fetch(`${baseUrl}/api/requirements/${req1.id}`, {
-      method: 'PUT',
-      headers: authHeaders,
-      body: JSON.stringify({
-        title: 'Título con conflicto simulado',
-        expectedVersion: 999, // Versión obsoleta deliberada
-      }),
-    });
-    const conflictData = await resConflict.json();
-    if (resConflict.status !== 409) {
-      throw new Error(`Control de concurrencia falló: se esperaba 409 pero se obtuvo ${resConflict.status}`);
-    }
-    console.log(`   ✅ Conflicto detectado con éxito (HTTP 409): "${conflictData.error.slice(0, 60)}..."`);
-
-    // 7. Review Test Case (Approve)
-    console.log('\n7️⃣ Probando PATCH /api/test-cases/:id/review (Aprobación humana)...');
-    const resReview = await fetch(`${baseUrl}/api/test-cases/${firstCase.id}/review`, {
-      method: 'PATCH',
-      headers: authHeaders,
-      body: JSON.stringify({
-        decision: 'APPROVED',
-        comments: 'Aprobado por el QA Lead. Cumple con todos los criterios de aceptación.',
-      }),
-    });
-    const reviewData = await resReview.json();
-    if (!resReview.ok || reviewData.data.testCase.status !== 'APPROVED') {
-      throw new Error(`Revisión falló: ${JSON.stringify(reviewData)}`);
-    }
-    console.log(`   ✅ Caso ${firstCase.code} aprobado y registrado en test_case_reviews.`);
-
-    // 8. Traceability Matrix
-    console.log('\n8️⃣ Probando GET /api/traceability/:projectId ...');
-    const resTrace = await fetch(`${baseUrl}/api/traceability/${project.id}`, {
-      headers: authHeaders,
-    });
-    const traceData = await resTrace.json();
-    console.log(
-      `   ✅ Matriz calculada: ${traceData.data.totalRequirements} requisitos, Cobertura: ${traceData.data.coveragePercent}%`
-    );
-
-    // 9. Metrics Dashboard
-    console.log('\n9️⃣ Probando GET /api/metrics/project/:projectId ...');
-    const resMetrics = await fetch(`${baseUrl}/api/metrics/project/${project.id}`, {
-      headers: authHeaders,
-    });
-    const metricsData = await resMetrics.json();
-    console.log(`   ✅ Tasa de Aprobación ISTQB: ${metricsData.data.istqbRates.approvalRate}%`);
-    console.log(`   ✅ Desglose de Origen: Manuales=${metricsData.data.sourceDistribution.manual.count} (${metricsData.data.sourceDistribution.manual.percent}%), Heurísticos=${metricsData.data.sourceDistribution.ruleBased.count} (${metricsData.data.sourceDistribution.ruleBased.percent}%), IA=${metricsData.data.sourceDistribution.aiGenerated.count} (${metricsData.data.sourceDistribution.aiGenerated.percent}%)`);
-    console.log(`   ✅ Calidad de Evidencia: ${metricsData.data.evidenceQuality.derivedPercent}% Derivado`);
-    console.log(`   ✅ Costo Total IA: USD $${metricsData.data.aiEconomics.totalCostUsd}`);
-
-    // 10. Export in Markdown
-    console.log('\n🔟 Probando GET /api/export/:projectId?format=markdown ...');
-    const resExport = await fetch(
-      `${baseUrl}/api/export/${project.id}?format=markdown&onlyApproved=false`,
-      { headers: authHeaders }
-    );
-    const exportText = await resExport.text();
-    if (!resExport.ok || !exportText.includes('# Especificación de Casos de Prueba')) {
-      throw new Error('Exportación falló');
-    }
-    console.log('   ✅ Exportación Markdown generada correctamente (' + exportText.length + ' caracteres).');
-
-    console.log('\n🎉 ¡TODAS LAS PRUEBAS DE LA API PASARON SATISFACTORIAMENTE (10/10)!');
+    await prisma.user.update({ where: { id: userId }, data: { isActive: false } });
+    check((await request(app).get('/api/v1/projects').set('Authorization', `Bearer ${originalToken}`)).status === 401, 'Token de usuario desactivado rechazado');
+    console.log(`Verificación completada: ${checks} comprobaciones. IA externa: no invocada, requiere credenciales y validación independiente.`);
   } finally {
-    server.close();
+    await prisma.project.deleteMany({ where: { id: { in: projects } } });
+    await prisma.user.deleteMany({ where: { id: { in: ids } } });
+    await prisma.$disconnect();
+    console.log('Datos temporales eliminados.');
   }
 }
-
-runTests().catch((e) => {
-  console.error('\n❌ ERROR EN PRUEBAS:', e);
-  process.exit(1);
-});
+run().catch(error => { console.error(error); process.exitCode = 1; });

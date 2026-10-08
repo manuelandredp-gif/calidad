@@ -116,7 +116,7 @@ class App {
 
   _registerServiceWorker() {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch((err) => {
+      navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then(registration => registration.update()).catch((err) => {
         console.warn('PWA Service Worker skipped:', err);
       });
     }
@@ -210,7 +210,7 @@ class App {
     const testCases = store.get('testCases') || [];
 
     backdrop.innerHTML = `
-      <div class="command-palette-card" onclick="event.stopPropagation()">
+      <div class="command-palette-card">
         <div class="command-palette-input-wrap">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           <input type="text" id="cmd-palette-input" class="command-palette-input" placeholder="Buscar requisitos, casos o cambiar vista (Esc para salir)..." autocomplete="off" />
@@ -254,6 +254,10 @@ class App {
 
   async logout() {
     await api.logout();
+    store.set('metrics', null);
+    store.set('traceability', null);
+    store.set('activeRequirementId', null);
+    store.set('activeRequirement', null);
     store.set('user', null);
     store.set('projects', []);
     store.set('requirements', []);
@@ -439,9 +443,7 @@ class App {
       return;
     }
 
-    select.innerHTML = projects
-      .map((p) => `<option value="${p.id}" ${p.id === activeId ? 'selected' : ''}>${p.name}</option>`)
-      .join('');
+    select.replaceChildren(...projects.map((p) => new Option(p.name, p.id, false, p.id === activeId)));
   }
 
   _setupSidebarToggle() {

@@ -228,7 +228,7 @@ export async function renderTestCases(container) {
       const tc = testCases.find((c) => c.id === id);
       if (!tc) return;
 
-      let justification = null;
+      let justification;
       if (tc.evidenceStatus === 'conflict') {
         const inputJust = prompt(
           `[EVIDENCIA EN CONFLICTO] El caso ${tc.code} contradice o tiene conflicto con los requisitos.\nPara aprobarlo, es obligatorio ingresar una justificación técnica:`
@@ -325,19 +325,19 @@ function renderTestCaseCard(tc) {
   if (tc.status === 'MODIFIED') statusBadge = `<span class="badge badge-source-rule">✏️ MODIFICADO</span>`;
   if (tc.status === 'REJECTED') statusBadge = `<span class="badge badge-danger">✕ RECHAZADO</span>`;
 
-  let sourceBadge = `<span class="badge" style="background:rgba(99,102,241,0.15); color:#818cf8; border:1px solid rgba(99,102,241,0.3);" title="Generado mediante Modelo de Lenguaje">🤖 IA</span>`;
+  let sourceBadge = `<span class="badge" style="background:rgba(99,102,241,0.15); color:var(--text-accent); border:1px solid rgba(99,102,241,0.3);" title="Generado mediante Modelo de Lenguaje">🤖 IA</span>`;
   if (tc.source === 'ISTQB_BVA') {
-    sourceBadge = `<span class="badge" style="background:rgba(59,130,246,0.15); color:#60a5fa; border:1px solid rgba(59,130,246,0.3);" title="Técnica Formal ISTQB: Valores Límite de 3 Puntos">📐 BVA</span>`;
+    sourceBadge = `<span class="badge" style="background:rgba(59,130,246,0.15); color:var(--text-info); border:1px solid rgba(59,130,246,0.3);" title="Técnica Formal ISTQB: Valores Límite de 3 Puntos">📐 BVA</span>`;
   } else if (tc.source === 'TEMPLATE') {
-    sourceBadge = `<span class="badge" style="background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.3);" title="Generado desde Patrón / Plantilla ISTQB">📋 Plantilla</span>`;
+    sourceBadge = `<span class="badge" style="background:rgba(16,185,129,0.15); color:var(--text-success); border:1px solid rgba(16,185,129,0.3);" title="Generado desde Patrón / Plantilla ISTQB">📋 Plantilla</span>`;
   } else if (tc.source === 'MANUAL') {
-    sourceBadge = `<span class="badge" style="background:rgba(245,158,11,0.15); color:#fbbf24; border:1px solid rgba(245,158,11,0.3);" title="Diseñado manualmente por analista QA">✍️ Manual</span>`;
+    sourceBadge = `<span class="badge" style="background:rgba(245,158,11,0.15); color:var(--text-warning); border:1px solid rgba(245,158,11,0.3);" title="Diseñado manualmente por analista QA">✍️ Manual</span>`;
   }
 
   const evidenceBadge = `<span class="badge badge-${tc.evidenceStatus || 'derived'}">Evidencia: ${tc.evidenceStatus || 'derived'}</span>`;
 
   const obsoleteWarning = tc.isObsolete
-    ? `<div style="background:rgba(239, 68, 68, 0.12); border:1px solid rgba(239, 68, 68, 0.35); border-radius:var(--radius-sm); padding:6px 12px; margin-bottom:10px; font-size:0.78rem; color:#fca5a5;">
+    ? `<div style="background:rgba(239, 68, 68, 0.12); border:1px solid rgba(239, 68, 68, 0.35); border-radius:var(--radius-sm); padding:6px 12px; margin-bottom:10px; font-size:0.78rem; color:var(--text-error);">
         ⚠️ <strong>Caso Obsolescente:</strong> El requisito de origen cambió de versión tras la generación de este caso. Requiere revisión.
        </div>`
     : '';
@@ -393,14 +393,14 @@ function renderTestCaseCard(tc) {
           ? `
         <div style="margin-bottom:10px; font-size:0.82rem;">
           <strong style="color:var(--text-muted);">Datos de Prueba:</strong>
-          <code style="background:rgba(0,0,0,0.25); padding:2px 6px; border-radius:4px; font-size:0.8rem;">${escapeHtml(tc.testData)}</code>
+          <code style="background:var(--bg-panel); padding:2px 6px; border-radius:4px; font-size:0.8rem;">${escapeHtml(tc.testData)}</code>
         </div>
       `
           : ''
       }
 
       <!-- Resultado Esperado -->
-      <div style="background:rgba(0,0,0,0.2); padding:10px 14px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle); margin-bottom:14px;">
+      <div style="background:var(--bg-panel); padding:10px 14px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle); margin-bottom:14px;">
         <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:2px;">Resultado Esperado:</div>
         <div style="font-size:0.86rem; color:var(--text-primary);">${escapeHtml(tc.expectedResult)}</div>
       </div>

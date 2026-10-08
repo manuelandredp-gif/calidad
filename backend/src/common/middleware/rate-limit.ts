@@ -1,10 +1,10 @@
 import rateLimit from 'express-rate-limit';
-import { isTest } from '../../config/env';
+import { isTest, env } from '../../config/env';
 
 const jsonMessage = (error: string) => ({ success: false, error });
 
-// En entorno de test desactivamos los límites para no interferir con las suites.
-const skip = () => isTest;
+// En desarrollo y test desactivamos los límites estrictos para pruebas continuas
+const skip = () => isTest || env.NODE_ENV === 'development';
 
 /**
  * Límite estricto para endpoints de autenticación (mitiga fuerza bruta de credenciales).

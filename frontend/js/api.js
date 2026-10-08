@@ -8,7 +8,7 @@ const API_BASE = '/api/v1';
 class ApiClient {
   constructor() {
     this.currentUser = null;
-    this._isRefreshing = false;
+    this._refreshPromise = null;
   }
 
   setCurrentUser(user) {
@@ -34,7 +34,7 @@ class ApiClient {
       });
 
       // Manejo de expiración de sesión (401) con un único reintento de refresh
-      if (response.status === 401 && !isRetry && !endpoint.startsWith('/auth/')) {
+      if (response.status === 401 && !isRetry && !['/auth/login', '/auth/register', '/auth/refresh', '/auth/logout'].includes(endpoint)) {
         const refreshed = await this.refreshToken();
         if (refreshed) {
           return this.request(endpoint, options, true);
@@ -76,27 +76,32 @@ class ApiClient {
   }
 
   async refreshToken() {
-    if (this._isRefreshing) return false;
-    this._isRefreshing = true;
-    try {
-      const response = await fetch(`${API_BASE}/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const resData = await response.json();
-        if (resData?.data?.user) {
-          this.currentUser = resData.data.user;
-        }
-        return true;
-      }
-      return false;
-    } catch {
-      return false;
-    } finally {
-      this._isRefreshing = false;
+    if (this._refreshPromise) return this._refreshPromise;
+    this._refreshPromise = (async () => {
+      try {
+        const response = await fetch(API_BASE + '/auth/refresh', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        });
+        return response.ok;
+      } catch { return false; }
+    })();
+    try { return await this._refreshPromise; }
+    finally { this._refreshPromise = null; }
+  }
+
+  async requestAll(endpoint, params = {}) {
+    if (params.page || params.cursor) {
+      return this.request(endpoint + '?' + new URLSearchParams(params));
     }
+    let page = 1;
+    let result;
+    const items = [];
+    do {
+      result = await this.request(endpoint + '?' + new URLSearchParams({ ...params, page, pageSize: 100 }));
+      items.push(...(result.data || []));
+      page++;
+    } while (page <= (result.meta?.totalPages || 0));
+    return { ...result, data: items };
   }
 
   // --- Health Checks ---
@@ -105,7 +110,8 @@ class ApiClient {
   }
 
   async getDbHealth() {
-    return this.request('/health/db');
+    const res = await this.request('/config/database');
+    return res.data;
   }
 
   // --- Autenticación & Sesión ---
@@ -139,15 +145,13 @@ class ApiClient {
 
   async getMe() {
     const res = await this.request('/auth/me');
-    this.currentUser = res.data?.user || null;
-    return res.data?.user || null;
+    this.currentUser = res.data || null;
+    return this.currentUser;
   }
 
   // --- Proyectos ---
   async getProjects(params = {}) {
-    const query = new URLSearchParams(params).toString();
-    const endpoint = query ? `/projects?${query}` : '/projects';
-    return this.request(endpoint);
+    return this.requestAll('/projects', params);
   }
 
   async getProject(id) {
@@ -169,18 +173,14 @@ class ApiClient {
   }
 
   async archiveProject(id) {
-    return this.request(`/projects/${id}`, {
-      method: 'DELETE',
+    return this.request(`/projects/${id}/archive`, {
+      method: 'PATCH',
     });
   }
 
   // --- Requisitos ---
   async getRequirements(projectId, params = {}) {
-    const query = new URLSearchParams(params).toString();
-    const endpoint = query
-      ? `/requirements/project/${projectId}?${query}`
-      : `/requirements/project/${projectId}`;
-    return this.request(endpoint);
+    return this.requestAll(`/requirements/project/${projectId}`, params);
   }
 
   async getRequirement(id) {
@@ -206,8 +206,8 @@ class ApiClient {
   }
 
   async archiveRequirement(id) {
-    return this.request(`/requirements/${id}`, {
-      method: 'DELETE',
+    return this.request(`/requirements/${id}/archive`, {
+      method: 'PATCH',
     });
   }
 
@@ -248,11 +248,7 @@ class ApiClient {
   }
 
   async getProjectTestCases(projectId, params = {}) {
-    const query = new URLSearchParams(params).toString();
-    const endpoint = query
-      ? `/test-cases/project/${projectId}?${query}`
-      : `/test-cases/project/${projectId}`;
-    return this.request(endpoint);
+    return this.requestAll(`/test-cases/project/${projectId}`, params);
   }
 
   async getTestCase(id) {
@@ -349,7 +345,7 @@ class ApiClient {
 
   // --- Administración de Usuarios (ADMIN) ---
   async getUsers() {
-    return this.request('/users');
+    return this.requestAll('/users');
   }
 
   async updateUserRoleOrStatus(id, payload) {

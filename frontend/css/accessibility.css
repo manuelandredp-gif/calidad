@@ -90,7 +90,7 @@ textarea:focus-visible {
 }
 
 .diff-content {
-  background: rgba(0, 0, 0, 0.3);
+  background:var(--bg-panel);
   padding: 1rem;
   border-radius: 6px;
   font-family: monospace;
@@ -103,7 +103,7 @@ textarea:focus-visible {
 }
 
 .diff-unified-box {
-  background: rgba(0, 0, 0, 0.2);
+  background:var(--bg-panel);
   padding: 1rem;
   border-radius: 6px;
   border: 1px solid var(--color-border, #334155);
@@ -125,7 +125,7 @@ ins.diff-add {
 
 del.diff-del {
   background-color: rgba(239, 68, 68, 0.25);
-  color: #f87171;
+  color:var(--text-error);
   text-decoration: line-through;
   padding: 0.1rem 0.25rem;
   border-radius: 2px;
@@ -152,7 +152,7 @@ del.diff-del {
 }
 
 .shortcuts-table kbd {
-  background: rgba(255, 255, 255, 0.1);
+  background:var(--bg-soft);
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
   font-family: monospace;

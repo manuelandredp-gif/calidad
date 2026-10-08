@@ -13,7 +13,7 @@ export async function renderSettings(container) {
   const isAdmin = user?.role === 'ADMIN';
 
   // Cargar estado de base de datos y proveedores de IA
-  let dbInfo = { engine: 'PostgreSQL', counts: { users: 0, projects: 0, requirements: 0, testCases: 0 } };
+  let dbInfo = { engine: 'PostgreSQL', status: 'unknown', counts: {} };
   let aiConfig = { providers: {} };
 
   try {
@@ -24,8 +24,8 @@ export async function renderSettings(container) {
     console.warn('Error obteniendo estado de configuración:', e);
   }
 
-  const geminiAvailable = aiConfig.providers?.gemini?.available;
-  const openaiAvailable = aiConfig.providers?.openai?.available;
+  const geminiAvailable = aiConfig.providers?.find?.(p => p.id === 'gemini')?.isConfigured;
+  const openaiAvailable = aiConfig.providers?.find?.(p => p.id === 'openai')?.isConfigured;
 
   container.innerHTML = `
     <div style="margin-bottom:24px;">
@@ -47,26 +47,26 @@ export async function renderSettings(container) {
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:14px;">
-          <div style="background:rgba(0,0,0,0.25); padding:10px 14px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+          <div style="background:var(--bg-panel); padding:10px 14px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
             <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase;">Usuarios</div>
-            <div style="font-size:1.2rem; font-weight:700; color:#fff;">${dbInfo.counts?.users ?? 0}</div>
+            <div style="font-size:1.2rem; font-weight:700; color:var(--text-primary);">${dbInfo.counts?.users ?? 'No disponible'}</div>
           </div>
-          <div style="background:rgba(0,0,0,0.25); padding:10px 14px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+          <div style="background:var(--bg-panel); padding:10px 14px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
             <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase;">Proyectos</div>
-            <div style="font-size:1.2rem; font-weight:700; color:#fff;">${dbInfo.counts?.projects ?? 0}</div>
+            <div style="font-size:1.2rem; font-weight:700; color:var(--text-primary);">${dbInfo.counts?.projects ?? 'No disponible'}</div>
           </div>
-          <div style="background:rgba(0,0,0,0.25); padding:10px 14px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+          <div style="background:var(--bg-panel); padding:10px 14px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
             <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase;">Requisitos</div>
-            <div style="font-size:1.2rem; font-weight:700; color:#fff;">${dbInfo.counts?.requirements ?? 0}</div>
+            <div style="font-size:1.2rem; font-weight:700; color:var(--text-primary);">${dbInfo.counts?.requirements ?? 'No disponible'}</div>
           </div>
-          <div style="background:rgba(0,0,0,0.25); padding:10px 14px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+          <div style="background:var(--bg-panel); padding:10px 14px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
             <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase;">Casos de Prueba</div>
-            <div style="font-size:1.2rem; font-weight:700; color:var(--cyan);">${dbInfo.counts?.testCases ?? 0}</div>
+            <div style="font-size:1.2rem; font-weight:700; color:var(--cyan);">${dbInfo.counts?.testCases ?? 'No disponible'}</div>
           </div>
         </div>
 
         <div style="font-size:0.78rem; color:var(--text-muted);">
-          URL de conexión: <code>${escapeHtml(dbInfo.databaseUrl || 'postgresql://...')}</code>
+          Estado: ${dbInfo.status === 'connected' ? 'Conectada' : 'No verificado'}. Los conteos corresponden a los datos accesibles por tu cuenta.
         </div>
       </div>
 
@@ -81,7 +81,7 @@ export async function renderSettings(container) {
 
         <div style="display:flex; flex-direction:column; gap:12px;">
           <!-- Gemini -->
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(0,0,0,0.2); border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:var(--bg-panel); border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
             <div>
               <div style="font-weight:700; font-size:0.9rem;">Google Gemini</div>
               <div style="font-size:0.75rem; color:var(--text-muted);">Variable: <code>GEMINI_API_KEY</code></div>
@@ -92,7 +92,7 @@ export async function renderSettings(container) {
           </div>
 
           <!-- OpenAI -->
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(0,0,0,0.2); border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:var(--bg-panel); border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
             <div>
               <div style="font-weight:700; font-size:0.9rem;">OpenAI</div>
               <div style="font-size:0.75rem; color:var(--text-muted);">Variable: <code>OPENAI_API_KEY</code></div>
@@ -181,16 +181,16 @@ async function loadUsersTable(container) {
                   </select>
                 </td>
                 <td>
-                  <span class="badge ${u.status === 'ACTIVE' ? 'badge-approved' : 'badge-danger'}">
-                    ${u.status}
+                  <span class="badge ${(u.isActive ? 'ACTIVE' : 'INACTIVE') === 'ACTIVE' ? 'badge-approved' : 'badge-danger'}">
+                    ${(u.isActive ? 'ACTIVE' : 'INACTIVE')}
                   </span>
                 </td>
                 <td style="font-size:0.8rem; color:var(--text-muted);">
                   ${new Date(u.createdAt).toLocaleDateString()}
                 </td>
                 <td style="text-align:right;">
-                  <button class="btn btn-sm ${u.status === 'ACTIVE' ? 'btn-outline' : 'btn-success'} btn-toggle-user-status" data-user-id="${u.id}" data-current-status="${u.status}" style="font-size:0.75rem;">
-                    ${u.status === 'ACTIVE' ? 'Desactivar' : 'Activar'}
+                  <button class="btn btn-sm ${(u.isActive ? 'ACTIVE' : 'INACTIVE') === 'ACTIVE' ? 'btn-outline' : 'btn-success'} btn-toggle-user-status" data-user-id="${u.id}" data-current-status="${(u.isActive ? 'ACTIVE' : 'INACTIVE')}" style="font-size:0.75rem;">
+                    ${(u.isActive ? 'ACTIVE' : 'INACTIVE') === 'ACTIVE' ? 'Desactivar' : 'Activar'}
                   </button>
                 </td>
               </tr>
@@ -229,7 +229,7 @@ async function loadUsersTable(container) {
         }
 
         try {
-          await api.updateUserRoleOrStatus(userId, { status: newStatus });
+          await api.updateUserRoleOrStatus(userId, { isActive: newStatus === 'ACTIVE' });
           toast.success(`Estado de usuario cambiado a ${newStatus}`);
           loadUsersTable(container);
         } catch (err) {

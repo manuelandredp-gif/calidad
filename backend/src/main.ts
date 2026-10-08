@@ -84,6 +84,7 @@ const handleDbHealth = async (_req: Request, res: Response, next: NextFunction) 
     res.status(200).json({
       status: 'connected',
       engine: 'PostgreSQL',
+      provider: new URL(env.DATABASE_URL).hostname.endsWith('.supabase.com') ? 'Supabase' : 'PostgreSQL',
       timestamp: new Date().toISOString(),
     });
   } catch (err) {
@@ -104,7 +105,7 @@ const handleAiHealth = (_req: Request, res: Response) => {
     provider,
     configured: keyPresent,
     message: keyPresent
-      ? `Proveedor '${provider}' configurado con credenciales activas.`
+      ? `Proveedor '${provider}' con clave presente; conectividad y permisos aún no verificados.`
       : `Proveedor '${provider}' no cuenta con API Key configurada en backend/.env.`,
   });
 };
@@ -154,12 +155,14 @@ app.get('/api/v1/health/deep', handleDeepHealth);
 
 // -------------------- API REST versionada (/api/v1) --------------------
 import { testRunsRouter } from './modules/test-runs/test-runs.router';
+import { specRouter } from './modules/spec/spec.router';
 
 const api = express.Router();
 api.use('/auth', authLimiter, authRouter);
 api.use('/users', apiLimiter, usersRouter);
 api.use('/config', apiLimiter, configRouter);
 api.use('/projects', apiLimiter, projectsRouter);
+api.use('/spec', apiLimiter, specRouter);
 api.use('/requirements', apiLimiter, requirementsRouter);
 api.use('/ai', aiLimiter, aiGenerationRouter);
 api.use('/test-cases', apiLimiter, testCasesRouter);
@@ -172,7 +175,9 @@ app.use('/api/v1', api);
 app.use('/api', api); // Alias retrocompatible
 
 // -------------------- Frontend estático SPA --------------------
-const frontendPath = path.resolve(__dirname, '../../frontend');
+const frontendPath = process.env.VERCEL
+  ? path.join(process.cwd(), 'public')
+  : path.resolve(__dirname, '../../frontend');
 app.use(express.static(frontendPath));
 
 app.get('*', (req: Request, res: Response, next) => {

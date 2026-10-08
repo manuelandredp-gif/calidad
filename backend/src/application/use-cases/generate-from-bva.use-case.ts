@@ -69,10 +69,12 @@ export class GenerateFromBvaUseCase {
 
     // 4. Inserción transaccional atómica con reserva correlativa de CP-XXX
     const createdCases = await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM requirements WHERE id = ${requirementId} FOR UPDATE`;
       const currentReq = await tx.requirement.findUniqueOrThrow({
         where: { id: requirementId },
-        select: { nextCaseNumber: true, version: true },
+        select: { nextCaseNumber: true, version: true, status: true },
       });
+      if (currentReq.status === 'OBSOLETE') throw ApiError.forbidden('El requisito está archivado.');
 
       let codeCounter = currentReq.nextCaseNumber;
       const inserted = [];

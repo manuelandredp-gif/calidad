@@ -27,7 +27,7 @@ export class GeminiAdapter implements IAIProvider {
       );
     }
 
-    const modelName = options?.model || 'gemini-1.5-flash';
+    const modelName = options?.model || env.AI_GEMINI_MODEL;
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
       model: modelName,
@@ -48,7 +48,7 @@ export class GeminiAdapter implements IAIProvider {
     const fullPrompt = `${systemPrompt}\n\n---\n${userPrompt}`;
 
     const result = await withRetry(
-      () => model.generateContent(fullPrompt),
+      (signal) => model.generateContent(fullPrompt, { signal }),
       {
         retries: env.AI_MAX_RETRIES,
         timeoutMs: env.AI_REQUEST_TIMEOUT_MS,
@@ -64,8 +64,9 @@ export class GeminiAdapter implements IAIProvider {
     const validated = validateAIResponse(responseText);
 
     const usageMetadata = response.usageMetadata;
-    const inputTokens = usageMetadata?.promptTokenCount ?? Math.floor(fullPrompt.length / 4);
-    const outputTokens = usageMetadata?.candidatesTokenCount ?? Math.floor(responseText.length / 4);
+    if (usageMetadata?.promptTokenCount === undefined || usageMetadata.candidatesTokenCount === undefined) throw new Error('El proveedor no reportó consumo de tokens; no se registran estimaciones como mediciones reales.');
+    const inputTokens = usageMetadata.promptTokenCount;
+    const outputTokens = usageMetadata.candidatesTokenCount;
     const estimatedCost = calculateAICost(modelName, inputTokens, outputTokens);
 
     return {

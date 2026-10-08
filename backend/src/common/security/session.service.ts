@@ -17,8 +17,15 @@ export class SessionService {
     const expiresInDays = params.expiresInDays ?? 7;
     const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
 
-    const session = await prisma.authSession.create({
-      data: {
+    const session = await prisma.authSession.upsert({
+      where: { tokenHash },
+      update: {
+        userAgent: params.userAgent,
+        ipAddress: params.ipAddress,
+        expiresAt,
+        isRevoked: false,
+      },
+      create: {
         userId: params.userId,
         tokenHash,
         userAgent: params.userAgent,
@@ -41,33 +48,19 @@ export class SessionService {
   }): Promise<boolean> {
     const oldHash = this.hashToken(params.oldRefreshToken);
 
-    const session = await prisma.authSession.findUnique({
-      where: { tokenHash: oldHash },
-    });
-
-    if (!session || session.isRevoked || session.expiresAt < new Date()) {
-      return false;
-    }
-
-    // Revocar sesión anterior e insertar nueva de forma atómica
-    await prisma.$transaction([
-      prisma.authSession.update({
-        where: { id: session.id },
+    return prisma.$transaction(async (tx) => {
+      const revoked = await tx.authSession.updateMany({
+        where: { tokenHash: oldHash, userId: params.userId, isRevoked: false, expiresAt: { gt: new Date() } },
         data: { isRevoked: true },
-      }),
-      prisma.authSession.create({
-        data: {
-          userId: params.userId,
-          tokenHash: this.hashToken(params.newRefreshToken),
-          userAgent: params.userAgent,
-          ipAddress: params.ipAddress,
-          expiresAt: new Date(Date.now() + (params.expiresInDays ?? 7) * 24 * 60 * 60 * 1000),
-          isRevoked: false,
-        },
-      }),
-    ]);
-
-    return true;
+      });
+      if (revoked.count !== 1) return false;
+      await tx.authSession.create({ data: {
+        userId: params.userId, tokenHash: this.hashToken(params.newRefreshToken),
+        userAgent: params.userAgent, ipAddress: params.ipAddress,
+        expiresAt: new Date(Date.now() + (params.expiresInDays ?? 7) * 24 * 60 * 60 * 1000), isRevoked: false,
+      } });
+      return true;
+    });
   }
 
   public static async revokeSession(refreshToken: string): Promise<void> {

@@ -97,7 +97,7 @@ export class TestCaseModalHandler {
           decision: 'MODIFIED',
           expectedVersion,
           comments: comments || 'Modificado por analista QA',
-          updates: {
+
             title,
             priority,
             evidenceStatus,
@@ -105,7 +105,6 @@ export class TestCaseModalHandler {
             steps,
             testData,
             expectedResult,
-          },
         });
 
         toast.success('Caso de prueba modificado y registrado en historial de auditoría');

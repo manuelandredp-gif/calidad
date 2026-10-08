@@ -12,12 +12,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
 
   <!-- Stylesheets -->
+  <script src="js/theme-init.js"></script>
   <link rel="stylesheet" href="css/variables.css" />
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/animations.css" />
   <link rel="stylesheet" href="css/accessibility.css" />
   <link rel="stylesheet" href="css/premium.css" />
+  <link rel="stylesheet" href="css/theme.css" />
 
   <!-- Favicon SVG -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236366f1'><polygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'/></svg>" />
@@ -27,6 +29,11 @@
        Authentication Screen (Login / Register) - Real Accounts Only
        ==================================================================== -->
   <div id="auth-screen" class="auth-screen" style="display: none;">
+    <button type="button" class="btn-toggle-theme theme-toggle auth-theme-toggle" aria-label="Activar modo claro" title="Activar modo claro">
+      <span class="theme-icon-sun" aria-hidden="true">☀️</span>
+      <span class="theme-icon-moon" aria-hidden="true" hidden>🌙</span>
+      <span class="theme-toggle-label">Modo claro</span>
+    </button>
     <div class="auth-container">
       <div class="auth-brand">
         <div class="auth-logo-badge">
@@ -93,11 +100,20 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="reg-password">Contraseña (Mínimo 6 caracteres) *</label>
+            <label class="form-label" for="reg-password">Contraseña (8 caracteres, mayúscula, minúscula y número) *</label>
             <div class="input-with-icon">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-              <input type="password" id="reg-password" class="form-input" placeholder="••••••••••••" minlength="6" required />
+              <input type="password" id="reg-password" class="form-input" placeholder="••••••••••••" minlength="8" required autocomplete="new-password" />
             </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="reg-password-confirm">Confirmar contraseña *</label>
+            <div class="input-with-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              <input type="password" id="reg-password-confirm" class="form-input" placeholder="Repite tu contraseña" required autocomplete="new-password" aria-describedby="reg-password-confirm-error" />
+            </div>
+            <p id="reg-password-confirm-error" class="field-error" aria-live="polite" hidden></p>
           </div>
 
           <button type="submit" id="btn-submit-register" class="btn btn-primary btn-auth-submit">
@@ -190,7 +206,7 @@
     <div class="main-wrapper">
       <header class="topbar">
         <div class="topbar-left">
-          <button class="btn-icon" id="btn-toggle-sidebar" style="display:none;" title="Menú">
+          <button class="btn-icon" id="btn-toggle-sidebar" title="Menú">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
           </button>
           <h1 class="current-view-title" id="current-view-title">Inicio</h1>
@@ -198,10 +214,6 @@
 
         <div class="topbar-right">
           <!-- Dark / Light Theme Toggle -->
-          <button type="button" class="btn-icon btn-toggle-theme" title="Alternar Modo Oscuro / Claro" aria-label="Cambiar tema visual">
-            <span class="theme-icon-sun" style="font-size:1rem;">☀️</span>
-            <span class="theme-icon-moon" style="display:none; font-size:1rem;">🌙</span>
-          </button>
 
           <div class="project-selector-wrapper">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
@@ -209,6 +221,11 @@
               <option value="">Selecciona un proyecto</option>
             </select>
           </div>
+          <button type="button" class="btn-toggle-theme theme-toggle" aria-label="Activar modo claro" title="Activar modo claro">
+            <span class="theme-icon-sun" aria-hidden="true">☀️</span>
+            <span class="theme-icon-moon" aria-hidden="true" hidden>🌙</span>
+            <span class="theme-toggle-label">Modo claro</span>
+          </button>
         </div>
       </header>
 
@@ -359,7 +376,7 @@
             </label>
             <textarea id="edit-req-criteria" class="form-textarea code-font" style="min-height:120px;" required></textarea>
           </div>
-          <div style="background:rgba(245, 158, 11, 0.08); border:1px solid rgba(245, 158, 11, 0.3); border-radius:var(--radius-md); padding:10px 14px; font-size:0.8rem; color:#fbbf24;">
+          <div style="background:rgba(245, 158, 11, 0.08); border:1px solid rgba(245, 158, 11, 0.3); border-radius:var(--radius-md); padding:10px 14px; font-size:0.8rem; color:var(--text-warning);">
             ⚠️ <strong>Control de Versiones:</strong> Al actualizar un requisito con casos existentes, se creará un snapshot histórico de versión y los casos previos se marcarán como pendientes de revisión por obsolescencia.
           </div>
         </div>
@@ -413,10 +430,10 @@
         <div class="modal-body">
           <div style="background:rgba(99, 102, 241, 0.08); border:1px solid rgba(99, 102, 241, 0.25); border-radius:var(--radius-md); padding:12px 16px; margin-bottom:14px;">
             <div style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Requisito Objetivo</div>
-            <div id="ai-gen-req-label" style="font-size:0.95rem; font-weight:700; color:#fff; margin-top:2px;">REQ-XXX</div>
+            <div id="ai-gen-req-label" style="font-size:0.95rem; font-weight:700; color:var(--text-primary); margin-top:2px;">REQ-XXX</div>
           </div>
 
-          <div id="ai-provider-warning" style="display:none; background:rgba(239, 68, 68, 0.1); border:1px solid rgba(239, 68, 68, 0.3); border-radius:var(--radius-md); padding:12px; margin-bottom:14px; font-size:0.83rem; color:#fca5a5;">
+          <div id="ai-provider-warning" style="display:none; background:rgba(239, 68, 68, 0.1); border:1px solid rgba(239, 68, 68, 0.3); border-radius:var(--radius-md); padding:12px; margin-bottom:14px; font-size:0.83rem; color:var(--text-error);">
             ⚠️ No hay proveedores de IA configurados con API Key en el servidor. Configure <code>GEMINI_API_KEY</code> u <code>OPENAI_API_KEY</code> en las variables de entorno del backend para habilitar la generación.
           </div>
 
@@ -432,8 +449,7 @@
             <div class="form-group">
               <label class="form-label" for="ai-gen-model">Modelo</label>
               <select class="form-select" id="ai-gen-model">
-                <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-                <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+                <option value="">Cargando configuración del servidor</option>
               </select>
             </div>
             <div class="form-group">
@@ -454,7 +470,7 @@
           </div>
 
           <!-- Progress animation container -->
-          <div id="ai-gen-progress" style="display:none; margin-top:10px; padding:14px; background:rgba(0,0,0,0.3); border-radius:var(--radius-md); text-align:center;">
+          <div id="ai-gen-progress" style="display:none; margin-top:10px; padding:14px; background:var(--bg-panel); border-radius:var(--radius-md); text-align:center;">
             <span class="spinner spinner-cyan"></span>
             <div style="font-size:0.85rem; color:var(--cyan); margin-top:8px; font-weight:600;">
               Llamando al proveedor de IA, validando esquema de salida y citando evidencia...
@@ -636,13 +652,13 @@
             <input type="text" class="form-input" id="manual-tc-testdata" placeholder="Ej: email=admin@test.com, password=Test123!" />
             <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;" id="synth-data-buttons">
               <span style="font-size:0.75rem; color:var(--text-muted); align-self:center;">🎲 Asistente de Datos Sintéticos:</span>
-              <button type="button" class="btn-synth-data" data-type="ruc_valid" style="font-size:0.72rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border-subtle); background:rgba(255,255,255,0.04); color:var(--text-secondary); cursor:pointer;">RUC Válido (SUNAT Mód 11)</button>
-              <button type="button" class="btn-synth-data" data-type="ruc_invalid" style="font-size:0.72rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border-subtle); background:rgba(255,255,255,0.04); color:var(--text-secondary); cursor:pointer;">RUC Inválido</button>
-              <button type="button" class="btn-synth-data" data-type="dni" style="font-size:0.72rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border-subtle); background:rgba(255,255,255,0.04); color:var(--text-secondary); cursor:pointer;">DNI (8 dígitos)</button>
-              <button type="button" class="btn-synth-data" data-type="card_luhn" style="font-size:0.72rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border-subtle); background:rgba(255,255,255,0.04); color:var(--text-secondary); cursor:pointer;">Tarjeta Visa (Luhn)</button>
-              <button type="button" class="btn-synth-data" data-type="boundary_255" style="font-size:0.72rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border-subtle); background:rgba(255,255,255,0.04); color:var(--text-secondary); cursor:pointer;">String 255 chars</button>
-              <button type="button" class="btn-synth-data" data-type="sqli" style="font-size:0.72rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border-subtle); background:rgba(255,255,255,0.04); color:var(--text-secondary); cursor:pointer;">SQLi Pasivo</button>
-              <button type="button" class="btn-synth-data" data-type="xss" style="font-size:0.72rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border-subtle); background:rgba(255,255,255,0.04); color:var(--text-secondary); cursor:pointer;">XSS Pasivo</button>
+              <button type="button" class="btn-synth-data" data-type="ruc_valid" style="font-size:0.72rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border-subtle); background:var(--bg-soft); color:var(--text-secondary); cursor:pointer;">RUC Válido (SUNAT Mód 11)</button>
+              <button type="button" class="btn-synth-data" data-type="ruc_invalid" style="font-size:0.72rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border-subtle); background:var(--bg-soft); color:var(--text-secondary); cursor:pointer;">RUC Inválido</button>
+              <button type="button" class="btn-synth-data" data-type="dni" style="font-size:0.72rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border-subtle); background:var(--bg-soft); color:var(--text-secondary); cursor:pointer;">DNI (8 dígitos)</button>
+              <button type="button" class="btn-synth-data" data-type="card_luhn" style="font-size:0.72rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border-subtle); background:var(--bg-soft); color:var(--text-secondary); cursor:pointer;">Tarjeta Visa (Luhn)</button>
+              <button type="button" class="btn-synth-data" data-type="boundary_255" style="font-size:0.72rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border-subtle); background:var(--bg-soft); color:var(--text-secondary); cursor:pointer;">String 255 chars</button>
+              <button type="button" class="btn-synth-data" data-type="sqli" style="font-size:0.72rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border-subtle); background:var(--bg-soft); color:var(--text-secondary); cursor:pointer;">SQLi Pasivo</button>
+              <button type="button" class="btn-synth-data" data-type="xss" style="font-size:0.72rem; padding:3px 8px; border-radius:4px; border:1px solid var(--border-subtle); background:var(--bg-soft); color:var(--text-secondary); cursor:pointer;">XSS Pasivo</button>
             </div>
           </div>
 
@@ -751,7 +767,7 @@
               </span>
               <span id="bva-preview-count" class="badge badge-derived" style="font-size:0.75rem;">8 casos</span>
             </div>
-            <div id="bva-live-preview-list" style="max-height:220px; overflow-y:auto; border:1px solid var(--border-subtle); border-radius:var(--radius-sm); background:rgba(0,0,0,0.2); padding:8px;">
+            <div id="bva-live-preview-list" style="max-height:220px; overflow-y:auto; border:1px solid var(--border-subtle); border-radius:var(--radius-sm); background:var(--bg-panel); padding:8px;">
               <!-- Se calcula dinámicamente en tiempo real -->
             </div>
           </div>

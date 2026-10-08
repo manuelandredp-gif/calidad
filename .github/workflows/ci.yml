@@ -16,9 +16,10 @@ jobs:
     env:
       # Valores dummy para que la validación de entorno (env.ts) pase en CI
       NODE_ENV: test
-      DATABASE_URL: "file:./ci.db"
+      DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
+      DIRECT_URL: "postgresql://ci:ci@localhost:5432/ci"
       JWT_SECRET: "ci_secret_key_de_integracion_continua_1234567890"
-      AI_PROVIDER_DEFAULT: mock
+      AI_PROVIDER_DEFAULT: gemini
 
     steps:
       - uses: actions/checkout@v4
@@ -26,7 +27,7 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: backend/package-lock.json
 

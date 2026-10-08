@@ -193,6 +193,7 @@ requirementsRouter.post(
     await assertProjectAccess(data.projectId, req.user!.userId, req.user!.role);
 
     const result = await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM projects WHERE id = ${data.projectId} FOR UPDATE`;
       const project = await tx.project.findUniqueOrThrow({
         where: { id: data.projectId },
         select: { status: true, nextRequirementNumber: true },
@@ -205,7 +206,11 @@ requirementsRouter.post(
       // Si no especificó código o ya existe, asignar atómicamente
       let finalCode = data.code?.trim().toUpperCase();
       if (!finalCode) {
-        finalCode = `REQ-${String(project.nextRequirementNumber).padStart(3, '0')}`;
+        let nextNumber = project.nextRequirementNumber;
+        do {
+          finalCode = 'REQ-' + String(nextNumber++).padStart(3, '0');
+        } while (await tx.requirement.findUnique({ where: { projectId_code: { projectId: data.projectId, code: finalCode } } }));
+        project.nextRequirementNumber = nextNumber - 1;
         await tx.project.update({
           where: { id: data.projectId },
           data: { nextRequirementNumber: project.nextRequirementNumber + 1 },
@@ -359,7 +364,7 @@ requirementsRouter.post(
 
     // Validar cada fila individualmente con el esquema estricto
     const validatedRows = items.map((item, idx) => {
-      const parsed = requirementImportRowSchema.safeParse(item);
+      const parsed = requirementImportRowSchema.extend({ code: requirementImportRowSchema.shape.code.optional() }).safeParse(item);
       if (!parsed.success) {
         throw ApiError.badRequest(
           `Error en fila ${idx + 1}: ${parsed.error.errors.map((e) => e.message).join(', ')}`
@@ -368,13 +373,19 @@ requirementsRouter.post(
       return parsed.data;
     });
 
+    const codes = validatedRows.filter(r => r.code).map(r => r.code!.toUpperCase());
+    if (new Set(codes).size !== codes.length) throw ApiError.badRequest('La importación contiene códigos duplicados.');
     // Inserción atómica transaccional
     const createdList = await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM projects WHERE id = ${projectId} FOR UPDATE`;
+      const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
+      if (project.status === 'ARCHIVED') throw ApiError.forbidden('El proyecto está archivado.');
+      let nextNumber = project.nextRequirementNumber;
       // Comprobar colisiones de códigos con requisitos ya existentes en el proyecto
       const existing = await tx.requirement.findMany({
         where: {
           projectId,
-          code: { in: validatedRows.map((r) => r.code) },
+          code: { in: codes },
         },
         select: { code: true },
       });
@@ -387,10 +398,15 @@ requirementsRouter.post(
 
       const created = [];
       for (const row of validatedRows) {
+        let code = row.code?.toUpperCase();
+        if (!code) {
+          do { code = 'REQ-' + String(nextNumber++).padStart(3, '0'); }
+          while (codes.includes(code) || await tx.requirement.findUnique({ where: { projectId_code: { projectId, code } } }));
+        }
         const reqRow = await tx.requirement.create({
           data: {
             projectId,
-            code: row.code,
+            code,
             title: row.title,
             description: row.description,
             acceptanceCriteria: row.acceptanceCriteria,

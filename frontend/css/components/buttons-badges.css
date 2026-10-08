@@ -39,13 +39,13 @@
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.07);
+  background:var(--bg-soft);
   color: var(--text-primary);
   border-color: var(--border-subtle);
 }
 
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background:var(--bg-soft);
   border-color: var(--border-highlight);
 }
 
@@ -63,7 +63,7 @@
 
 .btn-success {
   background: rgba(16, 185, 129, 0.18);
-  color: #34d399;
+  color:var(--text-success);
   border-color: rgba(16, 185, 129, 0.4);
 }
 
@@ -75,7 +75,7 @@
 
 .btn-danger {
   background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
+  color:var(--text-error);
   border-color: rgba(239, 68, 68, 0.35);
 }
 
@@ -105,13 +105,13 @@
   padding: 8px;
   border-radius: var(--radius-md);
   color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.04);
+  background:var(--bg-soft);
   border: 1px solid var(--border-subtle);
 }
 
 .btn-icon:hover {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.1);
+  background:var(--bg-soft);
 }
 
 /* Badges & Status Pills */
@@ -130,37 +130,37 @@
 
 .badge-approved {
   background: var(--success-bg);
-  color: #34d399;
+  color:var(--text-success);
   border-color: var(--success-border);
 }
 
 .badge-pending {
   background: var(--warning-bg);
-  color: #fbbf24;
+  color:var(--text-warning);
   border-color: var(--warning-border);
 }
 
 .badge-rejected {
   background: var(--error-bg);
-  color: #f87171;
+  color:var(--text-error);
   border-color: var(--error-border);
 }
 
 .badge-modified {
   background: var(--info-bg);
-  color: #60a5fa;
+  color:var(--text-info);
   border-color: var(--info-border);
 }
 
 .badge-derived {
   background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
+  color:var(--text-success);
   border-color: rgba(16, 185, 129, 0.3);
 }
 
 .badge-suggested {
   background: rgba(245, 158, 11, 0.18);
-  color: #f59e0b;
+  color:var(--text-warning);
   border-color: rgba(245, 158, 11, 0.45);
 }
 
@@ -182,8 +182,8 @@
   border-color: rgba(168, 85, 247, 0.35);
 }
 
-.badge-type-positive { color: #34d399; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.25); }
-.badge-type-negative { color: #f87171; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.25); }
-.badge-type-alternative { color: #60a5fa; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.25); }
-.badge-type-boundary { color: #fbbf24; background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.25); }
+.badge-type-positive { color:var(--text-success); background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.25); }
+.badge-type-negative { color:var(--text-error); background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.25); }
+.badge-type-alternative { color:var(--text-info); background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.25); }
+.badge-type-boundary { color:var(--text-warning); background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.25); }
 .badge-type-validation { color: #c084fc; background: rgba(192, 132, 252, 0.1); border-color: rgba(192, 132, 252, 0.25); }

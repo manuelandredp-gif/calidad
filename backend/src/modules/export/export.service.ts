@@ -233,7 +233,7 @@ export function buildGherkin(project: ExportProject): string {
 
       if (steps.length > 0) {
         steps.forEach((step, idx) => {
-          const cleanStep = step.replace(/^\d+[\.\)]\s*/, '');
+          const cleanStep = step.replace(/^\d+[.)]\s*/, '');
           gherkin += `    ${idx === 0 ? 'Cuando' : 'Y'} ${cleanStep}\n`;
         });
       } else {

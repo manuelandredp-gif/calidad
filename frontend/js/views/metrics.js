@@ -70,11 +70,11 @@ export async function renderMetrics(container) {
 function renderMetricsDashboard(m, container) {
   if (!container) return;
 
-  const coverage = m.coverage || {};
-  const testCases = m.testCases || {};
-  const aiPerf = m.aiPerformance || {};
+  const coverage = { percentage: m.summary?.coveragePercent, coveredRequirements: m.summary?.coveredRequirements, totalRequirements: m.summary?.totalRequirements };
+  const testCases = { total: m.summary?.totalCases, approved: m.summary?.approvedCases, modified: m.summary?.modifiedCases, rejected: m.summary?.rejectedCases, pending: m.summary?.pendingCases };
+  const aiPerf = { ...m.aiEconomy, totalCostUSD: m.aiEconomy?.totalCostUsd, avgLatencyMs: m.aiEconomy?.averageLatencyMs };
   const evidence = m.evidenceDistribution || {};
-  const duplicateCandidates = m.duplicateCandidatesCount ?? 0;
+  const duplicateCandidates = m.duplicateCandidatesCount ?? 'No medido';
 
   const totalCases = testCases.total ?? 0;
   const approved = testCases.approved ?? 0;
@@ -87,7 +87,7 @@ function renderMetricsDashboard(m, container) {
   const avgLatencyMs = aiPerf.avgLatencyMs ? `${aiPerf.avgLatencyMs} ms` : 'No disponible';
   const totalGenerations = aiPerf.totalGenerations ?? 0;
   const failedGenerations = aiPerf.failedGenerations ?? 0;
-  const cachedGenerations = aiPerf.cachedGenerations ?? 0;
+  const cachedGenerations = aiPerf.cachedGenerations ?? 'No medido';
 
   container.innerHTML = `
     <!-- Fila 1: KPIs Principales de Calidad -->
@@ -114,7 +114,7 @@ function renderMetricsDashboard(m, container) {
 
       <div class="card" style="padding:16px; text-align:center;">
         <div style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Pendientes de Revisión</div>
-        <div style="font-size:2rem; font-weight:800; color:#fbbf24; margin:6px 0;">
+        <div style="font-size:2rem; font-weight:800; color:var(--text-warning); margin:6px 0;">
           ${pending}
         </div>
         <div style="font-size:0.75rem; color:var(--text-secondary);">
@@ -155,7 +155,7 @@ function renderMetricsDashboard(m, container) {
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:16px;">
-          <div style="background:rgba(0,0,0,0.25); padding:12px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+          <div style="background:var(--bg-panel); padding:12px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
             <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase;">Tokens Reportados</div>
             <div style="font-size:1.3rem; font-weight:800; color:var(--cyan); margin-top:2px;">
               ${totalTokens.toLocaleString()}
@@ -163,12 +163,12 @@ function renderMetricsDashboard(m, container) {
             <div style="font-size:0.7rem; color:var(--text-secondary);">Entrada + Salida (API)</div>
           </div>
 
-          <div style="background:rgba(0,0,0,0.25); padding:12px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+          <div style="background:var(--bg-panel); padding:12px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
             <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase;">Costo Estimado Acumulado</div>
             <div style="font-size:1.3rem; font-weight:800; color:var(--success); margin-top:2px;">
               ${totalCostUSD}
             </div>
-            <div style="font-size:0.7rem; color:var(--text-secondary);">Tarifas vigentes proveedor</div>
+            <div style="font-size:0.7rem; color:var(--text-secondary);">Tabla de tarifas configurada</div>
           </div>
         </div>
 
@@ -215,7 +215,7 @@ function renderMetricsDashboard(m, container) {
               <div style="font-size:1.1rem; font-weight:700;">${evidence.suggested ?? 0}</div>
             </div>
             <div style="background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); padding:8px 12px; border-radius:var(--radius-sm);">
-              <div style="font-size:0.72rem; color:#fbbf24;">AMBIGUO (Regla vaga)</div>
+              <div style="font-size:0.72rem; color:var(--text-warning);">AMBIGUO (Regla vaga)</div>
               <div style="font-size:1.1rem; font-weight:700;">${evidence.ambiguous ?? 0}</div>
             </div>
             <div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); padding:8px 12px; border-radius:var(--radius-sm);">
@@ -225,7 +225,7 @@ function renderMetricsDashboard(m, container) {
           </div>
         </div>
 
-        <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+        <div style="background:var(--bg-panel); padding:12px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div>
               <div style="font-size:0.83rem; font-weight:700;">Candidatos a Duplicado Potencial:</div>
@@ -241,7 +241,7 @@ function renderMetricsDashboard(m, container) {
 
     <!-- Nota Metodológica de Transparencia Científica -->
     <div class="card" style="background:rgba(99,102,241,0.05); border-color:rgba(99,102,241,0.25); font-size:0.82rem; color:var(--text-secondary); line-height:1.6;">
-      <strong style="color:#fff;">Nota Metodológica:</strong> Los valores aquí reflejados provienen de auditorías y ejecuciones reales persistidas. 
+      <strong style="color:var(--text-primary);">Nota Metodológica:</strong> Los valores aquí reflejados provienen de auditorías y ejecuciones reales persistidas.
       La evaluación experimental comparativa de ahorro de tiempo (30-50 requisitos evaluados frente a pruebas manuales y cuestionarios) 
       permanece como <em>pendiente de evaluación experimental formal</em>, sin cifras fabricadas en el MVP.
     </div>

@@ -83,7 +83,7 @@ function renderTraceabilityTable(data, tableContainer) {
   if (!tableContainer) return;
 
   const matrix = data.matrix || [];
-  const summary = data.summary || {};
+  const summary = { coveragePercentage: data.coveragePercent, coveredRequirements: data.coveredRequirementsCount, uncoveredRequirements: data.totalRequirements - data.coveredRequirementsCount, totalTestCases: matrix.reduce((n, r) => n + r.stats.totalCases, 0), approvedTestCases: matrix.reduce((n, r) => n + r.stats.approvedVigentes, 0) };
   const coveragePct = summary.coveragePercentage ?? 0;
 
   if (matrix.length === 0) {
@@ -106,9 +106,9 @@ function renderTraceabilityTable(data, tableContainer) {
           </div>
         </div>
         <div style="display:flex; gap:20px; font-size:0.85rem;">
-          <div><strong style="color:#fff;">${summary.coveredRequirements ?? 0}</strong> <span style="color:var(--text-muted);">cubiertos</span></div>
-          <div><strong style="color:#fff;">${summary.uncoveredRequirements ?? 0}</strong> <span style="color:var(--text-muted);">sin cubrir</span></div>
-          <div><strong style="color:#fff;">${summary.totalTestCases ?? 0}</strong> <span style="color:var(--text-muted);">casos totales</span></div>
+          <div><strong style="color:var(--text-primary);">${summary.coveredRequirements ?? 0}</strong> <span style="color:var(--text-muted);">cubiertos</span></div>
+          <div><strong style="color:var(--text-primary);">${summary.uncoveredRequirements ?? 0}</strong> <span style="color:var(--text-muted);">sin cubrir</span></div>
+          <div><strong style="color:var(--text-primary);">${summary.totalTestCases ?? 0}</strong> <span style="color:var(--text-muted);">casos totales</span></div>
           <div><strong style="color:var(--success);">${summary.approvedTestCases ?? 0}</strong> <span style="color:var(--text-muted);">aprobados</span></div>
         </div>
       </div>
@@ -131,14 +131,14 @@ function renderTraceabilityTable(data, tableContainer) {
           ${matrix
             .map((row) => {
               const cases = row.testCases || [];
-              const approvedCount = cases.filter((c) => c.status === 'APPROVED').length;
-              const pendingCount = cases.filter((c) => c.status === 'PENDING').length;
+              const approvedCount = cases.filter((c) => c.status === 'APPROVED' && !c.isObsolete).length;
+              const pendingCount = cases.filter((c) => c.status === 'PENDING' && !c.isObsolete).length;
               const isCovered = approvedCount > 0;
 
               return `
               <tr>
                 <td>
-                  <span class="test-case-code req-jump-link" data-req-id="${row.id}" style="cursor:pointer;" title="Ir a detalle del requisito">
+                  <span class="test-case-code req-jump-link" data-req-id="${row.requirementId}" style="cursor:pointer;" title="Ir a detalle del requisito">
                     ${escapeHtml(row.code)}
                   </span>
                 </td>
@@ -168,7 +168,7 @@ function renderTraceabilityTable(data, tableContainer) {
                 <td style="text-align:center;">
                   <div style="font-size:0.78rem; display:flex; justify-content:center; gap:6px;">
                     <span style="color:var(--success);">${approvedCount} apr.</span>
-                    <span style="color:#fbbf24;">${pendingCount} pend.</span>
+                    <span style="color:var(--text-warning);">${pendingCount} pend.</span>
                   </div>
                 </td>
                 <td style="text-align:center;">

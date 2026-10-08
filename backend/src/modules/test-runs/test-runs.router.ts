@@ -23,6 +23,9 @@ testRunsRouter.get(
     if (!runA || !runB) {
       return res.status(400).json({ success: false, error: 'Debe especificar runA y runB en los parámetros.' });
     }
+    const [first, second] = await Promise.all([TestRunsService.getRun(String(runA)), TestRunsService.getRun(String(runB))]);
+    await assertProjectAccess(first.projectId, req.user!.userId, req.user!.role);
+    await assertProjectAccess(second.projectId, req.user!.userId, req.user!.role);
     const comparison = await TestRunsService.compareRuns(String(runA), String(runB));
     return sendSuccess(res, comparison, 'Comparativa de ejecuciones completada');
   })
@@ -84,7 +87,7 @@ testRunsRouter.patch(
   asyncHandler(async (req: Request, res: Response) => {
     const schema = z.object({
       status: z.enum(['PASSED', 'FAILED', 'BLOCKED', 'SKIPPED']),
-      durationSeconds: z.number().nonnegative().optional(),
+      durationSeconds: z.number().int().nonnegative().optional(),
       evidenceText: z.string().optional(),
     });
 

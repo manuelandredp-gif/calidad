@@ -33,7 +33,7 @@ export class AiModalHandler {
     const submitBtn = document.getElementById('btn-submit-ai-gen');
     if (!providerSelect || !this.providersConfig) return;
 
-    const providers = this.providersConfig.providers || {};
+    const providers = Object.fromEntries((this.providersConfig.providers || []).map(p => [p.id, { ...p, available: p.isConfigured, defaultModel: p.supportedModels?.[0]?.id }]));
     const geminiAvailable = providers.gemini?.available;
     const openaiAvailable = providers.openai?.available;
 
@@ -74,7 +74,7 @@ export class AiModalHandler {
     const modelSelect = document.getElementById('ai-gen-model');
     if (!modelSelect || !this.providersConfig) return;
 
-    const models = this.providersConfig.providers?.[provider]?.allowedModels || [];
+    const models = (this.providersConfig.providers?.find(p => p.id === provider)?.supportedModels || []).map(m => m.id);
     modelSelect.innerHTML = models
       .map((m) => `<option value="${m}">${m}</option>`)
       .join('');
@@ -140,7 +140,7 @@ export class AiModalHandler {
         });
 
         const count = result.data?.testCases?.length || 0;
-        const isCached = result.data?.metadata?.isCached;
+        const isCached = result.data?.fromCache;
         toast.success(
           `¡Generados ${count} casos de prueba con ${provider.toUpperCase()}${isCached ? ' (desde caché)' : ''}!`
         );

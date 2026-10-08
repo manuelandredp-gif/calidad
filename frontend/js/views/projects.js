@@ -7,6 +7,8 @@ import { modals } from '../modals.js';
 import { api } from '../api.js';
 import { toast } from '../toast.js';
 
+const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+
 export function renderProjects(container) {
   const projects = store.get('projects') || [];
   const activeProjectId = store.get('activeProjectId');
@@ -26,15 +28,15 @@ export function renderProjects(container) {
     </div>
 
     <!-- Projects Grid -->
-    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap:22px;">
+    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap:22px;">
       ${
         projects.length > 0
           ? projects
               .map((p) => {
                 const isActive = p.id === activeProjectId;
                 const reqCount = p.stats?.requirementsCount ?? p._count?.requirements ?? 0;
-                const caseCount = p.stats?.testCasesCount ?? 0;
-                const coverage = p.stats?.coveragePercentage ?? 0;
+                const caseCount = p.stats?.totalTestCases ?? 0;
+                const coverage = p.stats?.coveragePercent ?? 0;
 
                 return `
               <div class="card" style="border-color:${isActive ? 'var(--primary)' : 'var(--border-subtle)'}; background:${isActive ? 'rgba(99, 102, 241, 0.08)' : 'var(--bg-card)'};">
@@ -44,28 +46,28 @@ export function renderProjects(container) {
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
                     </div>
                     <div>
-                      <h3 style="font-size:1.05rem; font-weight:700;">${p.name}</h3>
+                      <h3 style="font-size:1.05rem; font-weight:700;">${escapeHtml(p.name)}</h3>
                       <span style="font-size:0.72rem; color:var(--text-muted);">Creado el ${new Date(p.createdAt).toLocaleDateString()}</span>
                     </div>
                   </div>
-                  ${isActive ? '<span class="badge badge-approved">Activo</span>' : ''}
+                  ${p.status === 'ARCHIVED' ? '<span class="badge">Archivado</span>' : isActive ? '<span class="badge badge-approved">Seleccionado</span>' : ''}
                 </div>
 
                 <p style="font-size:0.84rem; color:var(--text-secondary); margin-bottom:18px; min-height:42px;">
-                  ${p.description || 'Sin descripción disponible para este proyecto.'}
+                  ${escapeHtml(p.description || 'Sin descripción disponible para este proyecto.')}
                 </p>
 
                 <!-- Mini Stats -->
                 <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; margin-bottom:18px; text-align:center;">
-                  <div style="background:rgba(0,0,0,0.25); padding:8px 6px; border-radius:var(--radius-sm);">
+                  <div style="background:var(--bg-panel); padding:8px 6px; border-radius:var(--radius-sm);">
                     <div style="font-size:1.1rem; font-weight:700; color:var(--cyan);">${reqCount}</div>
                     <div style="font-size:0.68rem; color:var(--text-muted); text-transform:uppercase;">Requisitos</div>
                   </div>
-                  <div style="background:rgba(0,0,0,0.25); padding:8px 6px; border-radius:var(--radius-sm);">
+                  <div style="background:var(--bg-panel); padding:8px 6px; border-radius:var(--radius-sm);">
                     <div style="font-size:1.1rem; font-weight:700; color:var(--primary);">${caseCount}</div>
                     <div style="font-size:0.68rem; color:var(--text-muted); text-transform:uppercase;">Casos</div>
                   </div>
-                  <div style="background:rgba(0,0,0,0.25); padding:8px 6px; border-radius:var(--radius-sm);">
+                  <div style="background:var(--bg-panel); padding:8px 6px; border-radius:var(--radius-sm);">
                     <div style="font-size:1.1rem; font-weight:700; color:var(--success);">${coverage}%</div>
                     <div style="font-size:0.68rem; color:var(--text-muted); text-transform:uppercase;">Cobertura</div>
                   </div>
@@ -85,7 +87,7 @@ export function renderProjects(container) {
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                   <div style="display:flex; gap:6px;">
                     <button class="btn btn-sm ${isActive ? 'btn-secondary' : 'btn-primary'} btn-select-project" data-id="${p.id}">
-                      ${isActive ? '✓ Activo' : 'Seleccionar'}
+                      ${isActive ? '✓ Seleccionado' : 'Seleccionar'}
                     </button>
                     <button class="btn btn-sm btn-outline btn-open-reqs" data-id="${p.id}" title="Ver Requisitos">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
@@ -100,7 +102,7 @@ export function renderProjects(container) {
                     <button class="btn btn-sm btn-outline btn-edit-proj" data-id="${p.id}" title="Editar Proyecto">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                     </button>
-                    <button class="btn btn-sm btn-outline btn-delete-proj" data-id="${p.id}" style="color:var(--error); border-color:rgba(239, 68, 68, 0.35);" title="Eliminar Proyecto">
+                    <button class="btn btn-sm btn-outline btn-delete-proj" data-id="${p.id}" style="color:var(--error); border-color:rgba(239, 68, 68, 0.35);" title="Archivar Proyecto">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                   </div>
@@ -217,14 +219,14 @@ export function renderProjects(container) {
     btn.addEventListener('click', async () => {
       const id = btn.getAttribute('data-id');
       const selected = projects.find((p) => p.id === id);
-      if (!confirm(`¿Está seguro de eliminar el proyecto "${selected?.name}"? Se eliminarán todos sus requisitos y casos en cascada.`)) {
+      if (!confirm(`¿Está seguro de archivar el proyecto "${selected?.name}"? Se conservarán sus requisitos y casos para consulta.`)) {
         return;
       }
 
       btn.disabled = true;
       try {
-        await api.deleteProject(id);
-        toast.success(`Proyecto "${selected?.name}" eliminado`);
+        await api.archiveProject(id);
+        toast.success(`Proyecto "${selected?.name}" archivado`);
         const projRes = await api.getProjects();
         const updatedProjects = projRes.data || [];
         store.set('projects', updatedProjects);
@@ -237,7 +239,7 @@ export function renderProjects(container) {
         }
         renderProjects(container);
       } catch (err) {
-        toast.error(`Error al eliminar proyecto: ${err.message}`);
+        toast.error(`Error al archivar proyecto: ${err.message}`);
         btn.disabled = false;
       }
     });

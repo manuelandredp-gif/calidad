@@ -31,6 +31,8 @@ const envSchema = z
 
     // Solo proveedores reales: gemini u openai
     AI_PROVIDER_DEFAULT: z.enum(['gemini', 'openai']).default('gemini'),
+    AI_GEMINI_MODEL: z.string().min(1).default('gemini-3.1-flash-lite'),
+    AI_OPENAI_MODEL: z.string().min(1).default('gpt-4o-mini'),
     GEMINI_API_KEY: z.string().optional().default(''),
     OPENAI_API_KEY: z.string().optional().default(''),
 

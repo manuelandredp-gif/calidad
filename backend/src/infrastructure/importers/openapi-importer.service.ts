@@ -1,123 +1,56 @@
-// ==============================================================================
-// Infrastructure: OpenApiImporterService (Mejora 63)
-// Importador de especificaciones OpenAPI 3.0 / Swagger JSON para deducir
-// requisitos y casos de prueba de contratos de API REST de forma determinista.
-// ==============================================================================
-
 import { prisma } from '../../config/prisma';
-import { logger } from '../../common/utils/logger';
 import { ApiError } from '../../common/errors/api-error';
 
-export interface OpenApiEndpointCase {
-  endpoint: string;
-  method: string;
-  summary: string;
-  expectedStatus: string;
-  title: string;
-  type: 'positive' | 'negative' | 'boundary';
-}
-
+/** Import only behavior explicitly declared by the supplied API contract. */
 export class OpenApiImporterService {
-  /**
-   * Procesa un JSON de OpenAPI y crea requisitos y casos de prueba asociados en el proyecto.
-   */
-  public static async importOpenApiSpec(projectId: string, openApiJson: Record<string, unknown>) {
-    const paths = (openApiJson.paths as Record<string, Record<string, unknown>>) || {};
-    const pathKeys = Object.keys(paths);
-
-    if (pathKeys.length === 0) {
-      throw ApiError.badRequest('El archivo OpenAPI no contiene rutas (paths) válidas.');
-    }
-
-    const createdRequirements = [];
-
-    for (const pathKey of pathKeys) {
-      const pathMethods = paths[pathKey];
-      for (const [method, operationRaw] of Object.entries(pathMethods)) {
-        if (!['get', 'post', 'put', 'patch', 'delete'].includes(method.toLowerCase())) continue;
-
-        const operation = (operationRaw as Record<string, unknown>) || {};
-        const summary = (operation.summary as string) || `${method.toUpperCase()} ${pathKey}`;
-        const description = (operation.description as string) || `Contrato OpenAPI para el endpoint ${method.toUpperCase()} ${pathKey}`;
-
-        // Obtener siguiente número de requisito atómico
-        const project = await prisma.project.findUniqueOrThrow({
-          where: { id: projectId },
-          select: { nextRequirementNumber: true },
+  public static async importOpenApiSpec(projectId: string, spec: Record<string, unknown>) {
+    if (!spec.paths || typeof spec.paths !== 'object' || Array.isArray(spec.paths)) throw ApiError.badRequest('La especificación requiere paths válidos.');
+    const operations: Array<{ path: string; method: string; summary: string; description: string; responses: Array<{ status: string; description: string }> }> = [];
+    for (const [path, value] of Object.entries(spec.paths)) {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) continue;
+      for (const [method, raw] of Object.entries(value)) {
+        if (!['get', 'post', 'put', 'patch', 'delete', 'head', 'options', 'trace'].includes(method)) continue;
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw ApiError.badRequest(`Operación inválida: ${method} ${path}`);
+        const op = raw as Record<string, unknown>;
+        const responses = Object.entries((op.responses || {}) as Record<string, unknown>).filter(([status]) => /^[1-5][0-9]{2}$/.test(status)).map(([status, response]) => {
+          const content = response as Record<string, unknown>;
+          if (!content || typeof content.description !== 'string') throw ApiError.badRequest(`Respuesta ${status} sin descripción en ${method} ${path}. Resuelva referencias antes de importar.`);
+          return { status, description: content.description };
         });
-
-        const reqCode = `REQ-${String(project.nextRequirementNumber).padStart(3, '0')}`;
-        await prisma.project.update({
-          where: { id: projectId },
-          data: { nextRequirementNumber: project.nextRequirementNumber + 1 },
-        });
-
-        // Crear Requisito
-        const requirement = await prisma.requirement.create({
-          data: {
-            projectId,
-            code: reqCode,
-            title: `[API] ${summary}`,
-            description,
-            acceptanceCriteria: `1. El endpoint ${method.toUpperCase()} ${pathKey} debe responder con códigos de estado HTTP estándar según especificación OpenAPI.\n2. Cabecera Content-Type debe ser application/json.\n3. Rechazar peticiones no autorizadas o con payload malformado.`,
-            status: 'GENERATED',
-            nextCaseNumber: 4, // 3 casos generados inicialmente
-            testCases: {
-              create: [
-                {
-                  code: 'CP-001',
-                  type: 'positive',
-                  title: `[API 200/201] Petición exitosa a ${method.toUpperCase()} ${pathKey}`,
-                  preconditions: ['El servicio API REST está activo.', 'Credenciales y token válidos.'],
-                  steps: [`1. Enviar petición HTTP ${method.toUpperCase()} a la ruta "${pathKey}".`, '2. Verificar código HTTP.'],
-                  testData: `Método: ${method.toUpperCase()} | Ruta: ${pathKey}`,
-                  expectedResult: 'El servidor retorna status 200 OK o 201 Created con esquema JSON válido.',
-                  priority: 'high',
-                  evidenceStatus: 'pending',
-                  source: 'MANUAL',
-                  status: 'PENDING',
-                },
-                {
-                  code: 'CP-002',
-                  type: 'negative',
-                  title: `[API 401] Petición no autenticada a ${method.toUpperCase()} ${pathKey}`,
-                  preconditions: ['La petición no incluye cabecera Authorization.'],
-                  steps: [`1. Enviar petición HTTP ${method.toUpperCase()} sin token JWT.`],
-                  testData: 'Cabecera Authorization ausente',
-                  expectedResult: 'El servidor responde 401 Unauthorized y bloquea la ejecución.',
-                  priority: 'high',
-                  evidenceStatus: 'pending',
-                  source: 'MANUAL',
-                  status: 'PENDING',
-                },
-                {
-                  code: 'CP-003',
-                  type: 'validation',
-                  title: `[API 400/422] Validación de payload malformado en ${method.toUpperCase()} ${pathKey}`,
-                  preconditions: ['El endpoint requiere cuerpo o parámetros estructurados.'],
-                  steps: ['1. Enviar cuerpo de petición con tipos de datos inválidos.'],
-                  testData: 'Body: {"invalido": true}',
-                  expectedResult: 'El servidor retorna 400 Bad Request o 422 Unprocessable Entity indicando los campos erróneos.',
-                  priority: 'medium',
-                  evidenceStatus: 'pending',
-                  source: 'MANUAL',
-                  status: 'PENDING',
-                },
-              ],
-            },
-          },
-        });
-
-        createdRequirements.push(requirement);
+        if (!responses.length) throw ApiError.badRequest(`No hay respuestas HTTP explícitas en ${method} ${path}. No se inventan resultados esperados.`);
+        operations.push({ path, method, summary: String(op.summary || `${method.toUpperCase()} ${path}`), description: String(op.description || `Contrato ${method.toUpperCase()} ${path}`), responses });
       }
     }
-
-    logger.info({ projectId, importedRequirements: createdRequirements.length }, 'Especificación OpenAPI importada');
-
-    return {
-      projectId,
-      totalEndpointsImported: createdRequirements.length,
-      requirements: createdRequirements,
-    };
+    if (!operations.length) throw ApiError.badRequest('No hay operaciones HTTP para importar.');
+    return prisma.$transaction(async tx => {
+      await tx.$queryRaw`SELECT id FROM projects WHERE id = ${projectId} FOR UPDATE`;
+      const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
+      if (project.status === 'ARCHIVED') throw ApiError.forbidden('El proyecto está archivado.');
+      let next = project.nextRequirementNumber;
+      const requirements = [];
+      for (const op of operations) {
+        let code: string;
+        do { code = `REQ-${String(next++).padStart(3, '0')}`; }
+        while (await tx.requirement.findUnique({ where: { projectId_code: { projectId, code } } }));
+        const acceptanceCriteria = op.responses.map(r => `HTTP ${r.status}: ${r.description}`).join('\n');
+        const requirement = await tx.requirement.create({ data: {
+          projectId, code, title: `[API] ${op.summary}`, description: op.description,
+          acceptanceCriteria, status: 'GENERATED', nextCaseNumber: op.responses.length + 1,
+          versions: { create: { version: 1, title: `[API] ${op.summary}`, description: op.description, acceptanceCriteria, changeSummary: 'Importación de contrato OpenAPI' } },
+          testCases: { create: op.responses.map((r, index) => ({
+            code: `CP-${String(index + 1).padStart(3, '0')}`, type: Number(r.status) < 400 ? 'positive' : 'negative',
+            title: `[API ${r.status}] ${op.method.toUpperCase()} ${op.path}`,
+            preconditions: ['Preparar las condiciones indicadas por el contrato para esta respuesta.'],
+            steps: [`Enviar ${op.method.toUpperCase()} ${op.path} con los parámetros definidos en el contrato.`, `Verificar HTTP ${r.status} y el contenido documentado.`],
+            expectedResult: `HTTP ${r.status}: ${r.description}`, priority: 'medium', evidenceStatus: 'derived',
+            evidenceText: `Contrato OpenAPI: paths.${op.path}.${op.method}.responses.${r.status}`,
+            source: 'OPENAPI', status: 'PENDING',
+          })) },
+        } });
+        requirements.push(requirement);
+      }
+      await tx.project.update({ where: { id: projectId }, data: { nextRequirementNumber: next } });
+      return { projectId, totalEndpointsImported: requirements.length, requirements };
+    }, { timeout: 30000 });
   }
 }

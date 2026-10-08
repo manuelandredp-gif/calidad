@@ -197,7 +197,7 @@ export class TextNormalizer {
   public static stripAccents(input: string): string {
     return String(input || '')
       .normalize('NFD')
-      .replace(/p{Diacritic}/gu, '');
+      .replace(/\p{Diacritic}/gu, '');
   }
 
   /** Minúsculas, sin acentos, solo letras/dígitos y espacios simples. */
