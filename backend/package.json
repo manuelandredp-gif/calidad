@@ -22,7 +22,7 @@
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:deploy": "prisma migrate deploy",
+    "prisma:deploy": "node scripts/deploy-db.cjs",
     "admin:create": "tsx scripts/create-admin.ts",
     "data:maintenance": "tsx scripts/data-maintenance.ts",
     "db:start": "tsx scripts/start-embedded-db.ts"

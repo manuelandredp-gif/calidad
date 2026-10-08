@@ -1,15 +1,15 @@
 -- AlterTable
-ALTER TABLE "projects" ADD COLUMN     "next_use_case_number" INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE "projects" ADD COLUMN IF NOT EXISTS "next_use_case_number" INTEGER NOT NULL DEFAULT 1;
 
 -- AlterTable
-ALTER TABLE "requirements" ADD COLUMN     "derivation_hints" JSONB,
-ADD COLUMN     "use_case_id" TEXT;
+ALTER TABLE "requirements" ADD COLUMN IF NOT EXISTS "derivation_hints" JSONB,
+ADD COLUMN IF NOT EXISTS "use_case_id" TEXT;
 
 -- AlterTable
-ALTER TABLE "test_cases" ADD COLUMN     "technique" TEXT;
+ALTER TABLE "test_cases" ADD COLUMN IF NOT EXISTS "technique" TEXT;
 
 -- CreateTable
-CREATE TABLE "spec_generations" (
+CREATE TABLE IF NOT EXISTS "spec_generations" (
     "id" TEXT NOT NULL,
     "project_id" TEXT NOT NULL,
     "user_id" TEXT,
@@ -36,7 +36,7 @@ CREATE TABLE "spec_generations" (
 );
 
 -- CreateTable
-CREATE TABLE "use_cases" (
+CREATE TABLE IF NOT EXISTS "use_cases" (
     "id" TEXT NOT NULL,
     "project_id" TEXT NOT NULL,
     "generation_id" TEXT,
@@ -60,40 +60,55 @@ CREATE TABLE "use_cases" (
 );
 
 -- CreateIndex
-CREATE INDEX "spec_generations_project_id_idx" ON "spec_generations"("project_id");
+CREATE INDEX IF NOT EXISTS "spec_generations_project_id_idx" ON "spec_generations"("project_id");
 
 -- CreateIndex
-CREATE INDEX "spec_generations_user_id_idx" ON "spec_generations"("user_id");
+CREATE INDEX IF NOT EXISTS "spec_generations_user_id_idx" ON "spec_generations"("user_id");
 
 -- CreateIndex
-CREATE INDEX "use_cases_project_id_idx" ON "use_cases"("project_id");
+CREATE INDEX IF NOT EXISTS "use_cases_project_id_idx" ON "use_cases"("project_id");
 
 -- CreateIndex
-CREATE INDEX "use_cases_generation_id_idx" ON "use_cases"("generation_id");
+CREATE INDEX IF NOT EXISTS "use_cases_generation_id_idx" ON "use_cases"("generation_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "use_cases_project_id_code_key" ON "use_cases"("project_id", "code");
+CREATE UNIQUE INDEX IF NOT EXISTS "use_cases_project_id_code_key" ON "use_cases"("project_id", "code");
 
 -- CreateIndex
-CREATE INDEX "requirements_use_case_id_idx" ON "requirements"("use_case_id");
+CREATE INDEX IF NOT EXISTS "requirements_use_case_id_idx" ON "requirements"("use_case_id");
 
 -- CreateIndex
-CREATE INDEX "test_cases_source_idx" ON "test_cases"("source");
+CREATE INDEX IF NOT EXISTS "test_cases_source_idx" ON "test_cases"("source");
 
 -- AddForeignKey
-ALTER TABLE "requirements" ADD CONSTRAINT "requirements_use_case_id_fkey" FOREIGN KEY ("use_case_id") REFERENCES "use_cases"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "requirements" ADD CONSTRAINT "requirements_use_case_id_fkey" FOREIGN KEY ("use_case_id") REFERENCES "use_cases"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "spec_generations" ADD CONSTRAINT "spec_generations_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "spec_generations" ADD CONSTRAINT "spec_generations_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "spec_generations" ADD CONSTRAINT "spec_generations_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "spec_generations" ADD CONSTRAINT "spec_generations_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "use_cases" ADD CONSTRAINT "use_cases_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "use_cases" ADD CONSTRAINT "use_cases_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "use_cases" ADD CONSTRAINT "use_cases_generation_id_fkey" FOREIGN KEY ("generation_id") REFERENCES "spec_generations"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "use_cases" ADD CONSTRAINT "use_cases_generation_id_fkey" FOREIGN KEY ("generation_id") REFERENCES "spec_generations"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Same backend-only access policy as the existing production tables.
 ALTER TABLE "public"."spec_generations" ENABLE ROW LEVEL SECURITY;

@@ -32,6 +32,7 @@ COPY --from=builder /app/backend/dist ./dist
 COPY --from=builder /app/backend/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/backend/node_modules/@prisma ./node_modules/@prisma
 COPY backend/prisma ./prisma
+COPY backend/scripts/deploy-db.cjs ./scripts/deploy-db.cjs
 
 # El frontend estático se sirve desde ../../frontend (relativo a dist)
 COPY frontend /app/frontend
@@ -43,4 +44,4 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD node -e "fetch('http://localhost:4000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
-CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && node dist/main.js"]
+CMD ["sh", "-c", "npm run prisma:deploy && node dist/main.js"]
