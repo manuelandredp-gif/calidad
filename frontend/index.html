@@ -261,10 +261,47 @@
             <label class="form-label" for="project-desc-input">Descripción / Alcance</label>
             <textarea id="project-desc-input" class="form-textarea" placeholder="Descripción breve del software a verificar..."></textarea>
           </div>
+          <label style="display:flex; gap:10px; align-items:flex-start;">
+            <input type="checkbox" id="project-prepare-spec" checked />
+            <span>Preparar casos de uso, requisitos y pruebas desde la descripción <strong>(sin IA)</strong>. Podrás revisar la propuesta antes de guardarla.</span>
+          </label>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary modal-close">Cancelar</button>
           <button type="submit" class="btn btn-primary">Crear Proyecto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Project -->
+  <div class="modal-overlay" id="modal-project-spec">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="spec-modal-title">
+      <div class="modal-header">
+        <div class="modal-title" id="spec-modal-title">Generar desde la descripción · Sin IA</div>
+        <button class="btn-icon modal-close" title="Cerrar">&times;</button>
+      </div>
+      <form id="form-project-spec">
+        <div class="modal-body">
+          <p id="spec-project-name" style="font-weight:700; margin-bottom:16px;"></p>
+          <div class="form-group">
+            <label class="form-label" for="spec-description">Descripción del proyecto *</label>
+            <textarea id="spec-description" class="form-textarea" minlength="10" maxlength="20000" required placeholder="Ejemplo: gestionar libros, préstamos, reservas y devoluciones para estudiantes y bibliotecarios."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="spec-depth">Profundidad de las pruebas</label>
+            <select id="spec-depth" class="form-select">
+              <option value="basic">Básica</option>
+              <option value="standard" selected>Estándar</option>
+              <option value="exhaustive">Exhaustiva</option>
+            </select>
+          </div>
+          <div id="spec-preview-result" role="status" aria-live="polite" style="background:var(--bg-panel); padding:16px; border-radius:var(--radius-md);"></div>
+        </div>
+        <div class="modal-footer" style="flex-wrap:wrap;">
+          <button type="button" class="btn btn-secondary modal-close">Cancelar</button>
+          <button type="button" id="btn-spec-preview" class="btn btn-outline">Analizar descripción</button>
+          <button type="submit" id="btn-spec-generate" class="btn btn-primary" disabled>Generar y guardar</button>
         </div>
       </form>
     </div>

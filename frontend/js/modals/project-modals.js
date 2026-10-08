@@ -25,6 +25,7 @@ export class ProjectModalHandler {
       e.preventDefault();
       const name = document.getElementById('project-name-input').value.trim();
       const description = document.getElementById('project-desc-input').value.trim();
+      const prepareSpec = document.getElementById('project-prepare-spec').checked;
 
       if (!name) {
         toast.warning('El nombre del proyecto es obligatorio');
@@ -52,6 +53,7 @@ export class ProjectModalHandler {
           store.set('testCases', []);
         }
         app.refresh();
+        if (prepareSpec) this.modalManager.openProjectSpec(res.data);
       } catch (err) {
         toast.error(`Error al crear proyecto: ${err.message}`);
       } finally {

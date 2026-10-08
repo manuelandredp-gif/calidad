@@ -43,6 +43,7 @@
 
 /* Modals */
 .modal-overlay {
+  visibility: hidden;
   position: fixed;
   top: 0;
   left: 0;
@@ -61,6 +62,7 @@
 }
 
 .modal-overlay.open {
+  visibility: visible;
   opacity: 1;
   pointer-events: auto;
 }

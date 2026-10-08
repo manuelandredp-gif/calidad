@@ -165,6 +165,14 @@ class ApiClient {
     });
   }
 
+  async previewProjectSpec(payload) {
+    return this.request('/spec/preview', { method: 'POST', body: JSON.stringify(payload) });
+  }
+
+  async generateProjectSpec(payload) {
+    return this.request('/spec/generate', { method: 'POST', body: JSON.stringify(payload) });
+  }
+
   async updateProject(id, payload) {
     return this.request(`/projects/${id}`, {
       method: 'PUT',

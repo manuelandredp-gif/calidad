@@ -18,7 +18,7 @@ export function renderProjects(container) {
       <div>
         <h2 style="font-size:1.35rem; font-weight:700;">Gestión de Proyectos QA</h2>
         <p style="font-size:0.85rem; color:var(--text-secondary);">
-          Organiza suites de pruebas, requisitos del software y métricas de derivación automática de IA.
+          Genera casos de uso, requisitos y pruebas desde la descripción del proyecto, sin IA. También puedes trabajar con requisitos manuales y proveedores de IA.
         </p>
       </div>
       <button class="btn btn-primary" id="btn-open-new-project">
@@ -84,6 +84,7 @@ export function renderProjects(container) {
                     : ''
                 }
 
+                <button class="btn btn-primary btn-project-spec" data-id="${p.id}" style="margin-bottom:16px;" ${p.status === 'ARCHIVED' ? 'disabled' : ''}>Generar desde descripción · Sin IA</button>
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                   <div style="display:flex; gap:6px;">
                     <button class="btn btn-sm ${isActive ? 'btn-secondary' : 'btn-primary'} btn-select-project" data-id="${p.id}">
@@ -122,6 +123,12 @@ export function renderProjects(container) {
   `;
 
   // Listeners
+  container.querySelectorAll('.btn-project-spec').forEach(button => {
+    button.addEventListener('click', () => {
+      const project = projects.find(item => item.id === button.dataset.id);
+      if (project) modals.openProjectSpec(project);
+    });
+  });
   document.getElementById('btn-open-new-project')?.addEventListener('click', () => {
     modals.open('modal-new-project');
   });

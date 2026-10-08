@@ -8,6 +8,7 @@ import { RequirementModalHandler } from './modals/requirement-modals.js';
 import { AiModalHandler } from './modals/ai-modals.js';
 import { TestCaseModalHandler } from './modals/testcase-modals.js';
 import { NoAiModalHandler } from './modals/noai-modals.js';
+import { SpecModalHandler } from './modals/spec-modals.js';
 
 export class ModalManager {
   constructor() {
@@ -17,11 +18,13 @@ export class ModalManager {
     this.aiModals = new AiModalHandler(this);
     this.testCaseModals = new TestCaseModalHandler(this);
     this.noAiModals = new NoAiModalHandler(this);
+    this.specModals = new SpecModalHandler(this);
   }
 
   open(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
+      modal.style.removeProperty('display');
       modal.classList.add('open');
       this.activeModal = modal;
       document.body.style.overflow = 'hidden';
@@ -69,11 +72,16 @@ export class ModalManager {
     this.aiModals.setup();
     this.testCaseModals.setup();
     this.noAiModals.setup();
+    this.specModals.setup();
   }
 
   // Pre-fill Façade Methods
   populateEditProject(project) {
     this.projectModals.populateEditProject(project);
+  }
+
+  openProjectSpec(project) {
+    this.specModals.open(project);
   }
 
   populateEditRequirement(requirement) {
