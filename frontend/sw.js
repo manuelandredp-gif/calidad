@@ -3,7 +3,7 @@
 // Caching estático y estrategia Network-First con fallback en caché.
 // ==============================================================================
 
-const CACHE_NAME = 'testgenai-v6';
+const CACHE_NAME = 'testgenai-v7';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

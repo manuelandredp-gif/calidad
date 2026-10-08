@@ -25,10 +25,16 @@ export class ProjectModalHandler {
       e.preventDefault();
       const name = document.getElementById('project-name-input').value.trim();
       const description = document.getElementById('project-desc-input').value.trim();
-      const prepareSpec = document.getElementById('project-prepare-spec').checked;
+      const depth = document.getElementById('project-depth-input')?.value || 'standard';
+      const autoGen = document.getElementById('project-autogen-input')?.checked ?? false;
 
       if (!name) {
         toast.warning('El nombre del proyecto es obligatorio');
+        return;
+      }
+
+      if (autoGen && description.length < 10) {
+        toast.warning('Para generar la especificación, describe el proyecto con al menos 10 caracteres.');
         return;
       }
 
@@ -38,22 +44,46 @@ export class ProjectModalHandler {
 
       try {
         const res = await api.createProject({ name, description });
-        toast.success(`Proyecto "${name}" creado exitosamente`);
+        const projectId = res.data.id;
+
+        // Generación determinista de casos de uso, requisitos y casos de prueba (sin IA)
+        if (autoGen) {
+          submitBtn.innerHTML = '<span class="spinner"></span> Generando especificación...';
+          try {
+            const gen = await api.generateSpec({ projectId, name, description, depth });
+            const c = gen.data?.created || {};
+            toast.success(
+              `Proyecto creado. Se generaron ${c.useCases || 0} casos de uso, ${c.requirements || 0} requisitos y ${c.testCases || 0} casos de prueba.`
+            );
+          } catch (genErr) {
+            toast.warning(`Proyecto creado, pero la generación falló: ${genErr.message}`);
+          }
+        } else {
+          toast.success(`Proyecto "${name}" creado exitosamente`);
+        }
+
         form.reset();
         this.modalManager.close('modal-new-project');
 
-        // Refresh projects
+        // Refrescar proyectos y cargar datos generados del proyecto activo
         const projRes = await api.getProjects();
         if (projRes.data) {
           store.set('projects', projRes.data);
-          store.set('activeProjectId', res.data.id);
-          store.set('activeProject', res.data);
-          store.set('requirements', []);
-          store.set('activeRequirement', null);
-          store.set('testCases', []);
+          store.set('activeProjectId', projectId);
+          store.set('activeProject', projRes.data.find((p) => p.id === projectId) || res.data);
         }
+        try {
+          const reqRes = await api.getRequirements(projectId);
+          store.set('requirements', reqRes.data || []);
+          store.set('activeRequirement', (reqRes.data && reqRes.data[0]) || null);
+        } catch { store.set('requirements', []); }
+        try {
+          const tcRes = await api.getProjectTestCases(projectId);
+          store.set('testCases', tcRes.data || []);
+        } catch { store.set('testCases', []); }
+
         app.refresh();
-        if (prepareSpec) this.modalManager.openProjectSpec(res.data);
+        if (autoGen) app.navigate('use-cases');
       } catch (err) {
         toast.error(`Error al crear proyecto: ${err.message}`);
       } finally {

@@ -186,6 +186,32 @@ class ApiClient {
     });
   }
 
+  async generateSpec(payload) {
+    return this.request('/spec/generate', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async previewSpec(payload) {
+    return this.request('/spec/preview', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getProjectUseCases(projectId) {
+    return this.request(`/spec/use-cases/project/${projectId}`);
+  }
+
+  async getUseCase(id) {
+    return this.request(`/spec/use-cases/${id}`);
+  }
+
+  async getSpecHistory(projectId) {
+    return this.request(`/spec/history/project/${projectId}`);
+  }
+
   // --- Requisitos ---
   async getRequirements(projectId, params = {}) {
     return this.requestAll(`/requirements/project/${projectId}`, params);

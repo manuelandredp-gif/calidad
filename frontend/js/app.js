@@ -12,6 +12,7 @@ import { authView } from './views/auth.js';
 import { renderDashboard } from './views/dashboard.js';
 import { renderProjects } from './views/projects.js';
 import { renderRequirements } from './views/requirements.js';
+import { renderUseCases } from './views/useCases.js';
 import { renderTestCases } from './views/testCases.js';
 import { renderTraceability } from './views/traceability.js';
 import { renderMetrics } from './views/metrics.js';
@@ -26,6 +27,7 @@ class App {
       dashboard: renderDashboard,
       projects: renderProjects,
       requirements: renderRequirements,
+      'use-cases': renderUseCases,
       'test-cases': renderTestCases,
       traceability: renderTraceability,
       metrics: renderMetrics,
@@ -496,6 +498,7 @@ class App {
       dashboard: 'Inicio / Resumen del Proyecto',
       projects: 'Gestión de Proyectos',
       requirements: 'Requisitos Funcionales',
+      'use-cases': 'Casos de Uso del Sistema',
       'test-cases': 'Casos de Prueba & Revisión',
       traceability: 'Matriz de Trazabilidad y Cobertura',
       metrics: 'Métricas Reales e Historial de IA',
