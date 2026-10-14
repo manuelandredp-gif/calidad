@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>QualiReq — Inicio y módulos</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.qr{--s0:#f4f3ee;--s1:#ffffff;--s2:#ecebe4;--s3:#dedcd2;--line:#e1dfd6;--ls:#8c8a80;--ink:#15201d;--mut:#585c55;--acc:#0e6656;--acch:#0b5246;--onacc:#ffffff;--accs:#dcede7;--focus:#0e6656;--alta:#b03d0b;--altas:#fbe6da;--media:#835500;--medias:#f6ead0;--baja:#4c5864;--bajas:#e6eaee;--lim:#35557d;--lims:#e3eaf4;--nav:#0f1f1b;--nav2:#1b342d;--navink:#eef3ef;--navmut:#a9bdb4;--lime:#c6f06a;--sh:0 1px 2px rgba(21,32,29,.06),0 6px 20px rgba(21,32,29,.06);font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--s0);font-size:15px;line-height:24px;-webkit-font-smoothing:antialiased}
+.qr.dark{--s0:#0f1110;--s1:#181a18;--s2:#232521;--s3:#33352f;--line:#30322d;--ls:#77786f;--ink:#edece6;--mut:#a7a89f;--acc:#5cc7ae;--acch:#86dcc5;--onacc:#0b1a16;--accs:#16302a;--focus:#7fe0c8;--alta:#ff9c66;--altas:#3b2114;--media:#e9b850;--medias:#33290f;--baja:#a9b6c2;--bajas:#262c31;--lim:#93b4dc;--lims:#1d2836;--nav:#0a1412;--nav2:#16291f}
+.qr *{box-sizing:border-box}
+.qr h1,.qr h2,.qr h3,.qr p{margin:0}
+.qr a{color:var(--acc)}.qr a:hover{color:var(--acch)}
+.qr :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.disp{font-family:"Bricolage Grotesque","Plus Jakarta Sans",system-ui,sans-serif;font-weight:700;letter-spacing:-0.035em}
+.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:13px;line-height:20px;font-weight:600}
+.label{font-size:13px;line-height:18px;font-weight:600;color:var(--mut)}
+.small{font-size:13px;line-height:20px;color:var(--mut)}
+.num{font-variant-numeric:tabular-nums}
+.ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.ic.lg{width:20px;height:20px}
+.btn{height:42px;padding:0 16px;border-radius:12px;border:1px solid var(--ls);background:var(--s1);color:var(--ink);font:inherit;font-size:14px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;white-space:nowrap;text-decoration:none}
+.btn:hover{background:var(--s2)}
+.btn.primary{background:var(--acc);border-color:var(--acc);color:var(--onacc)}
+.btn.primary:hover{background:var(--acch)}
+.btn.quiet{border-color:transparent;background:transparent;color:var(--mut)}
+.badge{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:999px;font-size:13px;font-weight:600;line-height:1;white-space:nowrap}
+.b-alta{color:var(--alta);background:var(--altas)}.b-media{color:var(--media);background:var(--medias)}.b-ok{color:var(--acc);background:var(--accs)}.b-neutral{color:var(--mut);background:var(--s2)}
+.panel{background:var(--s1);border:1px solid var(--line);border-radius:18px}
+.nav{flex:1 1 236px;background:var(--nav);color:var(--navink);padding:22px 14px;display:flex;flex-direction:column;gap:2px}
+.navlab{font-size:13px;font-weight:600;color:var(--navmut);padding:18px 12px 6px}
+.qr .navi{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 12px;border-radius:12px;color:var(--navink);text-decoration:none;font-size:14px;font-weight:500}
+.qr .navi:hover{background:var(--nav2);color:#ffffff}
+.qr .navi.on{background:var(--nav2);color:#ffffff;font-weight:600}
+.navi.on .ic{color:var(--lime)}
+.qr a.mod{flex:1 1 320px;border-radius:22px;padding:26px;display:flex;flex-direction:column;gap:16px;text-decoration:none;min-height:250px}
+.qr a.mod.a{background:var(--acc);color:var(--onacc)}
+.qr a.mod.b{background:var(--nav);color:#ffffff}
+.qr a.mod:hover{filter:brightness(1.06)}
+.modic{width:48px;height:48px;border-radius:14px;display:grid;place-items:center}
+.tag{display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:999px;font-size:13px;font-weight:600}
+.ring{border-radius:999px;display:grid;place-items:center;flex:none}
+.ring .in{border-radius:999px;background:var(--s1);display:grid;place-items:center}
+.qr a.proj{background:var(--s1);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:14px;text-decoration:none;color:var(--ink);flex:1 1 280px;min-width:0}
+.qr a.proj:hover{border-color:var(--ls);box-shadow:var(--sh)}
+.field{height:44px;border:1px solid var(--ls);border-radius:12px;background:var(--s1);color:var(--ink);padding:0 14px;font:inherit;font-size:14px;width:100%}
+.howk{width:32px;height:32px;border-radius:999px;background:var(--lime);color:#15201d;display:grid;place-items:center;font-weight:700;font-size:14px;flex:none}
+</style>
+</helmet>
+<div class="{{rootClass}}" style="min-height: 100vh; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<nav class="nav" aria-label="Principal">
+<a href="Inicio.dc.html" style="text-decoration: none; padding: 4px 12px 14px; display: flex; flex-direction: column; gap: 2px">
+<span class="disp" style="font-size: 26px; line-height: 30px; color: #ffffff">Quali<span style="color: var(--lime)">Req</span></span>
+<span style="font-size: 13px; line-height: 18px; color: var(--navmut)">Calidad de requisitos</span>
+</a>
+<a class="navi on" href="Inicio.dc.html" aria-current="page"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 9.5 10 3.5l7 6V16a1 1 0 0 1-1 1h-3.5v-4.5h-5V17H4a1 1 0 0 1-1-1z"></path></svg>Inicio</a>
+<span class="navlab">Módulos · Sistema de ventas</span>
+<a class="navi" href="Main.dc.html" onClick="{{goRev}}"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5.5"></circle><path d="m13 13 4 4M6.8 9l1.6 1.6 3-3.2"></path></svg>Revisor de requisitos</a>
+<a class="navi" href="Main.dc.html" onClick="{{goGen}}"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="3"></rect><path d="M7 7.5h6M7 10.5h6M7 13.5h3.5"></path></svg>Generador de casos</a>
+<a class="navi" href="Main.dc.html" onClick="{{goExp}}"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v9M6.5 8.5 10 12l3.5-3.5M4 15.5h12"></path></svg>Exportar</a>
+<span class="navlab">Proyecto</span>
+<a class="navi" href="Versiones.dc.html"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><circle cx="6" cy="5" r="2"></circle><circle cx="6" cy="15" r="2"></circle><circle cx="14" cy="9" r="2"></circle><path d="M6 7v6M14 11c0 2-2 3-6 3"></path></svg>Versiones</a>
+<a class="navi" href="Reglas.dc.html"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5h12M4 10h12M4 15h12"></path><circle cx="7" cy="5" r="1.6"></circle><circle cx="13" cy="10" r="1.6"></circle><circle cx="9" cy="15" r="1.6"></circle></svg>Reglas y diccionario</a>
+<div style="flex: 1; min-height: 24px"></div>
+<div style="margin: 0 4px 8px; padding: 14px; border-radius: 14px; background: var(--nav2); display: flex; flex-direction: column; gap: 6px">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #ffffff"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--lime)"><path d="M8 1.5 13 3.5v4c0 3-2.2 5.5-5 7-2.8-1.5-5-4-5-7v-4z"></path><path d="M5.8 8 7.3 9.5 10.3 6.5"></path></svg>Motor v0.1.0</span>
+<span style="font-size: 13px; line-height: 19px; color: var(--navmut)">Determinista. Analiza en tu navegador: el texto no sale de este equipo.</span>
+</div>
+<a class="navi" href="Login.dc.html" style="gap: 10px"><span style="width: 30px; height: 30px; border-radius: 999px; background: var(--lime); color: #15201d; display: grid; place-items: center; font-weight: 700; font-size: 13px">MF</span><span style="display: flex; flex-direction: column; line-height: 18px"><span style="font-size: 14px">Milton F.</span><span style="font-size: 13px; color: var(--navmut)">Cerrar sesión</span></span></a>
+</nav>
+
+<main style="flex: 999 1 640px; min-width: 0; padding: 32px; display: flex; flex-direction: column; gap: 28px">
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 class="disp" style="font-size: 44px; line-height: 48px">Hola, Milton</h1>
+<p style="color: var(--mut); font-size: 16px">Elige un módulo o continúa con uno de tus proyectos.</p>
+</div>
+<button class="btn primary" type="button" onClick="{{openNew}}"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10"></path></svg>Nuevo proyecto</button>
+</header>
+
+<sc-if value="{{showNew}}" hint-placeholder-val="{{ false }}">
+<div class="panel" style="padding: 20px; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; border-color: var(--acc); box-shadow: 0 0 0 1px var(--acc) inset">
+<div style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 6px">
+<label for="np" class="label">Nombre del proyecto</label>
+<input id="np" class="field" type="text" placeholder="Ej.: Sistema de matrícula" value="{{newName}}" onChange="{{onName}}">
+</div>
+<button class="btn primary" type="button" onClick="{{create}}">Crear proyecto</button>
+<button class="btn quiet" type="button" onClick="{{closeNew}}">Cancelar</button>
+</div>
+</sc-if>
+
+<section aria-label="Módulos" style="display: flex; flex-wrap: wrap; gap: 16px">
+<a class="mod a" href="Main.dc.html" onClick="{{goRev}}">
+<span style="display: flex; justify-content: space-between; align-items: flex-start"><span class="modic" style="background: rgba(255,255,255,.16)"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true" style="width: 24px; height: 24px"><circle cx="9" cy="9" r="5.5"></circle><path d="m13 13 4 4M6.8 9l1.6 1.6 3-3.2"></path></svg></span><span class="tag" style="background: rgba(255,255,255,.16)">Módulo 1</span></span>
+<span class="disp" style="font-size: 32px; line-height: 36px">Revisor de requisitos</span>
+<span style="font-size: 15px; line-height: 24px; opacity: .9; max-width: 440px">Detecta ambigüedad, falta de verificabilidad y requisitos incompletos. Cada sospecha cita su regla, el atributo y una reescritura.</span>
+<span style="flex: 1"></span>
+<span style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center"><span class="tag" style="background: rgba(255,255,255,.16)">8 atributos</span><span class="tag" style="background: rgba(255,255,255,.16)">15 reglas</span><span style="flex: 1"></span><span style="font-weight: 700; display: inline-flex; align-items: center; gap: 6px">Abrir<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"></path></svg></span></span>
+</a>
+<a class="mod b" href="Main.dc.html" onClick="{{goGen}}">
+<span style="display: flex; justify-content: space-between; align-items: flex-start"><span class="modic" style="background: var(--lime); color: #15201d"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true" style="width: 24px; height: 24px"><rect x="3" y="3" width="14" height="14" rx="3"></rect><path d="M7 7.5h6M7 10.5h6M7 13.5h3.5"></path></svg></span><span class="tag" style="background: var(--nav2); color: var(--navink)">Módulo 2</span></span>
+<span class="disp" style="font-size: 32px; line-height: 36px">Generador de casos de prueba</span>
+<span style="font-size: 15px; line-height: 24px; color: var(--navmut); max-width: 440px">Deriva casos por valores límite, partición de equivalencia, umbrales y condiciones. Cada caso queda trazado a su requisito.</span>
+<span style="flex: 1"></span>
+<span style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center"><span class="tag" style="background: var(--nav2); color: var(--navink)">BVA · EP</span><span class="tag" style="background: var(--nav2); color: var(--navink)">Gherkin</span><span style="flex: 1"></span><span style="font-weight: 700; display: inline-flex; align-items: center; gap: 6px; color: var(--lime)">Abrir<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"></path></svg></span></span>
+</a>
+<div class="panel" style="flex: 1 1 260px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<span class="disp" style="font-size: 22px; line-height: 28px; letter-spacing: -0.02em">Cómo funciona</span>
+<div style="display: flex; gap: 12px; align-items: flex-start"><span class="howk">1</span><span style="display: flex; flex-direction: column"><span style="font-weight: 700">Pega tus requisitos</span><span class="small">Texto, .txt, .csv o .md</span></span></div>
+<div style="display: flex; gap: 12px; align-items: flex-start"><span class="howk">2</span><span style="display: flex; flex-direction: column"><span style="font-weight: 700">Revisa las sospechas</span><span class="small">Confirma, descarta o aplica la reescritura</span></span></div>
+<div style="display: flex; gap: 12px; align-items: flex-start"><span class="howk">3</span><span style="display: flex; flex-direction: column"><span style="font-weight: 700">Genera y exporta casos</span><span class="small">CSV, Markdown, JSON o Gherkin</span></span></div>
+</div>
+</section>
+
+<section aria-labelledby="pj" style="display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<h2 id="pj" class="disp" style="font-size: 28px; line-height: 34px; letter-spacing: -0.025em">Proyectos <span class="small num" style="font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: 0">{{projCount}}</span></h2>
+<div style="position: relative; width: 300px; max-width: 100%">
+<label for="q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Buscar proyecto</label>
+<svg class="ic" viewBox="0 0 16 16" aria-hidden="true" style="position: absolute; left: 14px; top: 14px; color: var(--mut)"><circle cx="7" cy="7" r="4.5"></circle><path d="m10.5 10.5 3 3"></path></svg>
+<input id="q" class="field" type="search" placeholder="Buscar proyecto" value="{{query}}" onChange="{{onQuery}}" style="padding-left: 38px">
+</div>
+</div>
+<sc-if value="{{noProjects}}" hint-placeholder-val="{{ false }}">
+<div class="panel" style="padding: 32px; text-align: center; display: flex; flex-direction: column; gap: 4px"><span style="font-weight: 700; font-size: 16px">Sin proyectos con ese nombre</span><span class="small">Prueba con otra búsqueda o crea un proyecto nuevo.</span></div>
+</sc-if>
+<div style="display: flex; flex-wrap: wrap; gap: 16px">
+<sc-for list="{{projects}}" as="p" hint-placeholder-count="3">
+<a class="proj" href="Main.dc.html" onClick="{{goRev}}">
+<span style="display: flex; align-items: flex-start; gap: 14px">
+<span class="ring" style="width: 56px; height: 56px; background: conic-gradient({{p.color}} {{p.score}}%, var(--s3) 0)"><span class="in disp num" style="width: 44px; height: 44px; font-size: 16px; letter-spacing: -0.02em">{{p.scoreLabel}}</span></span>
+<span style="display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1">
+<span style="font-weight: 700; font-size: 17px; line-height: 24px">{{p.name}}</span>
+<span class="small">{{p.meta}}</span>
+</span>
+</span>
+<span style="display: flex; gap: 8px; flex-wrap: wrap">
+<span class="badge b-neutral num">{{p.reqs}} requisitos</span>
+<span class="{{p.findCls}}">{{p.finds}} sospechas</span>
+<span class="badge b-ok num">{{p.cases}} casos</span>
+</span>
+<span style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 12px">
+<span class="small">{{p.updated}}</span>
+<span style="font-weight: 700; font-size: 14px; color: var(--acc); display: inline-flex; gap: 6px; align-items: center">Abrir<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"></path></svg></span>
+</span>
+</a>
+</sc-for>
+</div>
+<p class="small">Los proyectos mostrados son de ejemplo. Cada versión guarda la versión del motor para que un análisis antiguo sea reproducible.</p>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["Claro","Oscuro"],"default":"Claro"},"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const self = this;
+    const s = Object.assign({ query: '', showNew: false, newName: '', extra: [] }, this.state || {});
+    const set = function (p) { self.setState(p); };
+    const base = [
+      { name: 'Sistema de ventas', version: 3, reqs: 6, finds: 13, cases: 13, score: 72, updated: 'Analizado hoy' },
+      { name: 'Matrícula en línea', version: 5, reqs: 24, finds: 9, cases: 41, score: 84, updated: 'Analizado hace 3 días' },
+      { name: 'App de citas médicas', version: 1, reqs: 15, finds: 27, cases: 12, score: 42, updated: 'Analizado hace 1 semana' }
+    ];
+    const list = s.extra.concat(base);
+    const q = s.query.trim().toLowerCase();
+    const color = function (p) { return p >= 80 ? 'var(--acc)' : (p >= 50 ? 'var(--media)' : 'var(--alta)'); };
+    const projects = list.filter(function (p) { return !q || p.name.toLowerCase().indexOf(q) >= 0; }).map(function (p) {
+      return {
+        name: p.name, reqs: p.reqs, finds: p.finds, cases: p.cases, updated: p.updated,
+        score: p.score, scoreLabel: p.reqs ? p.score : '—', color: color(p.score),
+        meta: 'Versión ' + p.version + ' · motor v0.1.0',
+        findCls: 'badge num ' + (p.finds === 0 ? 'b-neutral' : (p.score < 50 ? 'b-alta' : 'b-media'))
+      };
+    });
+    return {
+      rootClass: 'qr' + (this.props.tema === 'Oscuro' ? ' dark' : ''),
+      goRev: function () { try { localStorage.setItem('qualireq.step', '"revisar"'); } catch (e) {} },
+      goGen: function () { try { localStorage.setItem('qualireq.step', '"generar"'); } catch (e) {} },
+      goExp: function () { try { localStorage.setItem('qualireq.step', '"exportar"'); } catch (e) {} },
+      query: s.query, onQuery: function (e) { set({ query: e.target.value }); },
+      showNew: s.showNew, newName: s.newName,
+      openNew: function () { set({ showNew: true }); }, closeNew: function () { set({ showNew: false, newName: '' }); },
+      onName: function (e) { set({ newName: e.target.value }); },
+      create: function () {
+        const n = s.newName.trim(); if (!n) { return; }
+        set({ extra: [{ name: n, version: 1, reqs: 0, finds: 0, cases: 0, score: 0, updated: 'Creado ahora · sin analizar' }].concat(s.extra), showNew: false, newName: '', query: '' });
+      },
+      projects: projects, projCount: list.length, noProjects: projects.length === 0
+    };
+  }
+}
+</script>
+</body>
+</html>

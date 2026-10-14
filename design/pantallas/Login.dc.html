@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>QualiReq — Inicio de sesión</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.qr{--s0:#f4f3ee;--s1:#ffffff;--s2:#ecebe4;--line:#e1dfd6;--ls:#8c8a80;--ink:#15201d;--mut:#585c55;--acc:#0e6656;--acch:#0b5246;--onacc:#ffffff;--accs:#dcede7;--focus:#0e6656;--alta:#b03d0b;--altas:#fbe6da;--nav:#0f1f1b;--nav2:#1b342d;--navink:#eef3ef;--navmut:#a9bdb4;--lime:#c6f06a;font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--s0);font-size:15px;line-height:24px;-webkit-font-smoothing:antialiased}
+.qr.dark{--s0:#0f1110;--s1:#181a18;--s2:#232521;--line:#30322d;--ls:#77786f;--ink:#edece6;--mut:#a7a89f;--acc:#5cc7ae;--acch:#86dcc5;--onacc:#0b1a16;--accs:#16302a;--focus:#7fe0c8;--nav:#0a1412;--nav2:#16291f}
+.qr *{box-sizing:border-box}
+.qr h1,.qr h2,.qr p{margin:0}
+.qr a{color:var(--acc)}.qr a:hover{color:var(--acch)}
+.qr :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.disp{font-family:"Bricolage Grotesque","Plus Jakarta Sans",system-ui,sans-serif;font-weight:700;letter-spacing:-0.035em}
+.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:13px;line-height:20px;font-weight:600}
+.small{font-size:13px;line-height:20px;color:var(--mut)}
+.ic{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.qr a.sso{height:52px;border-radius:14px;border:1px solid var(--ls);background:var(--s1);color:var(--ink);font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px;text-decoration:none}
+.qr a.sso:hover{background:var(--s2)}
+.qr a.sso.dark-btn{background:var(--ink);border-color:var(--ink);color:var(--s1)}
+.qr a.sso.dark-btn:hover{opacity:.9}
+.qr button.sso{width:100%;font:inherit;font-size:15px;font-weight:600;cursor:pointer}
+.qr button.sso.dark-btn{background:var(--ink);border:1px solid var(--ink);color:var(--s1)}
+.qr .field{width:100%;height:52px;border:1px solid var(--ls);border-radius:14px;background:var(--s1);color:var(--ink);padding:0 16px;font:inherit;font-size:16px}
+.qr .field::placeholder{color:var(--mut)}
+.qr .field.bad{border-color:var(--alta);box-shadow:0 0 0 1px var(--alta) inset}
+.err{font-size:13px;line-height:20px;font-weight:600;color:var(--alta)}
+.peek{position:absolute;right:6px;top:6px;height:40px;padding:0 12px;border-radius:10px;border:0;background:var(--s2);color:var(--ink);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.peek:hover{background:var(--line)}
+.ex{width:10px;height:10px;border-radius:999px;border:0;padding:0;background:var(--nav2);cursor:pointer;box-shadow:0 0 0 1px var(--navmut) inset}
+.ex.on{background:var(--lime);box-shadow:none;width:28px}
+.hl{color:#ffb88f;background:rgba(255,156,102,.16);border-radius:6px;padding:1px 5px;font-weight:600}
+.flow{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:var(--nav2);color:var(--navink);font-size:14px;font-weight:600;flex:1 1 140px}
+.flow .k{width:26px;height:26px;border-radius:999px;background:var(--lime);color:#15201d;display:grid;place-items:center;font-size:13px;font-weight:700;flex:none}
+</style>
+</helmet>
+<div class="{{rootClass}}" style="min-height: 100vh; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<section aria-label="Qué es QualiReq" style="flex: 1 1 560px; background: var(--nav); color: var(--navink); padding: 40px 56px; display: flex; flex-direction: column; gap: 32px; justify-content: space-between">
+<span class="disp" style="font-size: 30px; line-height: 34px; color: #ffffff">Quali<span style="color: var(--lime)">Req</span></span>
+
+<div style="display: flex; flex-direction: column; gap: 28px; max-width: 620px">
+<h1 class="disp" style="font-size: 60px; line-height: 62px; color: #ffffff">El defecto más barato es el que detectas <span style="color: var(--lime)">antes de codificar.</span></h1>
+<p style="font-size: 18px; line-height: 28px; color: var(--navmut); max-width: 520px">Revisa requisitos contra los 8 atributos de calidad y genera casos de prueba trazados. Con reglas auditables, sin IA y sin enviar tu texto a terceros.</p>
+
+<div style="background: var(--nav2); border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 10px">
+<span style="font-size: 13px; font-weight: 600; color: var(--navmut)">Ejemplo de revisión</span>
+<div style="display: flex; gap: 6px; align-items: center" role="group" aria-label="Elegir ejemplo">
+<sc-for list="{{dots}}" as="d" hint-placeholder-count="3"><button class="{{d.cls}}" type="button" aria-label="{{d.aria}}" aria-pressed="{{d.pressed}}" onClick="{{d.pick}}"></button></sc-for>
+</div>
+</div>
+<p style="font-size: 19px; line-height: 30px; color: #ffffff; font-weight: 500"><span class="mono" style="color: var(--navmut); margin-right: 8px">{{ex.id}}</span><sc-for list="{{ex.segs}}" as="sg" hint-placeholder-count="3"><span class="{{sg.cls}}">{{sg.t}}</span></sc-for></p>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: rgba(255,156,102,.16); color: #ffb88f; font-size: 13px; font-weight: 600"><span style="width: 7px; height: 7px; border-radius: 999px; background: currentColor"></span>{{ex.sev}}</span>
+<span class="mono" style="color: #ffffff">{{ex.rule}}</span>
+<span style="font-size: 14px; color: var(--navmut)">{{ex.msg}}</span>
+</div>
+<div style="border-top: 1px solid rgba(255,255,255,.1); padding-top: 12px; display: flex; gap: 10px; align-items: flex-start">
+<svg class="ic" viewBox="0 0 18 18" aria-hidden="true" style="color: var(--lime); margin-top: 3px"><path d="M3 9.5 7 13.5 15 5"></path></svg>
+<span style="font-size: 15px; line-height: 23px; color: #ffffff">{{ex.fix}}</span>
+</div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 10px">
+<span class="flow"><span class="k">1</span>Revisar</span>
+<span class="flow"><span class="k">2</span>Generar casos</span>
+<span class="flow"><span class="k">3</span>Exportar</span>
+</div>
+</div>
+
+<span style="font-size: 13px; color: var(--navmut)">SI-784 Calidad y Pruebas de Software · UPT Tacna</span>
+</section>
+
+<section aria-labelledby="login-title" style="flex: 1 1 440px; padding: 40px 32px; display: flex; align-items: center; justify-content: center">
+<div style="width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h2 id="login-title" class="disp" style="font-size: 40px; line-height: 44px">Inicia sesión</h2>
+<p style="color: var(--mut)">Ingresa con tu correo y contraseña para ver tus proyectos.</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="email" style="font-size: 14px; font-weight: 600">Correo</label>
+<input id="email" class="{{emailCls}}" type="email" autocomplete="email" placeholder="nombre@upt.pe" value="{{email}}" onChange="{{onEmail}}" aria-invalid="{{emailInvalid}}" aria-describedby="email-msg">
+<sc-if value="{{showEmailErr}}" hint-placeholder-val="{{ false }}"><span id="email-msg" class="err">{{emailErr}}</span></sc-if>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="pass" style="font-size: 14px; font-weight: 600">Contraseña</label>
+<div style="position: relative">
+<input id="pass" class="{{passCls}}" type="{{passType}}" autocomplete="current-password" placeholder="Tu contraseña" value="{{pass}}" onChange="{{onPass}}" aria-invalid="{{passInvalid}}" aria-describedby="pass-msg" style="padding-right: 96px">
+<button class="peek" type="button" onClick="{{togglePeek}}" aria-pressed="{{peekPressed}}">{{peekLabel}}</button>
+</div>
+<sc-if value="{{showPassErr}}" hint-placeholder-val="{{ false }}"><span id="pass-msg" class="err">{{passErr}}</span></sc-if>
+</div>
+<sc-if value="{{valid}}" hint-placeholder-val="{{ false }}"><a class="sso dark-btn" href="Inicio.dc.html">Ingresar</a></sc-if>
+<sc-if value="{{invalid}}" hint-placeholder-val="{{ true }}"><button class="sso dark-btn" type="button" onClick="{{submit}}">Ingresar</button></sc-if>
+</div>
+<p class="small">Solo se puede ingresar con correo y contraseña. Si tus requisitos contienen datos personales, revisa la Ley 29733.</p>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["Claro","Oscuro"],"default":"Claro"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const self = this;
+    const s = Object.assign({ ex: 0, email: '', pass: '', peek: false, tried: false }, this.state || {});
+    const em = s.email.trim();
+    const emailErr = !em ? 'Escribe tu correo.' : (/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em) ? '' : 'El correo no tiene un formato válido.');
+    const passErr = !s.pass ? 'Escribe tu contraseña.' : (s.pass.length < 8 ? 'La contraseña tiene al menos 8 caracteres.' : '');
+    const ok = !emailErr && !passErr;
+    const EX = [
+      { id: 'RNF-01', parts: [['El sistema debe ser ', ''], ['rápido', 'hl'], [' y ', ''], ['fácil', 'hl'], [' de usar.', '']], sev: 'Alta', rule: 'AMB-01', msg: 'Término subjetivo sin criterio medible', fix: 'El sistema debe responder en menos de 2 s para el 95 % de las peticiones.' },
+      { id: 'RNF-02', parts: [['El sistema debe soportar ', ''], ['varios', 'hl'], [' usuarios concurrentes.', '']], sev: 'Media', rule: 'VER-02', msg: 'Cuantificador vago', fix: 'El sistema debe atender 200 usuarios concurrentes con respuesta menor a 3 s.' },
+      { id: 'RF-01', parts: [['El sistema debe permitir ingresar una contraseña ', ''], ['de entre 8 y 16 caracteres', 'hl'], ['.', '']], sev: 'Media', rule: 'COM-03', msg: 'No define qué pasa fuera del rango', fix: 'Cuando el usuario registre su contraseña, el sistema debe aceptar de 8 a 16 caracteres y rechazar cualquier otra longitud con un mensaje de error.' }
+    ];
+    const e = EX[s.ex];
+    return {
+      rootClass: 'qr' + (this.props.tema === 'Oscuro' ? ' dark' : ''),
+      email: s.email, pass: s.pass,
+      onEmail: function (e) { self.setState({ email: e.target.value }); },
+      onPass: function (e) { self.setState({ pass: e.target.value }); },
+      passType: s.peek ? 'text' : 'password', peekLabel: s.peek ? 'Ocultar' : 'Mostrar', peekPressed: s.peek ? 'true' : 'false',
+      togglePeek: function () { self.setState({ peek: !s.peek }); },
+      showEmailErr: s.tried && !!emailErr, emailErr: emailErr, emailInvalid: s.tried && emailErr ? 'true' : 'false', emailCls: 'field' + (s.tried && emailErr ? ' bad' : ''),
+      showPassErr: s.tried && !!passErr, passErr: passErr, passInvalid: s.tried && passErr ? 'true' : 'false', passCls: 'field' + (s.tried && passErr ? ' bad' : ''),
+      valid: ok, invalid: !ok,
+      submit: function () { self.setState({ tried: true }); },
+      ex: { id: e.id, sev: e.sev, rule: e.rule, msg: e.msg, fix: e.fix, segs: e.parts.map(function (p) { return { t: p[0], cls: p[1] }; }) },
+      dots: EX.map(function (x, i) { return { cls: 'ex' + (i === s.ex ? ' on' : ''), pressed: i === s.ex ? 'true' : 'false', aria: 'Ejemplo ' + (i + 1) + ': ' + x.rule, pick: function () { self.setState({ ex: i }); } }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

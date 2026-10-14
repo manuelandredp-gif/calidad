@@ -1,0 +1,667 @@
+<title>Manual QualiReq</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: single-column document, max 960px, generous vertical rhythm */
+  :root {
+    --bg: #FAF7F2;
+    --bg-card: #FFFFFF;
+    --fg: #1B3A2D;
+    --fg-muted: #5C7A6E;
+    --accent: #1B6B4A;
+    --accent-soft: #E8F5EE;
+    --gold: #B8860B;
+    --gold-soft: #FDF6E3;
+    --line: #D4CFC6;
+    --line-strong: #A8A196;
+    --radius: 12px;
+    --font-display: 'Bricolage Grotesque', 'Georgia', serif;
+    --font-body: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141E1A;
+      --bg-card: #1C2924;
+      --fg: #E4E0D8;
+      --fg-muted: #93A89D;
+      --accent: #4ADE80;
+      --accent-soft: #1C3328;
+      --gold: #DAA520;
+      --gold-soft: #2A2414;
+      --line: #2E3D35;
+      --line-strong: #4A5E53;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141E1A;
+    --bg-card: #1C2924;
+    --fg: #E4E0D8;
+    --fg-muted: #93A89D;
+    --accent: #4ADE80;
+    --accent-soft: #1C3328;
+    --gold: #DAA520;
+    --gold-soft: #2A2414;
+    --line: #2E3D35;
+    --line-strong: #4A5E53;
+    color-scheme: dark;
+  }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    line-height: 1.7;
+    padding-inline: 24px;
+    padding-block: 0;
+    margin: 0;
+  }
+  .wrapper {
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  /* Cover */
+  .cover {
+    text-align: center;
+    padding: 80px 0 48px;
+    border-bottom: 2px solid var(--accent);
+  }
+  .cover-logo {
+    font-family: var(--font-display);
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .cover-logo span { color: var(--accent); }
+  .cover h1 {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin: 16px 0 8px;
+    color: var(--fg-muted);
+  }
+  .cover-meta {
+    font-size: 0.875rem;
+    color: var(--fg-muted);
+    margin-top: 12px;
+  }
+  .cover-meta code {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    background: var(--accent-soft);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  /* TOC */
+  .toc {
+    margin: 48px 0;
+    padding: 28px 32px;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+  }
+  .toc h2 {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 0 0 16px;
+  }
+  .toc ol {
+    padding-left: 20px;
+    margin: 0;
+  }
+  .toc li {
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+  }
+  .toc a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .toc a:hover { text-decoration: underline; }
+
+  /* Sections */
+  .section {
+    margin: 56px 0;
+    scroll-margin-top: 24px;
+  }
+  .section-number {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--gold);
+    background: var(--gold-soft);
+    padding: 3px 10px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 8px;
+  }
+  .section h2 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 12px;
+    text-wrap: balance;
+  }
+  .section p {
+    color: var(--fg-muted);
+    font-size: 0.925rem;
+    margin: 0 0 20px;
+    max-width: 65ch;
+  }
+  .screenshot-frame {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--bg-card);
+  }
+  .screenshot-frame img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .screenshot-caption {
+    font-size: 0.8rem;
+    color: var(--fg-muted);
+    text-align: center;
+    padding: 10px 16px;
+    border-top: 1px solid var(--line);
+    font-family: var(--font-mono);
+  }
+
+  /* Feature list */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin: 20px 0;
+  }
+  .feature-item {
+    background: var(--accent-soft);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+  .feature-item strong {
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  /* Summary table */
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    margin: 20px 0;
+  }
+  .summary-table th {
+    text-align: left;
+    font-weight: 600;
+    padding: 10px 14px;
+    border-bottom: 2px solid var(--accent);
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--fg-muted);
+  }
+  .summary-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .summary-table tr:last-child td { border-bottom: none; }
+  .summary-table .mono {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+  }
+  .badge-pass { background: var(--accent-soft); color: var(--accent); }
+  .badge-info { background: var(--gold-soft); color: var(--gold); }
+
+  /* Footer */
+  .doc-footer {
+    margin: 64px 0 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    font-size: 0.8rem;
+    color: var(--fg-muted);
+    text-align: center;
+  }
+
+  /* Print */
+  @media print {
+    .cover { padding-top: 40px; }
+    .section { page-break-inside: avoid; }
+    .screenshot-frame { box-shadow: none; }
+  }
+  @media (max-width: 600px) {
+    .cover-logo { font-size: 2.2rem; }
+    .cover h1 { font-size: 1.3rem; }
+    .section h2 { font-size: 1.25rem; }
+    body { padding-inline: 16px; }
+  }
+</style>
+
+<div class="wrapper">
+  <!-- PORTADA -->
+  <header class="cover">
+    <div class="cover-logo">Quali<span>Req</span></div>
+    <h1>Manual de usuario y evidencia funcional</h1>
+    <p class="cover-meta">
+      Motor <code>v0.1.0</code> &middot; 14 de octubre de 2026<br>
+      Revision y calidad de requisitos con generacion trazada de casos de prueba
+    </p>
+  </header>
+
+  <!-- TABLA DE CONTENIDOS -->
+  <nav class="toc">
+    <h2>Contenido</h2>
+    <ol>
+      <li><a href="#intro">Introduccion</a></li>
+      <li><a href="#login">Inicio de sesion</a></li>
+      <li><a href="#inicio">Pagina principal</a></li>
+      <li><a href="#nuevo-proyecto">Crear proyecto</a></li>
+      <li><a href="#revisar-vacio">Revisor de requisitos (vacio)</a></li>
+      <li><a href="#revisar-ejemplo">Carga de ejemplo</a></li>
+      <li><a href="#analisis">Resultado del analisis</a></li>
+      <li><a href="#sospechas">Sospechas y correcciones</a></li>
+      <li><a href="#analisis-completo">Vista completa del analisis</a></li>
+      <li><a href="#generar-tabla">Generador de casos: vista tabla</a></li>
+      <li><a href="#generar-gherkin">Generador de casos: vista Gherkin</a></li>
+      <li><a href="#exportar">Exportar resultados</a></li>
+      <li><a href="#versiones">Historial de versiones</a></li>
+      <li><a href="#reglas">Reglas y diccionario de dominio</a></li>
+      <li><a href="#pruebas">Resumen de pruebas automatizadas</a></li>
+    </ol>
+  </nav>
+
+  <!-- 1. INTRODUCCION -->
+  <section class="section" id="intro">
+    <span class="section-number">01</span>
+    <h2>Introduccion</h2>
+    <p>
+      QualiReq es una aplicacion web para la revision de calidad de requisitos de software
+      y la generacion trazada de casos de prueba. El motor de analisis es determinista:
+      evalua cada requisito contra un catalogo de 15 reglas y produce correcciones
+      automaticas, puntuacion de calidad y casos de prueba derivados de las restricciones
+      verificables encontradas.
+    </p>
+    <div class="features">
+      <div class="feature-item">
+        <strong>15 reglas</strong>
+        Catalogo de AMB-01 a NEC-01 que evalua ambiguedad, completitud, verificabilidad, correctitud, viabilidad, prioridad, consistencia y necesidad.
+      </div>
+      <div class="feature-item">
+        <strong>Determinista</strong>
+        Las mismas entradas producen siempre la misma salida. Sin IA generativa, sin llamadas a servicios externos.
+      </div>
+      <div class="feature-item">
+        <strong>Casos trazados</strong>
+        Genera casos de prueba por BVA, particion equivalente, umbrales y condiciones, vinculados al requisito de origen.
+      </div>
+      <div class="feature-item">
+        <strong>11 formatos</strong>
+        Exporta requisitos mejorados, sospechas y casos de prueba en TXT, Markdown, CSV, JSON y Gherkin.
+      </div>
+    </div>
+    <p>
+      Este documento sirve como manual de uso y como evidencia de funcionamiento.
+      Cada seccion incluye una captura de pantalla tomada automaticamente mediante
+      pruebas E2E (Playwright) sobre la aplicacion en ejecucion.
+    </p>
+  </section>
+
+  <!-- 2. LOGIN -->
+  <section class="section" id="login">
+    <span class="section-number">02</span>
+    <h2>Inicio de sesion</h2>
+    <p>
+      La pantalla de login permite el acceso con correo y contrasena. En modo de
+      desarrollo local, la autenticacion se simula y el usuario es redirigido
+      automaticamente a la pagina principal.
+    </p>
+    <div class="screenshot-frame">
+      <img src="capturas/01-login.png" alt="Pantalla de inicio de sesion de QualiReq">
+      <div class="screenshot-caption">01-login.png &mdash; Pantalla de autenticacion</div>
+    </div>
+  </section>
+
+  <!-- 3. INICIO -->
+  <section class="section" id="inicio">
+    <span class="section-number">03</span>
+    <h2>Pagina principal</h2>
+    <p>
+      Al ingresar, el usuario ve un saludo personalizado, dos tarjetas informativas
+      sobre las funcionalidades principales (revisor y generador de casos), y la
+      lista de proyectos existentes. Cada tarjeta de proyecto muestra el anillo de
+      calidad, la version actual, la cantidad de requisitos, sospechas y casos generados.
+      El buscador filtra proyectos por nombre en tiempo real.
+    </p>
+    <div class="screenshot-frame">
+      <img src="capturas/02-inicio.png" alt="Pagina principal con proyecto de ejemplo">
+      <div class="screenshot-caption">02-inicio.png &mdash; Dashboard con proyecto de ejemplo (72% calidad, 6 req, 12 sosp, 13 casos)</div>
+    </div>
+  </section>
+
+  <!-- 4. NUEVO PROYECTO -->
+  <section class="section" id="nuevo-proyecto">
+    <span class="section-number">04</span>
+    <h2>Crear proyecto</h2>
+    <p>
+      El boton "Nuevo proyecto" despliega un formulario inline para crear un proyecto.
+      El usuario escribe el nombre y hace clic en "Crear". El formulario se puede
+      cancelar para volver al estado anterior sin efectos secundarios.
+    </p>
+    <div class="screenshot-frame">
+      <img src="capturas/03-nuevo-proyecto.png" alt="Formulario de nuevo proyecto desplegado">
+      <div class="screenshot-caption">03-nuevo-proyecto.png &mdash; Formulario de creacion de proyecto</div>
+    </div>
+  </section>
+
+  <!-- 5. REVISAR VACIO -->
+  <section class="section" id="revisar-vacio">
+    <span class="section-number">05</span>
+    <h2>Revisor de requisitos (estado inicial)</h2>
+    <p>
+      El modulo de revision presenta un area de texto con numeros de linea e indicadores
+      de calidad por requisito. La guia visual muestra la estructura esperada de un
+      requisito: [lugar/tiempo/evento] + debe + accion + sujeto + resultado. Los botones
+      permiten cargar un ejemplo predefinido, subir un archivo o limpiar el contenido.
+    </p>
+    <div class="screenshot-frame">
+      <img src="capturas/04-revisar-vacio.png" alt="Revisor de requisitos sin contenido">
+      <div class="screenshot-caption">04-revisar-vacio.png &mdash; Editor de requisitos, estado inicial</div>
+    </div>
+  </section>
+
+  <!-- 6. EJEMPLO CARGADO -->
+  <section class="section" id="revisar-ejemplo">
+    <span class="section-number">06</span>
+    <h2>Carga del ejemplo</h2>
+    <p>
+      Al hacer clic en "Cargar ejemplo", se insertan 6 requisitos de prueba (RF-01
+      a RF-04, RNF-01 y RNF-02) que cubren diferentes tipos y niveles de calidad.
+      Cada linea muestra un indicador de color segun su estado: verde indica un
+      requisito sin sospechas, gris indica que aun no ha sido analizado. El boton
+      "Analizar" ejecuta el motor contra el texto actual.
+    </p>
+    <div class="screenshot-frame">
+      <img src="capturas/05-revisar-ejemplo.png" alt="Ejemplo de 6 requisitos cargados">
+      <div class="screenshot-caption">05-revisar-ejemplo.png &mdash; 6 requisitos cargados listos para analizar</div>
+    </div>
+  </section>
+
+  <!-- 7. ANALISIS -->
+  <section class="section" id="analisis">
+    <span class="section-number">07</span>
+    <h2>Resultado del analisis</h2>
+    <p>
+      Tras ejecutar el analisis, aparece el resumen con el anillo de calidad global
+      (72%) y los contadores por severidad: 4 hallazgos de severidad alta, 4 media
+      y 4 baja. El motor analiza en milisegundos y garantiza que el mismo texto
+      produce siempre el mismo resultado (huella determinista).
+    </p>
+    <div class="screenshot-frame">
+      <img src="capturas/06-analisis-resumen.png" alt="Resumen del analisis con 72% de calidad">
+      <div class="screenshot-caption">06-analisis-resumen.png &mdash; Calidad global 72%, 12 sospechas encontradas</div>
+    </div>
+  </section>
+
+  <!-- 8. SOSPECHAS Y CORRECCIONES -->
+  <section class="section" id="sospechas">
+    <span class="section-number">08</span>
+    <h2>Sospechas y correcciones</h2>
+    <p>
+      La vista detallada muestra la lista de requisitos con su puntuacion individual
+      a la izquierda, y las sospechas con correcciones propuestas a la derecha.
+      Cada sospecha identifica la regla infringida, explica el problema y ofrece
+      una correccion que el usuario puede aplicar individualmente o en lote con
+      "Aplicar todas las correcciones". El boton "Falso positivo" permite descartar
+      una sospecha si el usuario la considera incorrecta.
+    </p>
+    <div class="screenshot-frame">
+      <img src="capturas/07-sospechas-correcciones.png" alt="Sospechas con correcciones propuestas">
+      <div class="screenshot-caption">07-sospechas-correcciones.png &mdash; Detalle de sospechas: regla COM-03, PRI-01 sobre RF-01</div>
+    </div>
+  </section>
+
+  <!-- 9. ANALISIS COMPLETO -->
+  <section class="section" id="analisis-completo">
+    <span class="section-number">09</span>
+    <h2>Vista completa del analisis</h2>
+    <p>
+      La vista completa en scroll muestra todos los elementos del analisis: el resumen
+      de calidad, los 6 requisitos con sus puntuaciones individuales (RF-02 y RF-04
+      obtienen 100, RF-01 y RNF-01 obtienen 67, RNF-02 obtiene 67, RF-03 obtiene 50),
+      y todas las sospechas con sus correcciones propuestas. Los pasos de navegacion
+      (1 Revisar, 2 Generar, 3 Exportar) permiten avanzar en el flujo de trabajo.
+    </p>
+    <div class="screenshot-frame">
+      <img src="capturas/08-analisis-completo.png" alt="Vista completa del analisis con scroll">
+      <div class="screenshot-caption">08-analisis-completo.png &mdash; Vista completa con los 6 requisitos y 12 sospechas</div>
+    </div>
+  </section>
+
+  <!-- 10. GENERAR TABLA -->
+  <section class="section" id="generar-tabla">
+    <span class="section-number">10</span>
+    <h2>Generador de casos: vista tabla</h2>
+    <p>
+      El paso 2 genera automaticamente casos de prueba a partir de los requisitos
+      con restricciones verificables. Para el ejemplo, se generan 13 casos a partir
+      de 3 requisitos (RF-01, RF-02 y RF-04). Cada requisito muestra una linea numerica
+      con los valores de prueba. La tabla detalla el ID del caso, el requisito asociado,
+      el tipo (valido, invalido, limite, no funcional), la tecnica utilizada (BVA,
+      EP, umbral, condicion), el dato de prueba, el resultado esperado y la prioridad.
+      Un selector permite filtrar por requisito.
+    </p>
+    <div class="screenshot-frame">
+      <img src="capturas/09-generar-tabla.png" alt="Tabla de 13 casos de prueba generados">
+      <div class="screenshot-caption">09-generar-tabla.png &mdash; 13 casos generados: BVA, EP, umbrales y condiciones</div>
+    </div>
+  </section>
+
+  <!-- 11. GENERAR GHERKIN -->
+  <section class="section" id="generar-gherkin">
+    <span class="section-number">11</span>
+    <h2>Generador de casos: vista Gherkin</h2>
+    <p>
+      La vista alternativa muestra los mismos casos de prueba en formato Gherkin
+      (Given/When/Then), listos para integrarse con herramientas de BDD como
+      Cucumber. El toggle Tabla/Gherkin permite cambiar entre ambas vistas sin
+      perder el estado. Cada Feature agrupa los escenarios por requisito de origen.
+    </p>
+    <div class="screenshot-frame">
+      <img src="capturas/10-generar-gherkin.png" alt="Casos de prueba en formato Gherkin">
+      <div class="screenshot-caption">10-generar-gherkin.png &mdash; Formato Gherkin con Feature por requisito</div>
+    </div>
+  </section>
+
+  <!-- 12. EXPORTAR -->
+  <section class="section" id="exportar">
+    <span class="section-number">12</span>
+    <h2>Exportar resultados</h2>
+    <p>
+      El paso 3 permite exportar los resultados en 11 formatos organizados en tres
+      grupos: requisitos mejorados (TXT, Markdown, CSV, JSON), casos de prueba
+      (CSV, Markdown, JSON, Gherkin) y sospechas (CSV, Markdown, JSON). El panel
+      de vista previa muestra el contenido del formato seleccionado. Los botones
+      permiten copiar al portapapeles o descargar el archivo directamente.
+    </p>
+    <div class="screenshot-frame">
+      <img src="capturas/11-exportar.png" alt="Pagina de exportacion con 11 formatos">
+      <div class="screenshot-caption">11-exportar.png &mdash; Exportador con 3 grupos, 11 formatos y vista previa</div>
+    </div>
+  </section>
+
+  <!-- 13. VERSIONES -->
+  <section class="section" id="versiones">
+    <span class="section-number">13</span>
+    <h2>Historial de versiones</h2>
+    <p>
+      El modulo de versiones permite guardar el estado actual del borrador como una
+      version inmutable con una nota opcional. Cada version registra la cantidad de
+      requisitos, el porcentaje de calidad y la fecha. Las versiones anteriores se
+      pueden restaurar o comparar con la actual usando un diff visual palabra por
+      palabra.
+    </p>
+    <div class="screenshot-frame">
+      <img src="capturas/12-versiones.png" alt="Historial de versiones con borrador v1">
+      <div class="screenshot-caption">12-versiones.png &mdash; Version v1 (borrador), 6 req, 72% calidad</div>
+    </div>
+  </section>
+
+  <!-- 14. REGLAS -->
+  <section class="section" id="reglas">
+    <span class="section-number">14</span>
+    <h2>Reglas y diccionario de dominio</h2>
+    <p>
+      Este modulo muestra las 15 reglas del catalogo de analisis, cada una con su
+      ID, severidad, tipo de deteccion (lexico, estructura, patron, heuristica,
+      marca de revision) y atributo evaluado. Cada regla se puede activar o desactivar
+      individualmente con un interruptor. El diccionario de dominio permite agregar
+      terminos tecnicos del proyecto para que no sean marcados como ambiguos o
+      subjetivos.
+    </p>
+    <div class="screenshot-frame">
+      <img src="capturas/13-reglas.png" alt="Primeras reglas del catalogo">
+      <div class="screenshot-caption">13-reglas.png &mdash; Vista parcial: AMB-01, AMB-02, AMB-03, VER-01, VER-02</div>
+    </div>
+    <p style="margin-top: 20px;">
+      La vista completa muestra las 15 reglas y la seccion del diccionario de dominio
+      al final de la pagina.
+    </p>
+    <div class="screenshot-frame">
+      <img src="capturas/14-reglas-completo.png" alt="Las 15 reglas completas y el diccionario de dominio">
+      <div class="screenshot-caption">14-reglas-completo.png &mdash; Catalogo completo: 15 reglas + diccionario de dominio</div>
+    </div>
+  </section>
+
+  <!-- 15. PRUEBAS -->
+  <section class="section" id="pruebas">
+    <span class="section-number">15</span>
+    <h2>Resumen de pruebas automatizadas</h2>
+    <p>
+      La aplicacion cuenta con dos niveles de pruebas automatizadas que verifican
+      su correcto funcionamiento.
+    </p>
+
+    <h3 style="font-family: var(--font-display); font-size: 1.1rem; margin: 24px 0 12px;">Pruebas unitarias del motor (Vitest)</h3>
+    <table class="summary-table">
+      <thead>
+        <tr>
+          <th>Suite</th>
+          <th>Pruebas</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Analizador de requisitos</td>
+          <td class="mono">62</td>
+          <td><span class="badge badge-pass">PASAN</span></td>
+        </tr>
+        <tr>
+          <td>Correcciones (suggestFix, improve)</td>
+          <td class="mono">incluidas</td>
+          <td><span class="badge badge-pass">PASAN</span></td>
+        </tr>
+        <tr>
+          <td>Generador de casos (BVA, EP, umbrales)</td>
+          <td class="mono">incluidas</td>
+          <td><span class="badge badge-pass">PASAN</span></td>
+        </tr>
+        <tr>
+          <td>Exportadores (11 formatos)</td>
+          <td class="mono">incluidas</td>
+          <td><span class="badge badge-pass">PASAN</span></td>
+        </tr>
+        <tr>
+          <td>Prueba dorada (golden test)</td>
+          <td class="mono">1</td>
+          <td><span class="badge badge-pass">PASA</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 style="font-family: var(--font-display); font-size: 1.1rem; margin: 24px 0 12px;">Pruebas E2E de la aplicacion web (Playwright)</h3>
+    <table class="summary-table">
+      <thead>
+        <tr>
+          <th>Modulo</th>
+          <th>Pruebas</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Login y autenticacion</td>
+          <td class="mono">2</td>
+          <td><span class="badge badge-pass">PASAN</span></td>
+        </tr>
+        <tr>
+          <td>Pagina principal</td>
+          <td class="mono">4</td>
+          <td><span class="badge badge-pass">PASAN</span></td>
+        </tr>
+        <tr>
+          <td>Revisar requisitos</td>
+          <td class="mono">5</td>
+          <td><span class="badge badge-pass">PASAN</span></td>
+        </tr>
+        <tr>
+          <td>Generar casos</td>
+          <td class="mono">3</td>
+          <td><span class="badge badge-pass">PASAN</span></td>
+        </tr>
+        <tr>
+          <td>Exportar</td>
+          <td class="mono">2</td>
+          <td><span class="badge badge-pass">PASAN</span></td>
+        </tr>
+        <tr>
+          <td>Versiones</td>
+          <td class="mono">3</td>
+          <td><span class="badge badge-pass">PASAN</span></td>
+        </tr>
+        <tr>
+          <td>Reglas y diccionario</td>
+          <td class="mono">4</td>
+          <td><span class="badge badge-pass">PASAN</span></td>
+        </tr>
+        <tr>
+          <td>Navegacion</td>
+          <td class="mono">2</td>
+          <td><span class="badge badge-pass">PASAN</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="background: var(--accent-soft); border-radius: var(--radius); padding: 20px 24px; margin-top: 24px;">
+      <p style="margin: 0; color: var(--fg); font-weight: 500;">
+        Total: <strong>62 pruebas unitarias</strong> + <strong>25 pruebas E2E</strong> = 87 pruebas automatizadas.
+        Las 14 capturas de este manual fueron generadas automaticamente por el suite de capturas (Playwright).
+      </p>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="doc-footer">
+    <p>
+      QualiReq &middot; Motor v0.1.0 &middot; Generado el 14 de octubre de 2026<br>
+      Revision determinista de calidad de requisitos con generacion trazada de casos de prueba
+    </p>
+  </footer>
+</div>

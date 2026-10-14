@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>QualiReq — Reglas y diccionario</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.qr{--s0:#f4f3ee;--s1:#ffffff;--s2:#ecebe4;--s3:#dedcd2;--line:#e1dfd6;--ls:#8c8a80;--ink:#15201d;--mut:#585c55;--acc:#0e6656;--acch:#0b5246;--onacc:#ffffff;--accs:#dcede7;--focus:#0e6656;--alta:#b03d0b;--altas:#fbe6da;--media:#835500;--medias:#f6ead0;--baja:#4c5864;--bajas:#e6eaee;--lim:#35557d;--lims:#e3eaf4;--nav:#0f1f1b;--nav2:#1b342d;--navink:#eef3ef;--navmut:#a9bdb4;--lime:#c6f06a;font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--s0);font-size:15px;line-height:24px;-webkit-font-smoothing:antialiased}
+.qr.dark{--s0:#0f1110;--s1:#181a18;--s2:#232521;--s3:#33352f;--line:#30322d;--ls:#77786f;--ink:#edece6;--mut:#a7a89f;--acc:#5cc7ae;--acch:#86dcc5;--onacc:#0b1a16;--accs:#16302a;--focus:#7fe0c8;--alta:#ff9c66;--altas:#3b2114;--media:#e9b850;--medias:#33290f;--baja:#a9b6c2;--bajas:#262c31;--lim:#93b4dc;--lims:#1d2836;--nav:#0a1412;--nav2:#16291f}
+.qr *{box-sizing:border-box}
+.qr h1,.qr h2,.qr h3,.qr p{margin:0}
+.qr a{color:var(--acc)}.qr a:hover{color:var(--acch)}
+.qr :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.disp{font-family:"Bricolage Grotesque","Plus Jakarta Sans",system-ui,sans-serif;font-weight:700;letter-spacing:-0.035em}
+.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:13px;line-height:20px;font-weight:600}
+.label{font-size:13px;line-height:18px;font-weight:600;color:var(--mut)}
+.small{font-size:13px;line-height:20px;color:var(--mut)}
+.num{font-variant-numeric:tabular-nums}
+.ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.ic.lg{width:20px;height:20px}
+.btn{height:42px;padding:0 16px;border-radius:12px;border:1px solid var(--ls);background:var(--s1);color:var(--ink);font:inherit;font-size:14px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--s2)}
+.btn.primary{background:var(--acc);border-color:var(--acc);color:var(--onacc)}
+.btn.primary:hover{background:var(--acch)}
+.badge{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:999px;font-size:13px;font-weight:600;line-height:1;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:999px;background:currentColor;flex:none}
+.b-alta{color:var(--alta);background:var(--altas)}.b-media{color:var(--media);background:var(--medias)}.b-baja{color:var(--baja);background:var(--bajas)}.b-ok{color:var(--acc);background:var(--accs)}.b-neutral{color:var(--mut);background:var(--s2)}.b-limite{color:var(--lim);background:var(--lims)}
+.panel{background:var(--s1);border:1px solid var(--line);border-radius:18px}
+.nav{flex:1 1 236px;background:var(--nav);color:var(--navink);padding:22px 14px;display:flex;flex-direction:column;gap:2px}
+.navlab{font-size:13px;font-weight:600;color:var(--navmut);padding:18px 12px 6px}
+.qr .navi{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 12px;border-radius:12px;color:var(--navink);text-decoration:none;font-size:14px;font-weight:500}
+.qr .navi:hover{background:var(--nav2);color:#ffffff}
+.qr .navi.on{background:var(--nav2);color:#ffffff;font-weight:600}
+.navi.on .ic{color:var(--lime)}
+.fchip{height:34px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--s1);color:var(--mut);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.fchip:hover{border-color:var(--ls);color:var(--ink)}
+.fchip.on{background:var(--ink);border-color:var(--ink);color:var(--s1)}
+.rrow{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;border:1px solid transparent}
+.rrow.on{background:var(--s2);border-color:var(--ls)}
+.rsel{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;text-align:left;border:0;background:transparent;color:var(--ink);font:inherit;cursor:pointer;padding:0}
+.switch{width:44px;height:26px;border-radius:999px;border:1px solid var(--ls);background:var(--s2);padding:2px;cursor:pointer;display:inline-flex;align-items:center;flex:none}
+.switch .knob{width:20px;height:20px;border-radius:999px;background:var(--ls)}
+.switch.on{background:var(--acc);border-color:var(--acc);justify-content:flex-end}
+.switch.on .knob{background:var(--onacc)}
+.field{height:44px;border:1px solid var(--ls);border-radius:12px;background:var(--s1);color:var(--ink);padding:0 14px;font:inherit;font-size:14px;width:100%}
+.term{display:inline-flex;align-items:center;gap:4px;height:32px;padding:0 6px 0 12px;border-radius:999px;background:var(--s2);font-size:14px;font-weight:600}
+.term button{width:24px;height:24px;border-radius:999px;border:0;background:transparent;color:var(--mut);display:grid;place-items:center;cursor:pointer}
+.term button:hover{background:var(--s3);color:var(--ink)}
+.ex{border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;flex:1 1 220px}
+.ex.bad{background:var(--altas)}.ex.good{background:var(--accs)}
+.ex.bad .k{color:var(--alta)}.ex.good .k{color:var(--acc)}
+.kv{display:flex;flex-direction:column;gap:2px;flex:1 1 160px;padding:12px 14px;border-radius:12px;background:var(--s2)}
+</style>
+</helmet>
+<div class="{{rootClass}}" style="min-height: 100vh; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<nav class="nav" aria-label="Principal">
+<a href="Inicio.dc.html" style="text-decoration: none; padding: 4px 12px 14px; display: flex; flex-direction: column; gap: 2px">
+<span class="disp" style="font-size: 26px; line-height: 30px; color: #ffffff">Quali<span style="color: var(--lime)">Req</span></span>
+<span style="font-size: 13px; line-height: 18px; color: var(--navmut)">Calidad de requisitos</span>
+</a>
+<a class="navi" href="Inicio.dc.html"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 9.5 10 3.5l7 6V16a1 1 0 0 1-1 1h-3.5v-4.5h-5V17H4a1 1 0 0 1-1-1z"></path></svg>Inicio</a>
+<span class="navlab">Módulos · Sistema de ventas</span>
+<a class="navi" href="Main.dc.html" onClick="{{goRev}}"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5.5"></circle><path d="m13 13 4 4M6.8 9l1.6 1.6 3-3.2"></path></svg>Revisor de requisitos</a>
+<a class="navi" href="Main.dc.html" onClick="{{goGen}}"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="3"></rect><path d="M7 7.5h6M7 10.5h6M7 13.5h3.5"></path></svg>Generador de casos</a>
+<a class="navi" href="Main.dc.html" onClick="{{goExp}}"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v9M6.5 8.5 10 12l3.5-3.5M4 15.5h12"></path></svg>Exportar</a>
+<span class="navlab">Proyecto</span>
+<a class="navi" href="Versiones.dc.html"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><circle cx="6" cy="5" r="2"></circle><circle cx="6" cy="15" r="2"></circle><circle cx="14" cy="9" r="2"></circle><path d="M6 7v6M14 11c0 2-2 3-6 3"></path></svg>Versiones</a>
+<a class="navi on" href="Reglas.dc.html" aria-current="page"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5h12M4 10h12M4 15h12"></path><circle cx="7" cy="5" r="1.6"></circle><circle cx="13" cy="10" r="1.6"></circle><circle cx="9" cy="15" r="1.6"></circle></svg>Reglas y diccionario</a>
+<div style="flex: 1; min-height: 24px"></div>
+<div style="margin: 0 4px 8px; padding: 14px; border-radius: 14px; background: var(--nav2); display: flex; flex-direction: column; gap: 6px">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #ffffff"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--lime)"><path d="M8 1.5 13 3.5v4c0 3-2.2 5.5-5 7-2.8-1.5-5-4-5-7v-4z"></path><path d="M5.8 8 7.3 9.5 10.3 6.5"></path></svg>Motor v0.1.0</span>
+<span style="font-size: 13px; line-height: 19px; color: var(--navmut)">Determinista. Analiza en tu navegador: el texto no sale de este equipo.</span>
+</div>
+<a class="navi" href="Login.dc.html" style="gap: 10px"><span style="width: 30px; height: 30px; border-radius: 999px; background: var(--lime); color: #15201d; display: grid; place-items: center; font-weight: 700; font-size: 13px">MF</span><span style="display: flex; flex-direction: column; line-height: 18px"><span style="font-size: 14px">Milton F.</span><span style="font-size: 13px; color: var(--navmut)">Cerrar sesión</span></span></a>
+</nav>
+
+<main style="flex: 999 1 640px; min-width: 0; padding: 32px; display: flex; flex-direction: column; gap: 24px">
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span class="small"><a href="Inicio.dc.html" style="text-decoration: none">Proyectos</a> / <a href="Main.dc.html" style="text-decoration: none">Sistema de ventas</a> / Reglas</span>
+<h1 class="disp" style="font-size: 40px; line-height: 44px">Reglas y diccionario</h1>
+<p style="color: var(--mut); max-width: 720px">El catálogo es datos, no código. Lo que cambies aquí se aplica al revisor de este proyecto: reglas desactivadas y términos del dominio que no deben marcarse.</p>
+</div>
+<span class="badge b-ok num" style="height: 32px; font-size: 14px; padding: 0 14px">{{enabledLabel}}</span>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+<section aria-label="Catálogo" class="panel" style="flex: 1 1 360px; max-width: 460px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; flex-wrap: wrap; gap: 6px" role="group" aria-label="Filtrar por atributo">
+<sc-for list="{{attrChips}}" as="c" hint-placeholder-count="9"><button class="{{c.cls}}" type="button" aria-pressed="{{c.pressed}}" onClick="{{c.pick}}">{{c.label}}</button></sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px; margin-top: 4px">
+<sc-for list="{{rules}}" as="r" hint-placeholder-count="15">
+<div class="{{r.cls}}">
+<button class="rsel" type="button" onClick="{{r.pick}}" aria-pressed="{{r.pressed}}">
+<span style="display: flex; align-items: center; gap: 8px"><span class="mono">{{r.id}}</span><span class="{{r.sevCls}}" style="height: 22px"><span class="dot"></span>{{r.sevLabel}}</span><span class="small">{{r.attrLabel}}</span></span>
+<span style="font-size: 14px; line-height: 20px; font-weight: 500">{{r.title}}</span>
+</button>
+<button class="{{r.swCls}}" type="button" role="switch" aria-checked="{{r.checked}}" aria-label="{{r.swLabel}}" onClick="{{r.toggle}}"><span class="knob"></span></button>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section aria-label="Detalle de la regla" style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<div class="panel" style="padding: 24px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+<span class="mono" style="font-size: 16px">{{d.id}}</span>
+<span class="{{d.sevCls}}"><span class="dot"></span>Severidad {{d.sevLower}}</span>
+<span class="badge b-neutral">{{d.attrLabel}}</span>
+<span class="badge b-limite">{{d.kind}}</span>
+<span style="flex: 1"></span>
+<span class="{{d.stateCls}}">{{d.state}}</span>
+</div>
+<h2 class="disp" style="font-size: 30px; line-height: 36px; letter-spacing: -0.025em">{{d.title}}</h2>
+<p style="font-size: 16px; line-height: 26px; color: var(--mut)">{{d.rationale}}</p>
+<sc-if value="{{d.hasTerms}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span class="label">Términos que detecta</span>
+<div style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{d.terms}}" as="t" hint-placeholder-count="6"><span class="badge b-alta" style="height: 28px">«{{t}}»</span></sc-for></div>
+</div>
+</sc-if>
+<div style="display: flex; flex-wrap: wrap; gap: 10px">
+<div class="ex bad"><span class="label k">Ejemplo con la sospecha</span><span style="font-size: 15px; line-height: 23px">{{d.bad}}</span></div>
+<div class="ex good"><span class="label k">Ejemplo correcto</span><span style="font-size: 15px; line-height: 23px">{{d.good}}</span></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 10px">
+<div class="kv"><span class="label">Sugerencia de reescritura</span><span style="font-size: 14px; line-height: 21px; font-weight: 600">{{d.hint}}</span></div>
+<div class="kv"><span class="label">Fuente</span><span style="font-size: 14px; line-height: 21px; font-weight: 600">IEEE 830 / ISO/IEC/IEEE 29148 · {{d.attrLower}}</span></div>
+<div class="kv"><span class="label">Precisión medida</span><span style="font-size: 14px; line-height: 21px; font-weight: 600">Pendiente del conjunto de oro</span></div>
+</div>
+<p class="small">La precisión se calcula con requisitos etiquetados por dos personas y con las sospechas que confirmas o descartas. No se muestra una cifra antes de medirla.</p>
+</div>
+
+<div class="panel" style="padding: 24px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 class="disp" style="font-size: 24px; line-height: 30px; letter-spacing: -0.02em">Diccionario de dominio</h2>
+<p class="small" style="font-size: 14px; line-height: 22px">Términos propios del negocio que no deben marcarse. Por ejemplo, «Pago rápido» como nombre de un producto.</p>
+</div>
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<label for="dt" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Nuevo término</label>
+<input id="dt" class="field" type="text" placeholder="Agregar término" value="{{draft}}" onChange="{{onDraft}}" style="flex: 1 1 240px; width: auto">
+<button class="btn primary" type="button" onClick="{{addTerm}}"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10"></path></svg>Agregar</button>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{dict}}" as="w" hint-placeholder-count="4"><span class="term">{{w.t}}<button type="button" aria-label="{{w.aria}}" onClick="{{w.remove}}"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true" style="width: 14px; height: 14px"><path d="M4 4l8 8M12 4l-8 8"></path></svg></button></span></sc-for>
+<sc-if value="{{dictEmpty}}" hint-placeholder-val="{{ false }}"><span class="small">Sin términos todavía.</span></sc-if>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["Claro","Oscuro"],"default":"Claro"},"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+  componentDidMount() {
+    const p = {};
+    try {
+      const off = JSON.parse(localStorage.getItem('qualireq.off') || 'null');
+      const dict = JSON.parse(localStorage.getItem('qualireq.dict') || 'null');
+      if (off) { p.off = off; }
+      if (dict) { p.dict = dict; }
+    } catch (e) {}
+    if (Object.keys(p).length) { this.setState(p); }
+  }
+  renderVals() {
+    const self = this;
+    const s = Object.assign({ attr: 'todos', sel: 'AMB-01', off: {}, dict: ['Pago rápido', 'SUNAT', 'S/'], draft: '' }, this.state || {});
+    const set = function (p) {
+      self.setState(p);
+      try {
+        if (p.off) { localStorage.setItem('qualireq.off', JSON.stringify(p.off)); }
+        if (p.dict) { localStorage.setItem('qualireq.dict', JSON.stringify(p.dict)); }
+      } catch (e) {}
+    };
+    const ATTR = { necesario: 'Necesario', no_ambiguo: 'No ambiguo', verificable: 'Verificable', completo: 'Completo', correcto: 'Correcto', viable: 'Viable', priorizable: 'Priorizable', consistente: 'Consistente' };
+    const SEV = { alta: 'Alta', media: 'Media', baja: 'Baja' };
+    const R = [
+      ['AMB-01', 'no_ambiguo', 'alta', 'Léxico', 'Término subjetivo sin criterio medible', 'Un término subjetivo admite varias interpretaciones: dos personas pueden probar cosas distintas.', ['adecuado', 'rápido', 'fácil', 'amigable', 'eficiente', 'robusto'], 'El sistema debe ser rápido.', 'El sistema debe responder en menos de 2 s.', 'Sustituir por un valor medible con unidad.'],
+      ['AMB-02', 'no_ambiguo', 'alta', 'Léxico', 'Cláusula de escape', 'Las cláusulas de escape dejan el alcance abierto y nadie puede decir cuándo está completo.', ['etc.', 'y/o', 'según corresponda', 'si es posible'], 'Exportar a PDF y/o Excel, etc.', 'El sistema debe exportar el reporte en formato PDF.', 'Enumerar el alcance exacto.'],
+      ['AMB-03', 'no_ambiguo', 'media', 'Patrón', 'Voz pasiva sin sujeto', 'Sin un actor explícito no queda claro quién es responsable de la acción.', [], 'Los reportes serán generados.', 'El sistema debe generar el reporte mensual.', 'Reescribir en voz activa con el actor.'],
+      ['VER-01', 'verificable', 'alta', 'Estructura', 'Requisito no funcional sin valor ni unidad', 'Sin valor ni unidad no existe un resultado esperado contra el cual probar.', [], 'El sistema debe tener buen rendimiento.', 'El sistema debe responder en ≤ 2 s para el 95 % de las peticiones.', 'Agregar valor, unidad y condición.'],
+      ['VER-02', 'verificable', 'media', 'Léxico', 'Cuantificador vago', 'Un cuantificador vago no fija una cantidad que se pueda medir.', ['varios', 'algunos', 'muchos'], 'Debe soportar varios usuarios.', 'Debe soportar 200 usuarios concurrentes.', 'Reemplazar por una cantidad.'],
+      ['COM-01', 'completo', 'alta', 'Estructura', 'Falta el sujeto o actor', 'El modelo del curso exige un sujeto: quién realiza la acción.', [], 'Permitir el registro de clientes.', 'El sistema debe permitir al vendedor registrar clientes.', 'Indicar el sujeto.'],
+      ['COM-02', 'completo', 'media', 'Patrón', 'Falta un resultado observable', 'Sin resultado observable no se puede decidir si la prueba pasa o falla.', [], 'El sistema debe ser seguro.', 'El sistema debe bloquear la cuenta tras 3 intentos fallidos.', 'Describir qué se observa.'],
+      ['COM-03', 'completo', 'media', 'Estructura', 'No define qué pasa si se viola la restricción', 'Las entradas inválidas también necesitan un resultado esperado.', [], 'Contraseña de entre 8 y 16 caracteres.', '… y rechazar cualquier otra longitud con un mensaje de error.', 'Agregar el comportamiento ante valores inválidos.'],
+      ['COM-04', 'completo', 'alta', 'Léxico', 'Marcador pendiente', 'Un requisito con valores por definir no está listo para aprobarse.', ['TBD', 'por definir', 'pendiente'], 'El tiempo máximo es TBD.', 'El tiempo máximo es 5 s.', 'Completar el valor pendiente.'],
+      ['COR-01', 'correcto', 'media', 'Estructura', 'Requisito no atómico', 'Varias acciones en un requisito impiden trazarlas y probarlas por separado.', [], 'Generar y exportar el reporte.', 'Dos requisitos: generar el reporte; exportar el reporte.', 'Separar por acción.'],
+      ['VIA-01', 'viable', 'media', 'Léxico', 'Absoluto difícil de garantizar', 'Los absolutos rara vez son alcanzables o demostrables.', ['siempre', 'nunca', '100 %', 'todos'], 'Debe estar disponible siempre.', 'Disponibilidad del 99,5 % mensual.', 'Acotar con un porcentaje o una condición.'],
+      ['PRI-01', 'priorizable', 'baja', 'Estructura', 'Sin prioridad asignada', 'Sin prioridad no se puede ordenar el plan de pruebas (criticidad, importancia, complejidad).', [], 'RF-07 El sistema debe …', 'RF-07 El sistema debe … Prioridad: Alta', 'Asignar Alta, Media o Baja.'],
+      ['CON-01', 'consistente', 'alta', 'Estructura', 'ID duplicado', 'Dos requisitos con el mismo ID rompen la trazabilidad hacia los casos.', [], 'RF-02 … / RF-02 …', 'RF-02 … / RF-03 …', 'Renumerar con un ID único.'],
+      ['CON-02', 'consistente', 'media', 'Heurística', 'Umbrales contradictorios sobre el mismo sujeto', 'Dos umbrales distintos para la misma medida no pueden cumplirse a la vez.', [], 'Responder en < 2 s. / Responder en < 5 s.', 'Un único umbral: responder en < 2 s.', 'Unificar el umbral.'],
+      ['NEC-01', 'necesario', 'baja', 'Marca de revisión', 'Sin vínculo a objetivo o actor', 'La necesidad no se decide por reglas: se marca para juicio humano.', [], 'El sistema debe mostrar un fondo animado.', 'Vinculado al objetivo «aumentar la conversión».', 'Vincular a un objetivo del negocio.']
+    ].map(function (r) { return { id: r[0], attr: r[1], sev: r[2], kind: r[3], title: r[4], rationale: r[5], terms: r[6], bad: r[7], good: r[8], hint: r[9] }; });
+    const attrChips = ['todos'].concat(Object.keys(ATTR)).map(function (k) {
+      const on = s.attr === k;
+      return { label: k === 'todos' ? 'Todos' : ATTR[k], cls: 'fchip' + (on ? ' on' : ''), pressed: on ? 'true' : 'false', pick: function () { set({ attr: k }); } };
+    });
+    const rules = R.filter(function (r) { return s.attr === 'todos' || r.attr === s.attr; }).map(function (r) {
+      const on = !s.off[r.id], sel = s.sel === r.id;
+      return {
+        id: r.id, title: r.title, attrLabel: ATTR[r.attr], sevCls: 'badge b-' + r.sev, sevLabel: SEV[r.sev],
+        cls: 'rrow' + (sel ? ' on' : ''), pressed: sel ? 'true' : 'false', pick: function () { set({ sel: r.id }); },
+        swCls: 'switch' + (on ? ' on' : ''), checked: on ? 'true' : 'false', swLabel: 'Regla ' + r.id + (on ? ' activa' : ' inactiva'),
+        toggle: function () { const m = Object.assign({}, s.off); if (on) { m[r.id] = true; } else { delete m[r.id]; } set({ off: m }); }
+      };
+    });
+    const x = R.filter(function (r) { return r.id === s.sel; })[0] || R[0];
+    const active = !s.off[x.id];
+    const enabled = R.filter(function (r) { return !s.off[r.id]; }).length;
+    return {
+      rootClass: 'qr' + (this.props.tema === 'Oscuro' ? ' dark' : ''),
+      goRev: function () { try { localStorage.setItem('qualireq.step', '"revisar"'); } catch (e) {} },
+      goGen: function () { try { localStorage.setItem('qualireq.step', '"generar"'); } catch (e) {} },
+      goExp: function () { try { localStorage.setItem('qualireq.step', '"exportar"'); } catch (e) {} },
+      enabledLabel: enabled + ' de ' + R.length + ' reglas activas',
+      attrChips: attrChips, rules: rules,
+      d: { id: x.id, title: x.title, rationale: x.rationale, kind: x.kind, bad: x.bad, good: x.good, hint: x.hint, terms: x.terms, hasTerms: x.terms.length > 0, sevCls: 'badge b-' + x.sev, sevLower: SEV[x.sev].toLowerCase(), attrLabel: ATTR[x.attr], attrLower: 'atributo ' + ATTR[x.attr].toLowerCase(), state: active ? 'Activa en este proyecto' : 'Desactivada en este proyecto', stateCls: 'badge ' + (active ? 'b-ok' : 'b-neutral') },
+      draft: s.draft, onDraft: function (e) { set({ draft: e.target.value }); },
+      addTerm: function () { const t = s.draft.trim(); if (!t || s.dict.indexOf(t) >= 0) { return; } set({ dict: s.dict.concat([t]), draft: '' }); },
+      dict: s.dict.map(function (t) { return { t: t, aria: 'Quitar ' + t, remove: function () { set({ dict: s.dict.filter(function (u) { return u !== t; }) }); } }; }),
+      dictEmpty: s.dict.length === 0
+    };
+  }
+}
+</script>
+</body>
+</html>
