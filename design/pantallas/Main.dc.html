@@ -1,0 +1,1127 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>QualiReq — Espacio de trabajo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.qr{--s0:#f4f3ee;--s1:#ffffff;--s2:#ecebe4;--s3:#dedcd2;--line:#e1dfd6;--ls:#8c8a80;--ink:#15201d;--mut:#585c55;--acc:#0e6656;--acch:#0b5246;--onacc:#ffffff;--accs:#dcede7;--focus:#0e6656;--alta:#b03d0b;--altas:#fbe6da;--media:#835500;--medias:#f6ead0;--baja:#4c5864;--bajas:#e6eaee;--lim:#35557d;--lims:#e3eaf4;--nf:#56621f;--nfs:#ecefd8;--nav:#0f1f1b;--nav2:#1b342d;--navink:#eef3ef;--navmut:#a9bdb4;--lime:#c6f06a;--sh:0 1px 2px rgba(21,32,29,.06),0 6px 20px rgba(21,32,29,.06);font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--s0);font-size:15px;line-height:24px;-webkit-font-smoothing:antialiased}
+.qr.dark{--s0:#0f1110;--s1:#181a18;--s2:#232521;--s3:#33352f;--line:#30322d;--ls:#77786f;--ink:#edece6;--mut:#a7a89f;--acc:#5cc7ae;--acch:#86dcc5;--onacc:#0b1a16;--accs:#16302a;--focus:#7fe0c8;--alta:#ff9c66;--altas:#3b2114;--media:#e9b850;--medias:#33290f;--baja:#a9b6c2;--bajas:#262c31;--lim:#93b4dc;--lims:#1d2836;--nf:#bfcc7e;--nfs:#262a14;--nav:#0a1412;--nav2:#16291f;--sh:0 1px 2px rgba(0,0,0,.4)}
+.qr *{box-sizing:border-box}
+.qr h1,.qr h2,.qr h3,.qr p{margin:0}
+.qr a{color:var(--acc)}.qr a:hover{color:var(--acch)}
+.qr :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.disp{font-family:"Bricolage Grotesque","Plus Jakarta Sans",system-ui,sans-serif;font-weight:700;letter-spacing:-0.035em}
+.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:13px;line-height:20px;font-weight:600;letter-spacing:-0.01em}
+.label{font-size:13px;line-height:18px;font-weight:600;color:var(--mut)}
+.small{font-size:13px;line-height:20px;color:var(--mut)}
+.num{font-variant-numeric:tabular-nums}
+.ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.ic.lg{width:20px;height:20px}
+.btn{height:42px;padding:0 16px;border-radius:12px;border:1px solid var(--ls);background:var(--s1);color:var(--ink);font:inherit;font-size:14px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;white-space:nowrap;text-decoration:none}
+.qr a.btn{color:var(--ink)}
+.btn:hover{background:var(--s2)}
+.btn.primary{background:var(--acc);border-color:var(--acc);color:var(--onacc)}
+.btn.primary:hover{background:var(--acch);border-color:var(--acch)}
+.btn.xl{height:52px;padding:0 26px;font-size:16px;border-radius:14px}
+.btn.sm{height:34px;padding:0 12px;font-size:13px;border-radius:10px}
+.btn.quiet{border-color:transparent;background:transparent;color:var(--mut)}
+.btn.quiet:hover{background:var(--s2);color:var(--ink)}
+.btn.icon{width:42px;padding:0}
+.btn[disabled]{opacity:.7;cursor:progress}
+.seg{display:inline-flex;flex-wrap:wrap;padding:4px;background:var(--s2);border-radius:999px;gap:2px}
+.seg button{height:34px;padding:0 14px;border:0;border-radius:999px;background:transparent;font:inherit;font-size:13px;font-weight:600;color:var(--mut);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.seg button:hover{color:var(--ink)}
+.seg button.on{background:var(--s1);color:var(--ink);box-shadow:var(--sh)}
+.badge{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:999px;font-size:13px;font-weight:600;line-height:1;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:999px;background:currentColor;flex:none}
+.b-alta,.b-invalido{color:var(--alta);background:var(--altas)}
+.b-media,.b-revisar{color:var(--media);background:var(--medias)}
+.b-baja,.b-juicio{color:var(--baja);background:var(--bajas)}
+.b-valido,.b-cumple,.b-ok{color:var(--acc);background:var(--accs)}
+.b-limite{color:var(--lim);background:var(--lims)}
+.b-nf{color:var(--nf);background:var(--nfs)}
+.b-neutral{color:var(--mut);background:var(--s2)}
+.panel{background:var(--s1);border:1px solid var(--line);border-radius:18px}
+.nav{flex:1 1 236px;background:var(--nav);color:var(--navink);padding:22px 14px;display:flex;flex-direction:column;gap:2px}
+.navlab{font-size:13px;font-weight:600;color:var(--navmut);padding:18px 12px 6px}
+.qr .navi{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 12px;border-radius:12px;color:var(--navink);text-decoration:none;font-size:14px;font-weight:500;width:100%;border:0;background:transparent;font-family:inherit;text-align:left;cursor:pointer}
+.qr .navi:hover{background:var(--nav2);color:#ffffff}
+.qr .navi.on{background:var(--nav2);color:#ffffff;font-weight:600}
+.navi.on .ic{color:var(--lime)}
+.navi .cnt{margin-left:auto;font-size:13px;font-weight:600;color:var(--navmut);font-variant-numeric:tabular-nums}
+.navi.on .cnt{color:var(--lime)}
+.step{flex:1 1 220px;display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:16px;border:1px solid var(--line);background:var(--s1);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.step:hover{border-color:var(--ls)}
+.step .n{width:36px;height:36px;border-radius:999px;display:grid;place-items:center;background:var(--s2);color:var(--mut);font-weight:700;flex:none}
+.step.on{background:var(--ink);border-color:var(--ink);color:var(--s1)}
+.step.on .n{background:var(--lime);color:#15201d}
+.step .st{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:18px;line-height:24px;letter-spacing:-0.02em}
+.step .ss{font-size:13px;line-height:18px;opacity:.75}
+.edwrap{background:var(--s1);border:2px solid var(--acc);border-radius:24px;box-shadow:0 0 0 6px var(--accs),var(--sh);overflow:hidden}
+.edbody{display:flex;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--s1)}
+.edbody:focus-within{box-shadow:inset 0 0 0 2px var(--focus)}
+.gut{flex:none;width:72px;padding:16px 0;background:var(--s2);border-right:1px solid var(--line)}
+.gl{height:28px;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding-right:12px;font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--mut)}
+.gd{width:10px;height:10px;border-radius:999px;flex:none}
+.gd.ok{background:var(--acc)}.gd.media{background:var(--media)}.gd.alta{background:var(--alta)}.gd.none{box-shadow:inset 0 0 0 2px var(--ls)}.gd.blank{visibility:hidden}
+.qr .ed{flex:1;min-width:0;border:0;outline:none;resize:none;background:transparent;color:var(--ink);font:inherit;font-size:16px;line-height:28px;padding:16px 20px;white-space:pre;overflow-x:auto;overflow-y:hidden}
+.qr .ed:focus-visible{outline:none}
+.ed::placeholder{color:var(--mut)}
+.mchip{height:30px;padding:0 12px;border-radius:999px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;white-space:nowrap}
+.plus{color:var(--mut);font-weight:700}
+.stg{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;font-size:13px;font-weight:600;background:var(--s2);color:var(--mut)}
+.stg.done{background:var(--accs);color:var(--acc)}
+.stg.on{background:var(--ink);color:var(--s1)}
+.reqrow{width:100%;text-align:left;border:1px solid transparent;background:transparent;color:var(--ink);font:inherit;border-radius:12px;padding:10px 12px;display:flex;gap:12px;align-items:center;cursor:pointer}
+.reqrow:hover{background:var(--s2)}
+.reqrow.on{background:var(--s2);border-color:var(--ls)}
+.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:14px;line-height:21px}
+.ring{border-radius:999px;display:grid;place-items:center;flex:none}
+.ring .in{border-radius:999px;background:var(--s1);display:grid;place-items:center}
+.sevcard{flex:1 1 150px;text-align:left;border:1px solid var(--line);border-radius:16px;padding:14px 16px;background:var(--s1);color:var(--ink);font:inherit;cursor:pointer;display:flex;flex-direction:column;gap:4px}
+.sevcard:hover{border-color:var(--ls)}
+.sevcard.on{border-color:currentColor;box-shadow:0 0 0 1px currentColor inset}
+.sevcard.alta{color:var(--alta)}.sevcard.media{color:var(--media)}.sevcard.baja{color:var(--baja)}
+.sevcard .big{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:34px;line-height:38px;letter-spacing:-0.03em}
+.sevcard .t{color:var(--ink);font-weight:600;font-size:14px;line-height:20px}
+.sevcard .d{color:var(--mut);font-size:13px;line-height:18px}
+.card{background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.hl{color:var(--alta);background:var(--altas);border-radius:6px;padding:1px 4px;font-weight:600}
+.term{color:var(--alta);background:var(--altas);border-radius:999px;padding:0 10px;font-size:13px;line-height:24px;font-weight:600}
+.fixbox{background:var(--accs);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.qr .fix{width:100%;border:1px solid var(--ls);border-radius:12px;background:var(--s1);color:var(--ink);font:inherit;font-size:15px;line-height:24px;padding:10px 12px;resize:vertical}
+.slot{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;background:var(--s2);flex:1 1 140px;min-width:0}
+.slot.miss{background:var(--medias);color:var(--media)}
+.slot .v{font-size:14px;line-height:20px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slot.miss .v{color:var(--media)}
+.tbl{width:100%;border-collapse:collapse;font-size:14px;line-height:21px}
+.tbl th{font-size:13px;line-height:18px;font-weight:600;color:var(--mut);text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover td{background:var(--s2)}
+.tbl tbody tr.on td{background:var(--accs)}
+.tbl tr:last-child td{border-bottom:0}
+.nl{position:relative;height:110px;margin:4px 8px 0}
+.nl-axis{position:absolute;left:0;right:0;top:44px;height:2px;background:var(--s3);border-radius:2px}
+.nl-zone{position:absolute;top:36px;height:18px;border-radius:999px;background:var(--accs);border:1px dashed var(--acc)}
+.nl-pt{position:absolute;top:30px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;border:0;background:transparent;font:inherit;cursor:pointer;padding:0;color:var(--ink)}
+.nl-dot{width:30px;height:30px;border-radius:999px;border:3px solid var(--s1);box-shadow:0 0 0 2px currentColor;background:currentColor}
+.nl-pt .nv{font-family:"JetBrains Mono",monospace;font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap}
+.nl-pt.valido{color:var(--acc)}.nl-pt.invalido{color:var(--alta)}.nl-pt.limite{color:var(--lim)}.nl-pt.nf{color:var(--nf)}
+.nl-pt.on .nl-dot{transform:scale(1.25)}
+.fmt{flex:1 1 180px;text-align:left;border:1px solid var(--line);border-radius:16px;padding:16px;background:var(--s1);color:var(--ink);font:inherit;cursor:pointer;display:flex;flex-direction:column;gap:6px}
+.fmt:hover{border-color:var(--ls)}
+.fmt.on{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset;background:var(--accs)}
+.fmt .ft{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:20px;line-height:24px;letter-spacing:-0.02em}
+.pre{margin:0;font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:13px;line-height:21px;white-space:pre;overflow:auto;max-height:440px;padding:18px 20px;background:var(--nav);color:var(--navink);border-radius:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 8px 0 12px;border-radius:999px;border:1px solid var(--ls);background:var(--s1);font:inherit;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer}
+.chip:hover{background:var(--s2)}
+.pill{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;border-radius:999px;background:var(--s2);font-size:13px;font-weight:600;color:var(--mut)}
+.toast{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 16px;border-radius:14px;background:var(--ink);color:var(--s1)}
+.toast button{height:34px;padding:0 14px;border-radius:10px;border:1px solid var(--s1);background:transparent;color:var(--s1);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.check{display:inline-flex;align-items:center;gap:10px;font-size:14px;font-weight:600;cursor:pointer}
+.check input{width:18px;height:18px;accent-color:var(--acc)}
+</style>
+</helmet>
+<div class="{{rootClass}}" style="min-height: 100vh; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<nav class="nav" aria-label="Principal">
+<a href="Inicio.dc.html" style="text-decoration: none; padding: 4px 12px 14px; display: flex; flex-direction: column; gap: 2px">
+<span class="disp" style="font-size: 26px; line-height: 30px; color: #ffffff">Quali<span style="color: var(--lime)">Req</span></span>
+<span style="font-size: 13px; line-height: 18px; color: var(--navmut)">Calidad de requisitos</span>
+</a>
+<a class="navi" href="Inicio.dc.html"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 9.5 10 3.5l7 6V16a1 1 0 0 1-1 1h-3.5v-4.5h-5V17H4a1 1 0 0 1-1-1z"></path></svg>Inicio</a>
+<span class="navlab">Módulos · Sistema de ventas</span>
+<button class="{{navRev}}" type="button" onClick="{{goRev}}" aria-current="{{curRev}}"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5.5"></circle><path d="m13 13 4 4M6.8 9l1.6 1.6 3-3.2"></path></svg>Revisor de requisitos<span class="cnt">{{findCount}}</span></button>
+<button class="{{navGen}}" type="button" onClick="{{goGen}}" aria-current="{{curGen}}"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="3"></rect><path d="M7 7.5h6M7 10.5h6M7 13.5h3.5"></path></svg>Generador de casos<span class="cnt">{{caseCount}}</span></button>
+<button class="{{navExp}}" type="button" onClick="{{goExp}}" aria-current="{{curExp}}"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v9M6.5 8.5 10 12l3.5-3.5M4 15.5h12"></path></svg>Exportar</button>
+<span class="navlab">Proyecto</span>
+<a class="navi" href="Versiones.dc.html"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><circle cx="6" cy="5" r="2"></circle><circle cx="6" cy="15" r="2"></circle><circle cx="14" cy="9" r="2"></circle><path d="M6 7v6M14 11c0 2-2 3-6 3"></path></svg>Versiones</a>
+<a class="navi" href="Reglas.dc.html"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5h12M4 10h12M4 15h12"></path><circle cx="7" cy="5" r="1.6"></circle><circle cx="13" cy="10" r="1.6"></circle><circle cx="9" cy="15" r="1.6"></circle></svg>Reglas y diccionario<span class="cnt">{{rulesOn}}</span></a>
+<div style="flex: 1; min-height: 24px"></div>
+<div style="margin: 0 4px 8px; padding: 14px; border-radius: 14px; background: var(--nav2); display: flex; flex-direction: column; gap: 6px">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #ffffff"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--lime)"><path d="M8 1.5 13 3.5v4c0 3-2.2 5.5-5 7-2.8-1.5-5-4-5-7v-4z"></path><path d="M5.8 8 7.3 9.5 10.3 6.5"></path></svg>Motor v0.1.0</span>
+<span style="font-size: 13px; line-height: 19px; color: var(--navmut)">Determinista. Analiza en tu navegador: el texto no sale de este equipo.</span>
+</div>
+<a class="navi" href="Login.dc.html" style="gap: 10px"><span style="width: 30px; height: 30px; border-radius: 999px; background: var(--lime); color: #15201d; display: grid; place-items: center; font-weight: 700; font-size: 13px">MF</span><span style="display: flex; flex-direction: column; line-height: 18px"><span style="font-size: 14px">Milton F.</span><span style="font-size: 13px; color: var(--navmut)">Cerrar sesión</span></span></a>
+</nav>
+
+<div style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column">
+
+<header style="padding: 22px 32px 0; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<span class="small"><a href="Inicio.dc.html" style="text-decoration: none">Proyectos</a> / Sistema de ventas</span>
+<h1 class="disp" style="font-size: 34px; line-height: 40px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap">Sistema de ventas <span class="badge b-neutral" style="font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: 0">Versión 3 · borrador</span></h1>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+<span class="pill" title="Huella del texto analizado"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 2.5 3.5 13.5M12.5 2.5 11 13.5M2.5 5.5h11M2 10.5h11"></path></svg>Huella <span class="mono" style="color: var(--ink)">{{hash}}</span></span>
+<button class="btn icon quiet" type="button" aria-label="{{themeLabel}}" onClick="{{toggleTheme}}"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><path d="M16 12A6.5 6.5 0 1 1 8 4a5.5 5.5 0 0 0 8 8z"></path></svg></button>
+<a class="btn" href="Versiones.dc.html"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.5h8l2.5 2.5v8.5H3zM5.5 2.5v3.5h4.5V2.5M5.5 13.5V9.5h5v4"></path></svg>Guardar versión</a>
+</div>
+</header>
+
+<div style="padding: 20px 32px 0; display: flex; flex-wrap: wrap; gap: 12px" role="tablist" aria-label="Pasos del flujo">
+<sc-for list="{{steps}}" as="st" hint-placeholder-count="3">
+<button class="{{st.cls}}" type="button" role="tab" aria-selected="{{st.selected}}" onClick="{{st.pick}}">
+<span class="n">{{st.n}}</span>
+<span style="display: flex; flex-direction: column; min-width: 0"><span class="st">{{st.title}}</span><span class="ss">{{st.sub}}</span></span>
+</button>
+</sc-for>
+</div>
+
+<main style="padding: 20px 32px 48px; display: flex; flex-direction: column; gap: 20px">
+
+<sc-if value="{{hasToast}}" hint-placeholder-val="{{ false }}">
+<div class="toast" role="status">
+<svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true" style="color: var(--lime)"><path d="M4 10.5 8 14.5 16 6"></path></svg>
+<span style="flex: 1; font-weight: 600">{{toastMsg}}</span>
+<button type="button" onClick="{{undoApply}}">Deshacer</button>
+<button type="button" onClick="{{closeToast}}" aria-label="Cerrar aviso" style="width: 34px; padding: 0; border-color: transparent">×</button>
+</div>
+</sc-if>
+
+<sc-if value="{{isRev}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 20px">
+
+<section class="edwrap" aria-labelledby="ed-title">
+<div style="padding: 20px 24px 16px; display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1 1 420px">
+<span style="display: flex; align-items: center; gap: 10px"><span class="badge" style="background: var(--lime); color: #15201d">Paso 1</span><sc-if value="{{dirty}}" hint-placeholder-val="{{ false }}"><span class="badge b-media"><span class="dot"></span>Cambios sin analizar</span></sc-if></span>
+<label id="ed-title" for="req-input" class="disp" style="font-size: 30px; line-height: 36px; letter-spacing: -0.03em">Escribe o pega tus requisitos</label>
+<p style="color: var(--mut); font-size: 15px">Uno por línea. Empieza con un ID (RF-01, RNF-01) y termina, si quieres, con «Prioridad: Alta | Media | Baja».</p>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button class="btn" type="button" onClick="{{loadSample}}"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 1.5h6l3 3v10h-9zM9.5 1.5v3h3M6 8.5h4M6 11h4"></path></svg>Cargar ejemplo</button>
+<button class="btn" type="button"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 10.5V2.5M4.5 6 8 2.5 11.5 6M2.5 10.5v2a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-2"></path></svg>Subir .txt .csv .md</button>
+<button class="btn icon quiet" type="button" aria-label="Limpiar" onClick="{{clear}}"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"></path></svg></button>
+</div>
+</div>
+<div style="padding: 0 24px 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px">
+<span class="label" style="margin-right: 4px">Modelo de redacción</span>
+<span class="mchip" style="background: var(--lims); color: var(--lim)">[lugar / tiempo / evento]</span><span class="plus">+</span>
+<span class="mchip" style="background: var(--s2); color: var(--ink)">debe</span><span class="plus">+</span>
+<span class="mchip" style="background: var(--accs); color: var(--acc)">acción</span><span class="plus">+</span>
+<span class="mchip" style="background: var(--medias); color: var(--media)">sujeto</span><span class="plus">+</span>
+<span class="mchip" style="background: var(--nfs); color: var(--nf)">resultado</span>
+</div>
+<div class="edbody">
+<div class="gut" aria-hidden="true">
+<sc-for list="{{gutter}}" as="g" hint-placeholder-count="6"><div class="gl" title="{{g.tip}}">{{g.n}}<span class="{{g.cls}}"></span></div></sc-for>
+</div>
+<textarea id="req-input" class="ed" wrap="off" spellcheck="false" placeholder="RF-01 Cuando el usuario confirme el pedido, el sistema debe enviar un correo de confirmación en menos de 30 s. Prioridad: Alta" value="{{text}}" onChange="{{onText}}" style="height: {{edH}}px"></textarea>
+</div>
+<div style="padding: 14px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; background: var(--s0)">
+<div style="display: flex; flex-direction: column; gap: 8px; flex: 1 1 420px; min-width: 0">
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{stages}}" as="g" hint-placeholder-count="8"><span class="{{g.cls}}"><span class="num" style="opacity: .7">{{g.n}}</span>{{g.label}}</span></sc-for>
+</div>
+<span class="small" style="display: flex; flex-wrap: wrap; gap: 14px; align-items: center"><span>{{runNote}}</span><span style="display: inline-flex; gap: 6px; align-items: center"><span class="gd ok"></span>sin sospechas</span><span style="display: inline-flex; gap: 6px; align-items: center"><span class="gd media"></span>revisar</span><span style="display: inline-flex; gap: 6px; align-items: center"><span class="gd alta"></span>crítico</span></span>
+</div>
+<button class="btn" type="button" onClick="{{goExpImproved}}"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M2.5 13.5h11"></path></svg>Exportar mejorados</button>
+<button class="btn primary xl" type="button" onClick="{{analyze}}" disabled="{{running}}"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4v12l10-6z"></path></svg>{{analyzeLabel}}</button>
+</div>
+</section>
+
+<sc-if value="{{noReqs}}" hint-placeholder-val="{{ false }}">
+<div class="panel" style="padding: 28px; display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center">
+<span style="font-size: 17px; font-weight: 700">Aún no hay requisitos analizados</span>
+<span class="small">Escribe arriba o carga el ejemplo y presiona Analizar. Nada sale de tu navegador.</span>
+</div>
+</sc-if>
+
+<sc-if value="{{hasReqs}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 20px">
+
+<div class="panel" style="padding: 18px; display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch">
+<div style="flex: 1 1 230px; display: flex; align-items: center; gap: 16px">
+<span class="ring" style="width: 104px; height: 104px; background: conic-gradient({{globalColor}} {{globalScore}}%, var(--s3) 0)"><span class="in" style="width: 84px; height: 84px"><span class="disp num" style="font-size: 30px; line-height: 32px">{{globalScore}}<span style="font-size: 16px">%</span></span></span></span>
+<span style="display: flex; flex-direction: column; gap: 4px">
+<span class="disp" style="font-size: 20px; line-height: 24px; letter-spacing: -0.02em">Calidad global</span>
+<span class="small">Atributos decidibles que cumplen, en promedio. {{verifPct}} % de los requisitos son verificables.</span>
+</span>
+</div>
+<sc-for list="{{sevCards}}" as="c" hint-placeholder-count="3">
+<button class="{{c.cls}}" type="button" aria-pressed="{{c.pressed}}" onClick="{{c.pick}}">
+<span style="display: flex; align-items: center; gap: 8px"><span class="dot" style="width: 9px; height: 9px"></span><span class="big num">{{c.count}}</span></span>
+<span class="t">Severidad {{c.label}}</span>
+<span class="d">{{c.desc}}</span>
+</button>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+<section aria-label="Requisitos detectados" class="panel" style="flex: 1 1 320px; max-width: 420px; padding: 8px; display: flex; flex-direction: column; gap: 2px">
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px 6px">
+<span class="label">Requisitos · toca uno para ver su detalle</span>
+<span class="small num">{{reqCount}}</span>
+</div>
+<sc-for list="{{reqRows}}" as="r" hint-placeholder-count="6">
+<button class="{{r.cls}}" type="button" onClick="{{r.pick}}" aria-pressed="{{r.pressed}}">
+<span class="ring" style="width: 44px; height: 44px; background: conic-gradient({{r.ringColor}} {{r.score}}%, var(--s3) 0)"><span class="in num" style="width: 34px; height: 34px; font-size: 13px; font-weight: 700">{{r.score}}</span></span>
+<span style="display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1">
+<span style="display: flex; align-items: center; gap: 8px"><span class="mono">{{r.id}}</span><span class="badge b-neutral" style="height: 22px">{{r.kind}}</span><span style="flex: 1"></span><span class="{{r.countCls}}" style="height: 22px">{{r.countLabel}}</span></span>
+<span class="clamp">{{r.text}}</span>
+</span>
+</button>
+</sc-for>
+</section>
+
+<section aria-label="Sospechas y correcciones" style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+
+<sc-if value="{{hasSel}}" hint-placeholder-val="{{ false }}">
+<div class="panel" style="padding: 20px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+<span class="mono" style="font-size: 15px">{{sel.id}}</span>
+<span class="badge b-neutral">{{sel.kindLabel}}</span>
+<span class="{{sel.priCls}}">{{sel.priLabel}}</span>
+<span style="flex: 1"></span>
+<button class="btn sm quiet" type="button" onClick="{{clearSel}}"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"></path></svg>Ver todos</button>
+</div>
+<p style="font-size: 19px; line-height: 30px; font-weight: 500"><sc-for list="{{sel.segs}}" as="sg" hint-placeholder-count="3"><span class="{{sg.cls}}">{{sg.t}}</span></sc-for></p>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{sel.slots}}" as="sl" hint-placeholder-count="5"><span class="{{sl.cls}}"><span class="label" style="color: inherit; opacity: .85">{{sl.k}}</span><span class="v">{{sl.v}}</span></span></sc-for>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{sel.attrs}}" as="at" hint-placeholder-count="8"><span class="{{at.cls}}" style="height: 28px"><span class="dot"></span>{{at.label}} · {{at.state}}</span></sc-for>
+</div>
+<sc-if value="{{sel.hasFix}}" hint-placeholder-val="{{ true }}">
+<div class="fixbox">
+<label for="sel-fix" class="label" style="color: var(--acc)">Versión corregida con todas las sugerencias · puedes editarla</label>
+<textarea id="sel-fix" class="fix" rows="{{sel.rows}}" value="{{sel.fix}}" onChange="{{sel.onFix}}"></textarea>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<span class="small" style="flex: 1 1 240px">{{sel.fixHint}}</span>
+<sc-if value="{{sel.edited}}" hint-placeholder-val="{{ false }}"><button class="btn sm quiet" type="button" onClick="{{sel.reset}}">Restablecer</button></sc-if>
+<button class="btn sm primary" type="button" onClick="{{sel.apply}}"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5"></path></svg>Aplicar versión corregida</button>
+</div>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px">
+<h2 class="disp" style="font-size: 22px; line-height: 28px; letter-spacing: -0.02em">{{findTitle}} <span class="small num" style="font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: 0">{{findShown}}</span></h2>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center">
+<sc-if value="{{hasSevFilter}}" hint-placeholder-val="{{ false }}"><button class="chip" type="button" onClick="{{clearSev}}">Severidad {{sevLabel}}<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 5l6 6M11 5l-6 6"></path></svg></button></sc-if>
+<sc-for list="{{offChips}}" as="oc" hint-placeholder-count="0"><button class="chip" type="button" onClick="{{oc.pick}}" aria-label="{{oc.aria}}"><span class="mono">{{oc.id}}</span> desactivada<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8a5 5 0 1 0 1.5-3.5M3 2.5v2.5h2.5"></path></svg></button></sc-for>
+<sc-if value="{{canApplyAll}}" hint-placeholder-val="{{ true }}"><button class="btn sm primary" type="button" onClick="{{applyAll}}"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8.5 5 11.5 10 5M8 11.5l1 0 5-6.5"></path></svg>Aplicar todas las correcciones</button></sc-if>
+</div>
+</div>
+<p class="small" style="margin-top: -8px">Cada sospecha trae una corrección generada por reglas. Edítala si hace falta y aplícala: el requisito se reescribe en el editor y se vuelve a analizar.</p>
+
+<sc-if value="{{noFindings}}" hint-placeholder-val="{{ false }}">
+<div class="panel" style="padding: 40px 16px; text-align: center; display: flex; flex-direction: column; gap: 4px; align-items: center">
+<span style="width: 44px; height: 44px; border-radius: 999px; background: var(--accs); color: var(--acc); display: grid; place-items: center"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10.5 8 14.5 16 6"></path></svg></span>
+<span style="font-size: 16px; line-height: 24px; font-weight: 700; margin-top: 6px">Sin sospechas aquí</span>
+<span class="small">Las reglas activas no encontraron nada con este filtro. Necesario y Correcto siguen requiriendo juicio humano.</span>
+</div>
+</sc-if>
+
+<sc-for list="{{findings}}" as="f" hint-placeholder-count="3">
+<article class="card">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<span class="{{f.sevCls}}"><span class="dot"></span>{{f.sevLabel}}</span>
+<span class="mono">{{f.rule}}</span>
+<span class="small">· {{f.attrLabel}}</span>
+<span style="flex: 1"></span>
+<sc-if value="{{f.isAccepted}}" hint-placeholder-val="{{ false }}"><span class="badge b-ok"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5"></path></svg>Confirmada</span></sc-if>
+<sc-if value="{{f.isRejected}}" hint-placeholder-val="{{ false }}"><span class="badge b-neutral">Falso positivo</span></sc-if>
+<button class="chip" type="button" onClick="{{f.pickReq}}" style="height: 26px"><span class="mono">{{f.req}}</span></button>
+</div>
+<h3 style="font-size: 17px; line-height: 24px; font-weight: 700; letter-spacing: -0.01em">{{f.title}}</h3>
+<sc-if value="{{f.hasTerms}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px">
+<span class="label">Detectado</span>
+<sc-for list="{{f.terms}}" as="w" hint-placeholder-count="2"><span class="term">{{w}}</span></sc-for>
+</div>
+</sc-if>
+<p style="font-size: 14px; line-height: 22px; color: var(--mut)">{{f.why}}</p>
+<sc-if value="{{f.isRejected}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; justify-content: flex-end"><button class="btn sm quiet" type="button" onClick="{{f.undo}}"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 3.5 2.5 6.5l3 3M2.5 6.5h7a4 4 0 0 1 0 8h-2"></path></svg>Deshacer</button></div>
+</sc-if>
+<sc-if value="{{f.showFix}}" hint-placeholder-val="{{ true }}">
+<div class="fixbox">
+<label for="{{f.fid}}" class="label" style="color: var(--acc)">Corrección propuesta · puedes editarla antes de aplicar</label>
+<textarea id="{{f.fid}}" class="fix" rows="{{f.rows}}" value="{{f.fix}}" onChange="{{f.onFix}}"></textarea>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px">
+<span class="small" style="flex: 1 1 220px">{{f.fixHint}}</span>
+<sc-if value="{{f.edited}}" hint-placeholder-val="{{ false }}"><button class="btn sm quiet" type="button" onClick="{{f.reset}}">Restablecer</button></sc-if>
+<button class="btn sm quiet" type="button" onClick="{{f.reject}}">Falso positivo</button>
+<button class="btn sm quiet" type="button" onClick="{{f.disable}}">Desactivar regla</button>
+<button class="btn sm primary" type="button" onClick="{{f.apply}}"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5"></path></svg>Aplicar corrección</button>
+</div>
+</div>
+</sc-if>
+</article>
+</sc-for>
+
+<sc-if value="{{hasReqs}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; justify-content: flex-end"><button class="btn primary" type="button" onClick="{{goGen}}">Siguiente: generar casos<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"></path></svg></button></div>
+</sc-if>
+</section>
+</div>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{isGen}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+<section aria-label="Requisitos para generar casos" class="panel" style="flex: 1 1 320px; max-width: 400px; padding: 8px; display: flex; flex-direction: column; gap: 2px">
+<span class="label" style="padding: 10px 12px 6px">Elige un requisito</span>
+<sc-for list="{{genRows}}" as="g" hint-placeholder-count="7">
+<button class="{{g.cls}}" type="button" onClick="{{g.pick}}" aria-pressed="{{g.pressed}}">
+<span style="display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1">
+<span style="display: flex; align-items: center; gap: 8px"><span class="mono">{{g.id}}</span><span class="{{g.tagCls}}" style="height: 22px">{{g.tag}}</span><span style="flex: 1"></span><span class="small num" style="font-weight: 600">{{g.countLabel}}</span></span>
+<span class="clamp" style="color: var(--mut)">{{g.text}}</span>
+</span>
+</button>
+</sc-for>
+</section>
+
+<section aria-label="Casos de prueba" style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<sc-if value="{{genIsReq}}" hint-placeholder-val="{{ true }}">
+<div class="panel" style="padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+<span class="mono" style="font-size: 15px">{{gen.id}}</span>
+<span class="badge b-limite">{{gen.consLabel}}</span>
+<span style="flex: 1"></span>
+<span class="small">{{gen.tech}}</span>
+</div>
+<p style="font-size: 17px; line-height: 27px; font-weight: 500">{{gen.text}}</p>
+<div class="nl" role="group" aria-label="Valores de prueba sobre la recta">
+<div class="nl-axis"></div>
+<div class="nl-zone" style="left: {{gen.zoneLeft}}%; width: {{gen.zoneWidth}}%"></div>
+<sc-for list="{{gen.points}}" as="p" hint-placeholder-count="7">
+<button class="{{p.cls}}" type="button" style="left: {{p.left}}%" onClick="{{p.pick}}" aria-label="{{p.aria}}"><span class="nl-dot"></span><span class="nv">{{p.label}}</span></button>
+</sc-for>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: center">
+<span class="small" style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 22px; height: 12px; border-radius: 999px; background: var(--accs); border: 1px dashed var(--acc)"></span>Zona válida</span>
+<span class="badge b-valido">Válido</span><span class="badge b-limite">Límite</span><span class="badge b-invalido">Inválido</span><span class="badge b-nf">No funcional</span>
+<span class="small">Toca un punto para ver su caso.</span>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{genIsNoVerif}}" hint-placeholder-val="{{ false }}">
+<div class="panel" style="padding: 32px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start">
+<span class="badge b-juicio">No verificable</span>
+<h2 class="disp" style="font-size: 26px; line-height: 32px">{{genNoId}} no genera casos</h2>
+<p class="small" style="font-size: 15px; line-height: 24px; max-width: 560px">El motor no encontró una restricción extraíble (rango, máximo, umbral, condición o carga). Sin un valor medible no hay resultado esperado que probar: se remite a la regla VER-01.</p>
+<button class="btn primary" type="button" onClick="{{genFix}}" style="margin-top: 6px">Corregir {{genNoId}} en el revisor</button>
+</div>
+</sc-if>
+
+<sc-if value="{{genIsAll}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<sc-for list="{{typeStats}}" as="ts" hint-placeholder-count="4">
+<div class="panel" style="flex: 1 1 140px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px"><span class="{{ts.cls}}" style="align-self: flex-start">{{ts.label}}</span><span class="disp num" style="font-size: 30px; line-height: 34px">{{ts.count}}</span></div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{hasCases}}" hint-placeholder-val="{{ true }}">
+<div class="panel" style="overflow: hidden">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line)">
+<div class="seg" role="group" aria-label="Filtrar por tipo">
+<sc-for list="{{typeSeg}}" as="x" hint-placeholder-count="5"><button class="{{x.cls}}" type="button" aria-pressed="{{x.pressed}}" onClick="{{x.pick}}">{{x.label}}</button></sc-for>
+</div>
+<sc-if value="{{genIsReq}}" hint-placeholder-val="{{ true }}"><button class="btn sm" type="button" onClick="{{toggleGherkin}}" aria-pressed="{{gherkinPressed}}">{{gherkinLabel}}</button></sc-if>
+</div>
+<sc-if value="{{showGherkin}}" hint-placeholder-val="{{ false }}"><div style="padding: 16px"><pre class="pre">{{gherkin}}</pre></div></sc-if>
+<div style="overflow-x: auto">
+<table class="tbl">
+<thead><tr><th>ID</th><th>Requisito</th><th>Tipo</th><th>Técnica</th><th>Datos</th><th>Resultado esperado</th><th>Prioridad</th></tr></thead>
+<tbody>
+<sc-for list="{{cases}}" as="c" hint-placeholder-count="7">
+<tr class="{{c.cls}}" onClick="{{c.pick}}">
+<td class="mono" style="white-space: nowrap">{{c.id}}</td>
+<td class="mono" style="color: var(--mut)">{{c.req}}</td>
+<td><span class="{{c.typeCls}}">{{c.typeLabel}}</span></td>
+<td style="color: var(--mut); white-space: nowrap">{{c.tech}}</td>
+<td style="white-space: nowrap; font-weight: 600">{{c.data}}</td>
+<td style="min-width: 220px">{{c.expected}}</td>
+<td style="color: var(--mut); white-space: nowrap">{{c.pri}}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{genIsAll}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; gap: 10px; align-items: flex-start; padding: 12px 16px; border-radius: 14px; background: var(--bajas); color: var(--baja)">
+<svg class="ic" viewBox="0 0 16 16" aria-hidden="true" style="margin-top: 4px"><circle cx="8" cy="8" r="6.25"></circle><path d="M8 7.5v3.5M8 5h.01"></path></svg>
+<span style="font-size: 14px; line-height: 22px">{{noCaseNote}}</span>
+</div>
+</sc-if>
+
+<div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px">
+<button class="btn quiet" type="button" onClick="{{goRev}}"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8H3M7 4 3 8l4 4"></path></svg>Volver a revisar</button>
+<button class="btn primary" type="button" onClick="{{goExp}}">Siguiente: exportar<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"></path></svg></button>
+</div>
+</section>
+</div>
+</sc-if>
+
+<sc-if value="{{isExp}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<div class="seg" role="group" aria-label="Contenido a exportar">
+<sc-for list="{{contentSeg}}" as="x" hint-placeholder-count="3"><button class="{{x.cls}}" type="button" aria-pressed="{{x.pressed}}" onClick="{{x.pick}}">{{x.label}}</button></sc-for>
+</div>
+<span class="small">Se genera en tu navegador · motor v0.1.0 · huella <span class="mono">{{hash}}</span></span>
+</div>
+<sc-if value="{{isImproved}}" hint-placeholder-val="{{ true }}">
+<div class="panel" style="padding: 16px 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 14px">
+<span class="badge b-ok">{{impChanged}}</span>
+<span class="badge b-media">{{impPending}}</span>
+<span class="small" style="flex: 1 1 260px">Cada requisito sale con las correcciones aplicadas y sugeridas. Completa los valores entre ‹ › antes de aprobarlos.</span>
+<label class="check"><input type="checkbox" checked="{{withOrig}}" onChange="{{toggleOrig}}">Incluir el texto original</label>
+</div>
+</sc-if>
+<div style="display: flex; flex-wrap: wrap; gap: 12px" role="group" aria-label="Formato">
+<sc-for list="{{fmtCards}}" as="fc" hint-placeholder-count="4">
+<button class="{{fc.cls}}" type="button" aria-pressed="{{fc.pressed}}" onClick="{{fc.pick}}">
+<span class="mono" style="color: var(--acc)">.{{fc.ext}}</span>
+<span class="ft">{{fc.label}}</span>
+<span class="small">{{fc.desc}}</span>
+</button>
+</sc-for>
+</div>
+<div class="panel" style="padding: 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px">
+<span style="display: flex; align-items: center; gap: 10px"><span class="mono" style="font-size: 14px">{{fileName}}</span><span class="small">{{exportCount}}</span></span>
+<span style="display: flex; gap: 8px">
+<button class="btn" type="button" onClick="{{copy}}"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"></rect><path d="M10.5 5.5V3.5a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2"></path></svg>{{copyLabel}}</button>
+<button class="btn primary" type="button" onClick="{{download}}"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M2.5 13.5h11"></path></svg>Descargar {{fileName}}</button>
+</span>
+</div>
+<pre class="pre">{{exportText}}</pre>
+</div>
+</div>
+</sc-if>
+
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["Claro","Oscuro"],"default":"Claro"},"$preview":{"width":1440,"height":1500}}'>
+class Component extends DCLogic {
+  load(k) { try { const v = window.localStorage.getItem('qualireq.' + k); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+  save(k, v) { try { window.localStorage.setItem('qualireq.' + k, JSON.stringify(v)); } catch (e) {} }
+  componentDidMount() {
+    const p = {};
+    const st = this.load('step'); if (st) { p.step = st; this.save('step', null); }
+    const off = this.load('off'); if (off) { p.off = off; }
+    const dict = this.load('dict'); if (dict) { p.dict = dict; }
+    const w = this.load('work'); if (w && typeof w.atext === 'string') { p.text = w.text; p.atext = w.atext; p.status = w.status || {}; }
+    if (Object.keys(p).length) { this.setState(p); }
+  }
+  componentWillUnmount() { if (this._t) { clearInterval(this._t); } }
+  sample() {
+    return [
+      'RF-01 El sistema debe permitir al usuario ingresar una contraseña de entre 8 y 16 caracteres.',
+      'RNF-01 El sistema debe ser rápido y fácil de usar.',
+      'RF-02 Cuando el usuario confirme el pedido, el sistema debe enviar un correo de confirmación en menos de 30 s. Prioridad: Alta',
+      'RNF-02 El sistema debe soportar varios usuarios concurrentes.',
+      'RF-03 Los reportes serán generados y exportados a PDF y/o Excel, etc.',
+      'RF-04 Si el monto de la compra supera S/ 500, el sistema debe aplicar un descuento del 10 %. Prioridad: Media'
+    ].join('\n');
+  }
+  lex() {
+    return {
+      LEX: ['adecuado', 'adecuada', 'rápido', 'rápida', 'fácil', 'amigable', 'eficiente', 'robusto', 'intuitivo', 'sencillo', 'óptimo', 'moderno'],
+      ESC: ['etc.', 'y/o', 'según corresponda', 'si es posible', 'entre otros', 'cuando sea necesario'],
+      VAG: ['varios', 'varias', 'algunos', 'algunas', 'muchos', 'muchas', 'pocos', 'pocas', 'diversos'],
+      ABS: ['siempre', 'nunca', 'todos', 'todas', '100 %', '100%', 'totalmente', 'ningún'],
+      CL: { 'rápido': 'responder en menos de ‹2 s›', 'rápida': 'responder en menos de ‹2 s›', 'fácil': 'permitir completar ‹la tarea› en no más de ‹3› pasos', 'amigable': 'permitir que el ‹90 %› de los usuarios nuevos complete ‹la tarea› sin ayuda', 'intuitivo': 'permitir que el ‹90 %› de los usuarios nuevos complete ‹la tarea› sin ayuda', 'sencillo': 'permitir que el ‹90 %› de los usuarios nuevos complete ‹la tarea› sin ayuda', 'eficiente': 'consumir menos de ‹n› ‹recurso› por operación', 'robusto': 'operar ‹720› horas continuas sin fallas', 'adecuado': 'cumplir ‹criterio medible con unidad›', 'adecuada': 'cumplir ‹criterio medible con unidad›', 'óptimo': 'cumplir ‹criterio medible con unidad›', 'moderno': 'seguir la ‹guía de estilo vigente›' },
+      REP: { VAG: '‹100›', 'siempre': 'en el ‹99,5 %› de los casos', 'nunca': 'en menos del ‹0,5 %› de los casos', 'todos': '‹cada uno de›', 'todas': '‹cada una de›', '100 %': '‹99,5 %›', '100%': '‹99,5 %›', 'totalmente': 'en un ‹95 %›', 'ningún': '‹ningún›' }
+    };
+  }
+  catalog() {
+    const R = {};
+    [
+      ['AMB-01', 'no_ambiguo', 'alta', 'Término subjetivo sin criterio medible', 'Un término subjetivo admite varias interpretaciones: se reemplaza por un criterio medible con unidad.'],
+      ['AMB-02', 'no_ambiguo', 'alta', 'Cláusula de escape que deja abierto el alcance', 'Las cláusulas de escape impiden saber cuándo el requisito está completo: se eliminan y se deja el alcance exacto.'],
+      ['AMB-03', 'no_ambiguo', 'media', 'Voz pasiva: no queda claro quién actúa', 'Se reescribe en voz activa con el sistema como actor.'],
+      ['VER-01', 'verificable', 'alta', 'Requisito no funcional sin valor ni unidad', 'Sin valor ni unidad no hay resultado esperado que probar: se agrega un criterio medible.'],
+      ['VER-02', 'verificable', 'media', 'Cuantificador vago', 'Un cuantificador vago no fija una cantidad: se sustituye por un número.'],
+      ['COM-01', 'completo', 'alta', 'Falta el sujeto o actor', 'El modelo del curso exige un sujeto: se indica quién actúa.'],
+      ['COM-02', 'completo', 'media', 'Falta un resultado observable', '«Debe ser…» no describe nada observable: se cambia por una acción con resultado.'],
+      ['COM-03', 'completo', 'media', 'No define qué pasa si se viola la restricción', 'Las entradas inválidas también necesitan un resultado esperado: se agrega el rechazo con mensaje.'],
+      ['COM-04', 'completo', 'alta', 'Valor por completar', 'Hay marcadores pendientes. Escribe el valor real en la corrección y aplícala.'],
+      ['COR-01', 'correcto', 'media', 'Requisito no atómico', 'Varias acciones en un requisito impiden probarlas por separado: se divide en un requisito por acción.'],
+      ['VIA-01', 'viable', 'media', 'Absoluto difícil de garantizar', 'Los absolutos rara vez son demostrables: se acotan con un porcentaje.'],
+      ['PRI-01', 'priorizable', 'baja', 'Sin prioridad asignada', 'Sin prioridad no se puede ordenar el plan de pruebas: se propone Media; ajústala según criticidad, importancia y complejidad.'],
+      ['CON-01', 'consistente', 'alta', 'ID duplicado', 'Dos requisitos con el mismo ID rompen la trazabilidad: se propone un ID libre.'],
+      ['CON-02', 'consistente', 'media', 'Umbrales contradictorios', 'Unificar el umbral del mismo sujeto.'],
+      ['NEC-01', 'necesario', 'baja', 'Sin vínculo a objetivo o actor', 'Vincular el requisito a un objetivo del negocio.']
+    ].forEach(function (r) { R[r[0]] = { id: r[0], attr: r[1], sev: r[2], title: r[3], why: r[4] }; });
+    return R;
+  }
+  findWord(t, w) {
+    const isL = function (ch) { return /[a-z0-9áéíóúñü]/.test(ch || ''); };
+    let i = t.indexOf(w);
+    while (i >= 0) {
+      if ((i === 0 || !isL(t[i - 1])) && (i + w.length >= t.length || !isL(t[i + w.length]) || /[.%]$/.test(w))) { return i; }
+      i = t.indexOf(w, i + 1);
+    }
+    return -1;
+  }
+  extract(text) {
+    const t = text.toLowerCase();
+    const n = function (x) { return parseFloat(String(x).replace(',', '.')); };
+    let m = t.match(/(?:entre|de)\s+(\d+(?:[.,]\d+)?)\s+(?:y|a)\s+(\d+(?:[.,]\d+)?)\s*([a-záéíóúñ%]+)?/);
+    if (m && n(m[2]) > n(m[1])) { return { type: 'rango', a: n(m[1]), b: n(m[2]), unit: m[3] || '', raw: m[0].trim() }; }
+    m = t.match(/(en menos de|menos de|como máximo|máximo de|no más de|hasta)\s+(\d+(?:[.,]\d+)?)\s*(ms|s|segundos|minutos|min)(?![a-z])/);
+    if (m) { return { type: 'umbral', v: n(m[2]), unit: m[3], strict: m[1].indexOf('menos') >= 0, raw: m[0].trim() }; }
+    m = t.match(/si\s+(.+?)\s+(supera|excede|es mayor (?:a|que)|es menor (?:a|que))\s+(s\/\s*|\$\s*)?(\d+(?:[.,]\d+)?)/);
+    if (m) {
+      const c = text.match(/,\s*(?:el sistema debe\s+)?([^.]+)/i);
+      return { type: 'condicion', v: n(m[4]), money: !!m[3], less: m[2].indexOf('menor') >= 0, cons: c ? c[1].trim() : 'ejecuta la acción', raw: m[0].trim() };
+    }
+    m = t.match(/(máximo|como mínimo|mínimo|al menos)\s+(?:de\s+)?(\d+)\s*([a-záéíóúñ]+)?/);
+    if (m) { return { type: m[1].indexOf('máx') >= 0 ? 'max' : 'min', v: n(m[2]), unit: m[3] || '', raw: m[0].trim() }; }
+    m = t.match(/(\d+)\s+usuarios\s+concurrentes/);
+    if (m) { return { type: 'carga', v: n(m[1]), unit: 'usuarios', raw: m[0] }; }
+    return null;
+  }
+  consLabel(c) {
+    if (c.type === 'rango') { return 'Rango ' + c.a + '–' + c.b + (c.unit ? ' ' + c.unit : '') + ', inclusive'; }
+    if (c.type === 'umbral') { return 'Umbral ' + (c.strict ? '< ' : '≤ ') + c.v + ' ' + c.unit; }
+    if (c.type === 'condicion') { return 'Condición: monto ' + (c.less ? '< ' : '> ') + (c.money ? 'S/ ' : '') + c.v; }
+    if (c.type === 'max') { return 'Máximo ' + c.v + (c.unit ? ' ' + c.unit : ''); }
+    if (c.type === 'min') { return 'Mínimo ' + c.v + (c.unit ? ' ' + c.unit : ''); }
+    return 'Carga ' + c.v + ' usuarios';
+  }
+  // --- Correcciones deterministas ---
+  endDot(s) { s = s.trim().replace(/[\s,;]+$/, ''); return /[.!?›]$/.test(s) ? s : s + '.'; }
+  lc(s) { return s.charAt(0).toLowerCase() + s.slice(1); }
+  joinY(a) { return a.length < 2 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' y ' + a[a.length - 1]; }
+  hasLex(t) { const self = this, low = t.toLowerCase(); return this.lex().LEX.some(function (w) { return self.findWord(low, w) >= 0; }); }
+  removeEsc(t) {
+    return this.endDot(t.replace(/\s*y\/o\s*/gi, ' y ').replace(/,?\s*\betc\b\.?/gi, '').replace(/,?\s*(según corresponda|si es posible|entre otros|cuando sea necesario)/gi, '').replace(/\s{2,}/g, ' ').replace(/\s+([.,])/g, '$1'));
+  }
+  toActive(t) {
+    const P = '[a-záéíóúñ]+?(?:ados?|adas?|idos?|idas?)';
+    const m = t.match(new RegExp('^(los|las|el|la|unos|unas|un|una)\\s+(.+?)\\s+(?:será|serán|es|son|fue|fueron|sea|sean)\\s+(' + P + '(?:\\s+y\\s+' + P + ')*)(?=[\\s.,;]|$)(.*)$', 'i'));
+    if (!m) { return null; }
+    const verbs = m[3].split(/\s+y\s+/).map(function (p) { const mm = p.match(/^(.*?)(ad|id)(os?|as?)$/i); return mm ? mm[1].toLowerCase() + (mm[2].toLowerCase() === 'ad' ? 'ar' : 'ir') : p; });
+    return this.endDot('El sistema debe ' + verbs.join(' y ') + ' ' + m[1].toLowerCase() + ' ' + m[2] + m[4]);
+  }
+  measurable(t) {
+    const self = this, L = this.lex(), low = t.toLowerCase();
+    const found = L.LEX.filter(function (w) { return self.findWord(low, w) >= 0; }).sort(function (a, b) { return self.findWord(low, a) - self.findWord(low, b); });
+    if (!found.length) { return t; }
+    const m = t.match(/^(.*?)\bdebe\s+(?:ser|estar)\s/i);
+    if (m) {
+      const cl = []; found.forEach(function (w) { if (cl.indexOf(L.CL[w]) < 0) { cl.push(L.CL[w]); } });
+      return this.endDot((m[1].trim() || 'El sistema') + ' debe ' + this.joinY(cl));
+    }
+    let out = t;
+    found.forEach(function (w) { const i = self.findWord(out.toLowerCase(), w); if (i >= 0) { out = out.slice(0, i) + '‹' + L.CL[w] + '›' + out.slice(i + w.length); } });
+    return out;
+  }
+  replaceWords(t, kind) {
+    const self = this, L = this.lex();
+    let out = t;
+    L[kind].forEach(function (w) {
+      let guard = 0, i = self.findWord(out.toLowerCase(), w);
+      while (i >= 0 && guard++ < 10) { const rep = kind === 'VAG' ? L.REP.VAG : L.REP[w]; out = out.slice(0, i) + rep + out.slice(i + w.length); i = self.findWord(out.toLowerCase(), w); }
+    });
+    return out;
+  }
+  addMetric(t) { return /\d/.test(t) ? t : t.replace(/\.?\s*$/, '') + ' con ‹criterio medible y unidad›.'; }
+  addSubject(t) { return /\bdebe\b/i.test(t) ? t.replace(/^.*?\bdebe\b/i, 'El sistema debe') : this.endDot('El sistema debe ' + this.lc(t)); }
+  fixDebeSer(t) { return t.replace(/debe\s+(ser|estar)\s+[^.,]+/i, 'debe ‹acción observable› y mostrar ‹resultado verificable›'); }
+  appendReject(t) { return t.replace(/\.\s*$/, '') + ' y rechazar cualquier otro valor mostrando un mensaje de error.'; }
+  split(t) {
+    const m = t.match(/^(.*?\bdebe\s+)([a-záéíóúñ]+r)\s+y\s+([a-záéíóúñ]+r)\s+(.+?)\.?$/i);
+    if (m) {
+      const pm = m[4].match(/^(.+?)\s+(a|al|en|por|para|desde|hacia|con|mediante)\s+(.+)$/i);
+      return [this.endDot(m[1] + m[2] + ' ' + (pm ? pm[1] : m[4])), this.endDot(m[1] + m[3] + ' ' + m[4])];
+    }
+    const parts = t.split(/\s*,?\s+y\s+(?=debe\b)/i);
+    if (parts.length > 1) { const subj = (t.match(/^(.*?)\bdebe\b/i) || [])[1] || 'El sistema '; const self = this; return parts.map(function (p, i) { return self.endDot(i === 0 ? p : subj + p); }); }
+    return [t];
+  }
+  nextId(kind, reqs, k) {
+    let max = 0;
+    reqs.forEach(function (q) { if (q.kind === kind) { const m = q.id.match(/(\d+)$/); if (m) { max = Math.max(max, parseInt(m[1], 10)); } } });
+    return kind + '-' + String(max + 1 + k).padStart(2, '0');
+  }
+  compose(r, bodies, pri, reqs, firstId) {
+    const sfx = pri ? ' Prioridad: ' + pri : '';
+    const id0 = firstId || (r.hasId ? r.id : '');
+    const out = [(id0 ? id0 + ' ' : '') + bodies[0] + sfx];
+    for (let k = 1; k < bodies.length; k++) { out.push(this.nextId(r.kind, reqs, k - 1 + (firstId ? 1 : 0)) + ' ' + bodies[k] + sfx); }
+    return out.join('\n');
+  }
+  fixOne(rule, r, reqs) {
+    const t = r.text, subj = this.hasLex(t);
+    let b = [t], pri = r.pri, fid = null;
+    if (rule === 'AMB-01') { b = [this.measurable(t)]; }
+    else if (rule === 'AMB-02') { b = [this.removeEsc(t)]; }
+    else if (rule === 'AMB-03') { b = [this.toActive(t) || t]; }
+    else if (rule === 'VER-01') { b = [subj ? this.measurable(t) : this.addMetric(t)]; }
+    else if (rule === 'VER-02') { b = [this.replaceWords(t, 'VAG')]; }
+    else if (rule === 'COM-01') { b = [this.addSubject(t)]; }
+    else if (rule === 'COM-02') { b = [subj ? this.measurable(t) : this.fixDebeSer(t)]; }
+    else if (rule === 'COM-03') { b = [this.appendReject(t)]; }
+    else if (rule === 'COR-01') { b = this.split(this.toActive(t) || t); }
+    else if (rule === 'VIA-01') { b = [this.replaceWords(t, 'ABS')]; }
+    else if (rule === 'PRI-01') { pri = 'Media'; }
+    else if (rule === 'CON-01') { fid = this.nextId(r.kind, reqs, 0); }
+    return this.compose(r, b, pri, reqs, fid);
+  }
+  improve(r, codes, reqs) {
+    const has = function (c) { return codes.indexOf(c) >= 0; };
+    let t = r.text;
+    if (has('AMB-02')) { t = this.removeEsc(t); }
+    if (has('AMB-03')) { t = this.toActive(t) || t; }
+    if (has('AMB-01') || (has('COM-02') && this.hasLex(t))) { t = this.measurable(t); }
+    else if (has('COM-02')) { t = this.fixDebeSer(t); }
+    if (has('VER-02')) { t = this.replaceWords(t, 'VAG'); }
+    if (has('VER-01')) { t = this.addMetric(t); }
+    if (has('VIA-01')) { t = this.replaceWords(t, 'ABS'); }
+    if (has('COM-01') && !/\bdebe\b/i.test(t)) { t = this.addSubject(t); }
+    if (has('COM-03')) { t = this.appendReject(t); }
+    const b = has('COR-01') ? this.split(t) : [t];
+    return this.compose(r, b, r.pri || (has('PRI-01') ? 'Media' : ''), reqs, has('CON-01') ? this.nextId(r.kind, reqs, 0) : null);
+  }
+  run(src, off, dict) {
+    const self = this, CAT = this.catalog(), L = this.lex();
+    const rawLines = src.split('\n');
+    const reqs = [];
+    rawLines.forEach(function (line, li) {
+      const l = line.trim();
+      if (!l || reqs.length >= 200) { return; }
+      const m = l.match(/^((?:RNF|RF|R)-?\d+)\s*[:.\-–]?\s*(.*)$/i);
+      let body = m ? m[2] : l;
+      const id = m ? m[1].toUpperCase() : 'R-' + String(reqs.length + 1).padStart(2, '0');
+      const pm = body.match(/\s*Prioridad:\s*(alta|media|baja)\.?\s*$/i);
+      const pri = pm ? pm[1].charAt(0).toUpperCase() + pm[1].slice(1).toLowerCase() : '';
+      if (pm) { body = body.slice(0, pm.index).trim(); }
+      reqs.push({ id: id, hasId: !!m, li: li, kind: id.indexOf('RNF') === 0 ? 'RNF' : 'RF', pri: pri, text: body });
+    });
+    const dup = {}; reqs.forEach(function (r) { dup[r.id] = (dup[r.id] || 0) + 1; });
+    const PART = '[a-záéíóúñ]+(?:ados?|adas?|idos?|idas?)';
+    const findings = [];
+    reqs.forEach(function (r) {
+      const t = r.text.toLowerCase();
+      let tm = t;
+      (dict || []).forEach(function (d) { const dl = String(d).toLowerCase(); if (!dl) { return; } let i = tm.indexOf(dl); while (i >= 0) { tm = tm.slice(0, i) + ' '.repeat(dl.length) + tm.slice(i + dl.length); i = tm.indexOf(dl); } });
+      const orig = function (w) { const i = self.findWord(tm, w); return i >= 0 ? r.text.substr(i, w.length) : w; };
+      const add = function (rule, terms) {
+        if (off[rule]) { return; }
+        const c = CAT[rule];
+        findings.push({ key: r.id + '|' + rule + '|' + r.li, req: r.id, rule: rule, attr: c.attr, sev: c.sev, title: c.title, why: c.why, terms: terms || [] });
+      };
+      r.cons = self.extract(r.text);
+      const lex = L.LEX.filter(function (w) { return self.findWord(tm, w) >= 0; }).map(orig);
+      if (lex.length) { add('AMB-01', lex); }
+      const esc = L.ESC.filter(function (w) { return tm.indexOf(w) >= 0; });
+      if (esc.length) { add('AMB-02', esc); }
+      const pas = t.match(new RegExp('(?:^|\\s)(será|serán|es|son|fue|fueron|sea|sean)\\s+(' + PART + ')(?=[\\s.,;]|$)'));
+      if (pas) { add('AMB-03', [r.text.substr(t.indexOf(pas[1] + ' ' + pas[2]), pas[1].length + pas[2].length + 1)]); }
+      if (r.kind === 'RNF' && !/\d/.test(t)) { add('VER-01', []); }
+      const vag = L.VAG.filter(function (w) { return self.findWord(tm, w) >= 0; }).map(orig);
+      if (vag.length) { add('VER-02', vag); }
+      if (!pas && !/(el sistema|la aplicación|el módulo|la plataforma|el servidor|la app)/.test(t)) { add('COM-01', []); }
+      const cm = t.match(/debe\s+(ser|estar)\s+([a-záéíóúñ]+)/);
+      if (cm) { add('COM-02', [r.text.substr(t.indexOf(cm[0]), cm[0].length)]); }
+      if (r.cons && ['rango', 'max', 'min'].indexOf(r.cons.type) >= 0 && !/(rechaz|error|mensaje|impid|bloque|no permit|deneg)/.test(t)) { add('COM-03', [r.cons.raw]); }
+      const ph = r.text.match(/‹[^›]*›/g);
+      if (ph || /(tbd|por definir|pendiente|\?\?)/.test(t)) { add('COM-04', ph || []); }
+      const debes = (t.match(/\bdebe\b/g) || []).length;
+      const pp = t.match(new RegExp('(' + PART + ')\\s+y\\s+(' + PART + ')'));
+      const vv = t.match(/\bdebe\s+[a-záéíóúñ]+r\s+y\s+[a-záéíóúñ]+r\b/);
+      if (debes > 1 || pp || vv) { const w = pp || vv; add('COR-01', w ? [r.text.substr(t.indexOf(w[0]), w[0].length)] : ['debe … debe']); }
+      const abs = L.ABS.filter(function (w) { return self.findWord(tm, w) >= 0; }).map(orig);
+      if (abs.length) { add('VIA-01', abs); }
+      if (!r.pri) { add('PRI-01', []); }
+      if (dup[r.id] > 1) { add('CON-01', [r.id]); }
+    });
+    const cases = [];
+    reqs.forEach(function (r) {
+      const c = r.cons; if (!c) { return; }
+      const pts = [];
+      const u = c.unit ? ' ' + c.unit : '';
+      const fv = function (v) { return c.money ? 'S/ ' + v.toFixed(2) : (Number.isInteger(v) ? String(v) : v.toFixed(2)); };
+      if (c.type === 'rango') {
+        const nom = Math.round((c.a + c.b) / 2);
+        [[c.a - 1, 'invalido', 'BVA · a−1'], [c.a, 'limite', 'BVA · a'], [c.a + 1, 'valido', 'BVA · a+1'], [nom, 'valido', 'EP · nominal'], [c.b - 1, 'valido', 'BVA · b−1'], [c.b, 'limite', 'BVA · b'], [c.b + 1, 'invalido', 'BVA · b+1']].forEach(function (p) {
+          if (pts.some(function (q) { return q.v === p[0]; })) { return; }
+          pts.push({ v: p[0], type: p[1], tech: p[2], data: fv(p[0]) + u, exp: p[1] === 'invalido' ? 'Rechaza el valor y muestra un mensaje de error' : 'Acepta el valor' });
+        });
+      } else if (c.type === 'umbral') {
+        const lim = (c.strict ? 'menos de ' : 'como máximo ') + c.v + ' ' + c.unit;
+        pts.push({ v: c.v - 1, type: 'nf', tech: 'Umbral · por debajo', data: 'Medido: ' + (c.v - 1) + ' ' + c.unit, exp: 'Cumple: ' + lim });
+        pts.push({ v: c.v, type: 'limite', tech: 'Umbral · en el valor', data: 'Medido: ' + c.v + ' ' + c.unit, exp: c.strict ? 'No cumple: se exige ' + lim : 'Cumple: justo en el máximo' });
+        pts.push({ v: c.v + 1, type: 'invalido', tech: 'Umbral · por encima', data: 'Medido: ' + (c.v + 1) + ' ' + c.unit, exp: 'No cumple: se registra la falla' });
+      } else if (c.type === 'condicion') {
+        const st = c.money ? 0.01 : 1;
+        const yes = 'Se ejecuta: ' + c.cons, no = 'No se ejecuta: ' + c.cons;
+        pts.push({ v: c.less ? c.v - st : c.v + st, type: 'valido', tech: 'Condición cumplida', data: fv(c.less ? c.v - st : c.v + st), exp: yes });
+        pts.push({ v: c.v, type: 'limite', tech: 'Umbral · en el valor', data: fv(c.v), exp: no });
+        pts.push({ v: c.less ? c.v + st : c.v - st, type: 'valido', tech: 'Condición no cumplida', data: fv(c.less ? c.v + st : c.v - st), exp: no });
+        pts.sort(function (a, b) { return a.v - b.v; });
+      } else if (c.type === 'max') {
+        pts.push({ v: c.v - 1, type: 'valido', tech: 'BVA · máx−1', data: fv(c.v - 1) + u, exp: 'Acepta el valor' });
+        pts.push({ v: c.v, type: 'limite', tech: 'BVA · máx', data: fv(c.v) + u, exp: 'Acepta el valor' });
+        pts.push({ v: c.v + 1, type: 'invalido', tech: 'BVA · máx+1', data: fv(c.v + 1) + u, exp: 'Rechaza el valor' });
+      } else if (c.type === 'min') {
+        pts.push({ v: c.v - 1, type: 'invalido', tech: 'BVA · mín−1', data: fv(c.v - 1) + u, exp: 'Rechaza el valor' });
+        pts.push({ v: c.v, type: 'limite', tech: 'BVA · mín', data: fv(c.v) + u, exp: 'Acepta el valor' });
+        pts.push({ v: c.v + 1, type: 'valido', tech: 'BVA · mín+1', data: fv(c.v + 1) + u, exp: 'Acepta el valor' });
+      } else {
+        pts.push({ v: c.v, type: 'nf', tech: 'Perfil de carga', data: c.v + ' usuarios concurrentes', exp: 'Mantiene el criterio de aceptación definido' });
+      }
+      pts.forEach(function (p, i) {
+        cases.push({ id: 'TC-' + r.id.replace('-', '') + '-' + String(i + 1).padStart(2, '0'), req: r.id, v: p.v, type: p.type, tech: p.tech, data: p.data, expected: p.exp, pri: r.pri || 'Sin prioridad' });
+      });
+    });
+    let h = 5381; for (let i = 0; i < src.length; i++) { h = ((h << 5) + h + src.charCodeAt(i)) >>> 0; }
+    return { reqs: reqs, findings: findings, cases: cases, hash: h.toString(16).slice(-6).padStart(6, '0'), lines: rawLines };
+  }
+  renderVals() {
+    const self = this;
+    const s = Object.assign({ step: 'revisar', text: null, atext: null, running: false, stage: 8, sel: null, sev: null, off: {}, dict: ['Pago rápido', 'SUNAT', 'S/'], status: {}, edits: {}, toast: null, gsel: null, tfilter: 'todos', selCase: null, gherkin: false, fmt: 'txt', content: 'mejorados', withOrig: false, copied: false, dark: null }, this.state || {});
+    const set = function (p) {
+      self.setState(p);
+      const n = Object.assign({}, s, p);
+      if ('text' in p || 'atext' in p || 'status' in p) { self.save('work', { text: n.text, atext: n.atext, status: n.status }); }
+      if ('off' in p) { self.save('off', n.off); }
+    };
+    const text = s.text === null ? this.sample() : s.text;
+    const atext = s.atext === null ? this.sample() : s.atext;
+    const t0 = (typeof performance !== 'undefined') ? performance.now() : 0;
+    const A = this.run(atext, s.off, s.dict);
+    const ms = (typeof performance !== 'undefined') ? performance.now() - t0 : 0;
+    const ATTR = { necesario: 'Necesario', no_ambiguo: 'No ambiguo', verificable: 'Verificable', completo: 'Completo', correcto: 'Correcto', viable: 'Viable', priorizable: 'Priorizable', consistente: 'Consistente' };
+    const ORDER = ['necesario', 'no_ambiguo', 'verificable', 'completo', 'correcto', 'viable', 'priorizable', 'consistente'];
+    const DECIDE = ['no_ambiguo', 'verificable', 'completo', 'viable', 'priorizable', 'consistente'];
+    const SEV = { alta: 'Alta', media: 'Media', baja: 'Baja' };
+    const RANK = { alta: 0, media: 1, baja: 2 };
+    const TYPE = { valido: 'Válido', invalido: 'Inválido', limite: 'Límite', nf: 'No funcional' };
+    const dark = s.dark !== null ? s.dark : this.props.tema === 'Oscuro';
+    const reqMap = {}; A.reqs.forEach(function (r) { reqMap[r.id] = r; });
+    const idx = {}; A.reqs.forEach(function (r, i) { idx[r.id] = i; });
+
+    const all = A.findings.map(function (f) { return Object.assign({}, f, { status: s.status[f.key] || 'abierto' }); });
+    const counted = all.filter(function (f) { return f.status !== 'rechazado'; });
+    const codesOf = function (rid) { return counted.filter(function (f) { return f.req === rid; }).map(function (f) { return f.rule; }); };
+    const colorFor = function (p) { return p >= 80 ? 'var(--acc)' : (p >= 50 ? 'var(--media)' : 'var(--alta)'); };
+    const scoreOf = function (rid) {
+      const bad = {}; counted.forEach(function (f) { if (f.req === rid) { bad[f.attr] = true; } });
+      return Math.round(DECIDE.filter(function (a) { return !bad[a]; }).length / DECIDE.length * 100);
+    };
+    const scores = A.reqs.map(function (r) { return scoreOf(r.id); });
+    const scoreById = {}; A.reqs.forEach(function (r, i) { scoreById[r.id] = scores[i]; });
+    const globalScore = scores.length ? Math.round(scores.reduce(function (a, b) { return a + b; }, 0) / scores.length) : 0;
+    const verifN = A.reqs.filter(function (r) { return r.cons; }).length;
+
+    const replaceLines = function (pairs, msg) {
+      const lines = A.lines.slice();
+      pairs.sort(function (a, b) { return b.r.li - a.r.li; }).forEach(function (pr) {
+        const nl = pr.str.split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+        if (!nl.length) { return; }
+        if (pr.r.hasId && !/^(RNF|RF|R)-?\d+/i.test(nl[0])) { nl[0] = pr.r.id + ' ' + nl[0]; }
+        lines.splice.apply(lines, [pr.r.li, 1].concat(nl));
+      });
+      const nt = lines.join('\n');
+      set({ text: nt, atext: nt, edits: {}, toast: { msg: msg, prev: atext, prevText: text } });
+    };
+
+    const reqRows = A.reqs.map(function (r, i) {
+      const n = counted.filter(function (f) { return f.req === r.id; }).length;
+      const on = s.sel === r.id;
+      return {
+        id: r.id, kind: r.kind, text: r.text, score: scores[i], ringColor: colorFor(scores[i]),
+        cls: 'reqrow' + (on ? ' on' : ''), pressed: on ? 'true' : 'false',
+        countLabel: n === 0 ? 'Sin sospechas' : (n === 1 ? '1 sospecha' : n + ' sospechas'),
+        countCls: 'badge ' + (n === 0 ? 'b-ok' : 'b-neutral'),
+        pick: function () { set({ sel: on ? null : r.id }); }
+      };
+    });
+
+    // Gutter
+    const dirty = text !== atext && !s.running;
+    const liReq = {}; A.reqs.forEach(function (r) { liReq[r.li] = r; });
+    const tLines = text.split('\n');
+    const gutter = tLines.map(function (ln, i) {
+      let cls = 'gd blank', tip = '';
+      if (ln.trim()) {
+        const r = !dirty ? liReq[i] : null;
+        if (r) { const sc = scoreById[r.id]; cls = 'gd ' + (sc >= 80 ? 'ok' : (sc >= 50 ? 'media' : 'alta')); tip = r.id + ' · calidad ' + sc + ' %'; }
+        else { cls = 'gd none'; tip = 'Sin analizar'; }
+      }
+      return { n: i + 1, cls: cls, tip: tip };
+    });
+    const rowsN = Math.max(7, tLines.length + 1);
+    while (gutter.length < rowsN) { gutter.push({ n: '', cls: 'gd blank', tip: '' }); }
+
+    const scope = all.filter(function (f) { return !s.sel || f.req === s.sel; });
+    const scopeCounted = scope.filter(function (f) { return f.status !== 'rechazado'; });
+    const sevCards = [['alta', 'Bloquean la verificación'], ['media', 'Dificultan la prueba'], ['baja', 'Mejoras de forma']].map(function (k) {
+      const on = s.sev === k[0];
+      return { label: SEV[k[0]], desc: k[1], count: scopeCounted.filter(function (f) { return f.sev === k[0]; }).length, cls: 'sevcard ' + k[0] + (on ? ' on' : ''), pressed: on ? 'true' : 'false', pick: function () { set({ sev: on ? null : k[0] }); } };
+    });
+    const rowsFor = function (str) { return Math.max(2, str.split('\n').length + Math.floor(str.length / 90)); };
+    const listed = scope.filter(function (f) { return !s.sev || f.sev === s.sev; })
+      .sort(function (a, b) { return (RANK[a.sev] - RANK[b.sev]) || (idx[a.req] - idx[b.req]); })
+      .map(function (f) {
+        const r = reqMap[f.req];
+        const st = function (v) { return function () { const m = Object.assign({}, s.status); if (v) { m[f.key] = v; } else { delete m[f.key]; } set({ status: m }); }; };
+        const sugg = self.fixOne(f.rule, r, A.reqs);
+        const edited = Object.prototype.hasOwnProperty.call(s.edits, f.key);
+        const fix = edited ? s.edits[f.key] : sugg;
+        const ph = /‹[^›]*›/.test(fix);
+        return {
+          rule: f.rule, req: f.req, title: f.title, why: f.why,
+          terms: f.terms.map(function (t) { return '«' + t + '»'; }), hasTerms: f.terms.length > 0,
+          sevCls: 'badge b-' + f.sev, sevLabel: SEV[f.sev], attrLabel: ATTR[f.attr],
+          isAccepted: f.status === 'aceptado', isRejected: f.status === 'rechazado', showFix: f.status !== 'rechazado',
+          reject: st('rechazado'), undo: st(null),
+          fid: 'fix-' + f.key.replace(/[^A-Za-z0-9]/g, '-'), fix: fix, rows: rowsFor(fix), edited: edited,
+          fixHint: ph ? 'Completa los valores entre ‹ › con datos reales; si los dejas, la regla COM-04 los marcará.' : (f.rule === 'COM-04' ? 'Escribe el valor real en lugar del marcador.' : 'Lista para aplicar. Puedes ajustar la redacción.'),
+          onFix: function (e) { const m = Object.assign({}, s.edits); m[f.key] = e.target.value; set({ edits: m }); },
+          reset: function () { const m = Object.assign({}, s.edits); delete m[f.key]; set({ edits: m }); },
+          apply: function () { replaceLines([{ r: r, str: fix }], 'Corrección ' + f.rule + ' aplicada a ' + f.req + '. Se volvió a analizar.'); },
+          disable: function () { const m = Object.assign({}, s.off); m[f.rule] = true; set({ off: m }); },
+          pickReq: function () { set({ sel: f.req }); }
+        };
+      });
+    const offChips = Object.keys(s.off).filter(function (k) { return s.off[k]; }).map(function (id) {
+      return { id: id, aria: 'Reactivar regla ' + id, pick: function () { const m = Object.assign({}, s.off); delete m[id]; set({ off: m }); } };
+    });
+    const fixable = A.reqs.filter(function (r) { return codesOf(r.id).length > 0; });
+
+    let sel = null;
+    if (s.sel && reqMap[s.sel]) {
+      const r = reqMap[s.sel];
+      const terms = []; counted.forEach(function (f) { if (f.req === r.id) { f.terms.forEach(function (w) { terms.push(w); }); } });
+      const low = r.text.toLowerCase();
+      const marks = [];
+      terms.forEach(function (w) { const i = low.indexOf(String(w).toLowerCase()); if (i >= 0) { marks.push([i, i + w.length]); } });
+      marks.sort(function (a, b) { return a[0] - b[0]; });
+      const segs = []; let pos = 0;
+      marks.forEach(function (mk) { if (mk[0] < pos) { return; } if (mk[0] > pos) { segs.push({ t: r.text.slice(pos, mk[0]), cls: '' }); } segs.push({ t: r.text.slice(mk[0], mk[1]), cls: 'hl' }); pos = mk[1]; });
+      if (pos < r.text.length) { segs.push({ t: r.text.slice(pos), cls: '' }); }
+      const ev = r.text.match(/^(cuando|si|al|durante|antes de|después de)\s[^,]+/i);
+      const sj = r.text.match(/(el sistema|la aplicación|el módulo|la plataforma|el servidor)/i);
+      const ac = r.text.match(/\bdebe\s+([a-záéíóúñ]+)/i);
+      const rs = ac ? r.text.slice(r.text.indexOf(ac[0]) + ac[0].length).replace(/^\s+/, '').replace(/\.\s*$/, '') : '';
+      const slot = function (k, v, optional) { return { k: k, v: v || (optional ? 'No aplica' : 'Falta'), cls: 'slot' + (v || optional ? '' : ' miss') }; };
+      const bad = {}; counted.forEach(function (f) { if (f.req === r.id) { bad[f.attr] = true; } });
+      const codes = codesOf(r.id);
+      const key = '__req|' + r.id + '|' + r.li;
+      const sugg = codes.length ? self.improve(r, codes, A.reqs) : '';
+      const edited = Object.prototype.hasOwnProperty.call(s.edits, key);
+      const fix = edited ? s.edits[key] : sugg;
+      sel = {
+        id: r.id, kindLabel: r.kind === 'RNF' ? 'No funcional' : 'Funcional',
+        priLabel: r.pri ? 'Prioridad ' + r.pri.toLowerCase() : 'Sin prioridad', priCls: 'badge ' + (r.pri ? 'b-neutral' : 'b-baja'),
+        segs: segs,
+        slots: [slot('Evento o condición', ev ? ev[0] : '', true), slot('Sujeto', sj ? sj[0] : ''), slot('Debe', ac ? 'debe' : ''), slot('Acción', ac ? ac[1] : ''), slot('Resultado', rs.length > 64 ? rs.slice(0, 62) + '…' : rs)],
+        attrs: ORDER.map(function (a) {
+          if (bad[a]) { return { label: ATTR[a], state: 'revisar', cls: 'badge b-revisar' }; }
+          if (a === 'necesario' || a === 'correcto') { return { label: ATTR[a], state: 'juicio humano', cls: 'badge b-juicio' }; }
+          return { label: ATTR[a], state: 'cumple', cls: 'badge b-cumple' };
+        }),
+        hasFix: codes.length > 0, fix: fix, rows: rowsFor(fix || ' '), edited: edited,
+        fixHint: /‹[^›]*›/.test(fix) ? 'Reúne las ' + codes.length + ' correcciones. Completa los valores entre ‹ › antes de aplicar.' : 'Reúne las ' + codes.length + ' correcciones de este requisito.',
+        onFix: function (e) { const m = Object.assign({}, s.edits); m[key] = e.target.value; set({ edits: m }); },
+        reset: function () { const m = Object.assign({}, s.edits); delete m[key]; set({ edits: m }); },
+        apply: function () { replaceLines([{ r: r, str: fix }], 'Versión corregida aplicada a ' + r.id + '. Se volvió a analizar.'); }
+      };
+    }
+
+    const STAGES = ['Normalizar', 'Segmentar', 'Parsear', 'Restricciones', 'Reglas', 'Puntuar', 'Reescribir', 'Derivar casos'];
+    const stages = STAGES.map(function (l, i) { return { n: i + 1, label: l, cls: 'stg' + (i < s.stage ? ' done' : (i === s.stage && s.running ? ' on' : '')) }; });
+    const msLabel = ms < 1 ? 'menos de 1 ms' : Math.round(ms) + ' ms';
+
+    // Generador
+    const casesFor = function (rid) { return A.cases.filter(function (c) { return c.req === rid; }); };
+    const firstVerif = A.reqs.filter(function (r) { return r.cons; })[0];
+    const gsel = (s.gsel && (s.gsel === 'all' || reqMap[s.gsel])) ? s.gsel : (firstVerif ? firstVerif.id : 'all');
+    const genRows = [{ id: 'Todos', text: 'Todos los casos derivados del conjunto', tag: A.cases.length + ' casos', tagCls: 'badge b-ok', countLabel: '', key: 'all' }].concat(A.reqs.map(function (r) {
+      const n = casesFor(r.id).length;
+      return { id: r.id, text: r.text, tag: r.cons ? self.consLabel(r.cons).split(' ')[0].replace(':', '') : 'No verificable', tagCls: 'badge ' + (r.cons ? 'b-limite' : 'b-juicio'), countLabel: n ? n + ' casos' : '—', key: r.id };
+    })).map(function (g) {
+      const on = gsel === g.key;
+      return Object.assign(g, { cls: 'reqrow' + (on ? ' on' : ''), pressed: on ? 'true' : 'false', pick: function () { set({ gsel: g.key, selCase: null, tfilter: 'todos' }); } });
+    });
+    const greq = gsel !== 'all' ? reqMap[gsel] : null;
+    let gen = { id: '', text: '', consLabel: '', tech: '', points: [], zoneLeft: 0, zoneWidth: 0 };
+    if (greq && greq.cons) {
+      const c = greq.cons; const cs = casesFor(greq.id);
+      const vs = cs.map(function (x) { return x.v; });
+      let lo = Math.min.apply(null, vs), hi = Math.max.apply(null, vs);
+      if (hi === lo) { lo -= 1; hi += 1; }
+      const pos = function (v) { return 8 + (v - lo) / (hi - lo) * 84; };
+      let z0 = 2, z1 = 98;
+      if (c.type === 'rango') { z0 = pos(c.a); z1 = pos(c.b); }
+      else if (c.type === 'umbral') { z1 = c.strict ? (pos(c.v) - 3) : pos(c.v); }
+      else if (c.type === 'condicion') { if (c.less) { z1 = pos(c.v) - 3; } else { z0 = pos(c.v) + 3; } }
+      else if (c.type === 'max') { z1 = pos(c.v); }
+      else if (c.type === 'min') { z0 = pos(c.v); }
+      const TECH = { rango: 'Valores límite (BVA) + partición de equivalencia', umbral: 'Umbral: por debajo, en el valor y por encima', condicion: 'Condición «si X entonces Y»: cumplida y no cumplida', max: 'Valores límite sobre el máximo', min: 'Valores límite sobre el mínimo', carga: 'Caso no funcional con perfil de carga' };
+      gen = {
+        id: greq.id, text: greq.text, consLabel: this.consLabel(c), tech: TECH[c.type],
+        zoneLeft: Math.round(z0 * 10) / 10, zoneWidth: Math.round(Math.max(1, z1 - z0) * 10) / 10,
+        points: cs.map(function (x) {
+          const on = s.selCase === x.id;
+          return { left: Math.round(pos(x.v) * 10) / 10, label: x.data.replace(/^Medido: /, '').replace(/ caracteres$/, ''), cls: 'nl-pt ' + x.type + (on ? ' on' : ''), aria: x.id + ': ' + x.data + ', ' + TYPE[x.type], pick: function () { set({ selCase: on ? null : x.id }); } };
+        })
+      };
+    }
+    const baseCases = greq ? casesFor(greq.id) : A.cases;
+    const cases = baseCases.filter(function (c) { return s.tfilter === 'todos' || c.type === s.tfilter; }).map(function (c) {
+      const on = s.selCase === c.id;
+      return { id: c.id, req: c.req, tech: c.tech, data: c.data, expected: c.expected, pri: c.pri, typeCls: 'badge b-' + c.type, typeLabel: TYPE[c.type], cls: on ? 'on' : '', pick: function () { set({ selCase: on ? null : c.id }); } };
+    });
+    const typeSeg = [['todos', 'Todos'], ['valido', 'Válido'], ['invalido', 'Inválido'], ['limite', 'Límite'], ['nf', 'No funcional']].map(function (x) {
+      const n = x[0] === 'todos' ? baseCases.length : baseCases.filter(function (c) { return c.type === x[0]; }).length;
+      return { label: x[1] + ' ' + n, cls: s.tfilter === x[0] ? 'on' : '', pressed: s.tfilter === x[0] ? 'true' : 'false', pick: function () { set({ tfilter: x[0] }); } };
+    });
+    const typeStats = ['valido', 'invalido', 'limite', 'nf'].map(function (k) { return { label: TYPE[k], cls: 'badge b-' + k, count: A.cases.filter(function (c) { return c.type === k; }).length }; });
+    const noCase = A.reqs.filter(function (r) { return !r.cons; }).map(function (r) { return r.id; });
+    const gherkinFor = function (rid) {
+      const r = reqMap[rid];
+      const lines = ['# language: es', 'Característica: ' + rid, '  # ' + r.text, '', '  Esquema del escenario: Verificar ' + rid, '    Dado el requisito ' + rid, '    Cuando se usa <datos>', '    Entonces <resultado>', '', '    Ejemplos:', '      | caso | datos | resultado |'];
+      casesFor(rid).forEach(function (c) { lines.push('      | ' + c.id + ' | ' + c.data + ' | ' + c.expected + ' |'); });
+      return lines.join('\n');
+    };
+
+    // Exportar
+    const improved = A.reqs.map(function (r) {
+      const codes = codesOf(r.id);
+      const original = A.lines[r.li].trim();
+      const better = codes.length ? self.improve(r, codes, A.reqs) : original;
+      return { id: r.id, original: original, mejorado: better, reglas: codes, changed: better !== original, pending: /‹[^›]*›/.test(better) };
+    });
+    const q = function (v) { v = String(v); return /[",;\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    let today = '';
+    try { today = new Date().toLocaleDateString('es-PE'); } catch (e) { today = ''; }
+    let exportText = '', count = '';
+    if (s.content === 'mejorados') {
+      count = improved.length + ' requisitos';
+      if (s.fmt === 'txt') {
+        const out = ['QualiReq · Requisitos mejorados', 'Proyecto: Sistema de ventas · versión 3', 'Motor v0.1.0 · huella ' + A.hash + (today ? ' · ' + today : ''), 'Completa los valores entre ‹ › antes de aprobar los requisitos.', ''];
+        improved.forEach(function (x) { out.push(x.mejorado); if (s.withOrig && x.changed) { out.push('    Antes: ' + x.original); out.push('    Reglas corregidas: ' + x.reglas.join(', ')); } });
+        exportText = out.join('\n');
+      } else if (s.fmt === 'md') {
+        const out = ['# Requisitos mejorados — Sistema de ventas', '', '> Motor v0.1.0 · huella ' + A.hash + '. Completa los valores entre ‹ › antes de aprobar.', ''];
+        improved.forEach(function (x) { x.mejorado.split('\n').forEach(function (l) { out.push('- ' + l); }); if (s.withOrig && x.changed) { out.push('  - Antes: ~~' + x.original + '~~'); } });
+        exportText = out.join('\n');
+      } else if (s.fmt === 'csv') {
+        exportText = ['id,original,mejorado,reglas_corregidas'].concat(improved.map(function (x) { return [x.id, x.original, x.mejorado.replace(/\n/g, ' | '), x.reglas.join(' ')].map(q).join(','); })).join('\n');
+      } else {
+        exportText = JSON.stringify({ engine_version: '0.1.0', huella: A.hash, requisitos: improved.map(function (x) { return { id: x.id, original: x.original, mejorado: x.mejorado.split('\n'), reglas_corregidas: x.reglas }; }) }, null, 2);
+      }
+    } else {
+      const rows = s.content === 'casos'
+        ? A.cases.map(function (c) { return { id: c.id, requisito: c.req, tipo: TYPE[c.type], tecnica: c.tech, datos: c.data, resultado_esperado: c.expected, prioridad: c.pri }; })
+        : counted.map(function (f) { return { requisito: f.req, regla: f.rule, atributo: ATTR[f.attr], severidad: SEV[f.sev], mensaje: f.title, estado: f.status }; });
+      const cols = rows.length ? Object.keys(rows[0]) : [];
+      count = rows.length + (s.content === 'casos' ? ' casos' : ' sospechas');
+      if (s.fmt === 'csv') { exportText = [cols.join(',')].concat(rows.map(function (o) { return cols.map(function (k) { return q(o[k]); }).join(','); })).join('\n'); }
+      else if (s.fmt === 'md') { exportText = ['# ' + (s.content === 'casos' ? 'Casos de prueba' : 'Sospechas') + ' — Sistema de ventas', '', '| ' + cols.join(' | ') + ' |', '|' + cols.map(function () { return '---'; }).join('|') + '|'].concat(rows.map(function (o) { return '| ' + cols.map(function (k) { return o[k]; }).join(' | ') + ' |'; })).join('\n'); }
+      else if (s.fmt === 'json') { const o = { engine_version: '0.1.0', huella: A.hash }; o[s.content === 'casos' ? 'casos' : 'sospechas'] = rows; exportText = JSON.stringify(o, null, 2); }
+      else { exportText = A.reqs.filter(function (r) { return r.cons; }).map(function (r) { return gherkinFor(r.id); }).join('\n\n'); }
+    }
+    const EXT = { txt: 'txt', csv: 'csv', md: 'md', json: 'json', gherkin: 'feature' };
+    const FMTS = {
+      mejorados: [['txt', 'Texto', 'Un requisito por línea, listo para pegar'], ['md', 'Markdown', 'Para el informe o el repositorio'], ['csv', 'CSV', 'Original y mejorado lado a lado'], ['json', 'JSON', 'Para integraciones y CI']],
+      casos: [['csv', 'CSV', 'Para hojas de cálculo'], ['md', 'Markdown', 'Para el informe o el repositorio'], ['json', 'JSON', 'Para integraciones y CI'], ['gherkin', 'Gherkin', 'Dado / Cuando / Entonces']],
+      sospechas: [['csv', 'CSV', 'Para hojas de cálculo'], ['md', 'Markdown', 'Para el informe'], ['json', 'JSON', 'Para integraciones y CI']]
+    };
+    const fileName = 'qualireq-' + (s.content === 'mejorados' ? 'requisitos-mejorados' : s.content) + '.' + EXT[s.fmt];
+    const fmtCards = FMTS[s.content].map(function (x) {
+      const on = s.fmt === x[0];
+      return { ext: EXT[x[0]], label: x[1], desc: x[2], cls: 'fmt' + (on ? ' on' : ''), pressed: on ? 'true' : 'false', pick: function () { set({ fmt: x[0], copied: false }); } };
+    });
+    const contentSeg = [['mejorados', 'Requisitos mejorados'], ['casos', 'Casos de prueba'], ['sospechas', 'Sospechas']].map(function (x) {
+      return { label: x[1], cls: s.content === x[0] ? 'on' : '', pressed: s.content === x[0] ? 'true' : 'false', pick: function () { set({ content: x[0], fmt: x[0] === 'mejorados' ? 'txt' : 'csv', copied: false }); } };
+    });
+    const nChanged = improved.filter(function (x) { return x.changed; }).length;
+    const nPending = improved.filter(function (x) { return x.pending; }).length;
+
+    const steps = [['revisar', 'Revisar y corregir', counted.length + ' sospechas abiertas'], ['generar', 'Generar casos', A.cases.length + ' casos trazados'], ['exportar', 'Exportar', 'Requisitos mejorados · casos · sospechas']].map(function (x, i) {
+      const on = s.step === x[0];
+      return { n: i + 1, title: x[1], sub: x[2], cls: 'step' + (on ? ' on' : ''), selected: on ? 'true' : 'false', pick: function () { set({ step: x[0] }); } };
+    });
+    const rulesOn = 15 - Object.keys(s.off).filter(function (k) { return s.off[k]; }).length;
+
+    return {
+      rootClass: 'qr' + (dark ? ' dark' : ''),
+      themeLabel: dark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro',
+      toggleTheme: function () { set({ dark: !dark }); },
+      navRev: 'navi' + (s.step === 'revisar' ? ' on' : ''), navGen: 'navi' + (s.step === 'generar' ? ' on' : ''), navExp: 'navi' + (s.step === 'exportar' ? ' on' : ''),
+      curRev: s.step === 'revisar' ? 'page' : 'false', curGen: s.step === 'generar' ? 'page' : 'false', curExp: s.step === 'exportar' ? 'page' : 'false',
+      rulesOn: rulesOn + '/15',
+      hash: A.hash, steps: steps,
+      isRev: s.step === 'revisar', isGen: s.step === 'generar', isExp: s.step === 'exportar',
+      text: text, dirty: dirty, gutter: gutter, edH: rowsN * 28 + 32,
+      onText: function (e) { set({ text: e.target.value }); },
+      running: s.running, analyzeLabel: s.running ? 'Analizando…' : 'Analizar',
+      analyze: function () {
+        if (self._t) { clearInterval(self._t); }
+        const snap = text; let k = 0;
+        set({ running: true, stage: 0 });
+        self._t = setInterval(function () {
+          k++;
+          if (k >= 8) { clearInterval(self._t); self._t = null; set({ running: false, stage: 8, atext: snap, sel: null, sev: null, gsel: null, selCase: null, edits: {} }); }
+          else { self.setState({ stage: k }); }
+        }, 120);
+      },
+      loadSample: function () { const t = self.sample(); set({ text: t, atext: t, sel: null, sev: null, gsel: null, edits: {}, status: {} }); },
+      clear: function () { set({ text: '', atext: '', sel: null, sev: null, gsel: null, edits: {}, status: {} }); },
+      stages: stages,
+      runNote: s.running ? 'Analizando… etapa ' + (s.stage + 1) + ' de 8' : 'Analizado en ' + msLabel + ' · mismo texto, mismo resultado',
+      hasToast: !!s.toast, toastMsg: s.toast ? s.toast.msg : '',
+      undoApply: function () { if (s.toast) { set({ text: s.toast.prevText, atext: s.toast.prev, toast: null, edits: {} }); } },
+      closeToast: function () { set({ toast: null }); },
+      hasReqs: A.reqs.length > 0, noReqs: A.reqs.length === 0, reqCount: A.reqs.length, reqRows: reqRows,
+      globalScore: globalScore, globalColor: colorFor(globalScore), verifPct: A.reqs.length ? Math.round(verifN / A.reqs.length * 100) : 0,
+      sevCards: sevCards, hasSevFilter: !!s.sev, sevLabel: s.sev ? SEV[s.sev].toLowerCase() : '', clearSev: function () { set({ sev: null }); },
+      offChips: offChips,
+      canApplyAll: fixable.length > 0,
+      applyAll: function () { replaceLines(fixable.map(function (r) { return { r: r, str: self.improve(r, codesOf(r.id), A.reqs) }; }), 'Correcciones aplicadas a ' + fixable.length + ' requisitos. Completa los valores entre ‹ › que queden.'); },
+      hasSel: !!sel, sel: sel || { id: '', segs: [], slots: [], attrs: [], hasFix: false }, clearSel: function () { set({ sel: null }); },
+      findTitle: sel ? 'Sospechas de ' + sel.id : 'Sospechas y correcciones', findShown: listed.length + (listed.length === 1 ? ' resultado' : ' resultados'),
+      findings: listed, noFindings: listed.length === 0,
+      findCount: counted.length, caseCount: A.cases.length,
+      goRev: function () { set({ step: 'revisar' }); }, goGen: function () { set({ step: 'generar' }); }, goExp: function () { set({ step: 'exportar' }); },
+      goExpImproved: function () { set({ step: 'exportar', content: 'mejorados', fmt: 'txt', copied: false }); },
+      genRows: genRows, gen: gen,
+      genIsReq: !!(greq && greq.cons), genIsNoVerif: !!(greq && !greq.cons), genIsAll: !greq,
+      genNoId: greq ? greq.id : '', genFix: function () { set({ step: 'revisar', sel: greq ? greq.id : null }); },
+      cases: cases, hasCases: baseCases.length > 0, typeSeg: typeSeg, typeStats: typeStats,
+      noCaseNote: noCase.length ? noCase.join(', ') + ' no generan casos: no tienen una restricción extraíble. Se remiten a la regla VER-01.' : 'Todos los requisitos tienen al menos una restricción extraíble.',
+      showGherkin: !!(s.gherkin && greq && greq.cons), gherkin: greq && greq.cons ? gherkinFor(greq.id) : '',
+      gherkinLabel: s.gherkin ? 'Ver tabla' : 'Ver en Gherkin', gherkinPressed: s.gherkin ? 'true' : 'false',
+      toggleGherkin: function () { set({ gherkin: !s.gherkin }); },
+      isImproved: s.content === 'mejorados', impChanged: nChanged + ' de ' + improved.length + ' mejorados', impPending: nPending + ' con valores por completar',
+      withOrig: !!s.withOrig, toggleOrig: function () { set({ withOrig: !s.withOrig }); },
+      fmtCards: fmtCards, contentSeg: contentSeg, exportText: exportText, fileName: fileName, exportCount: count,
+      copyLabel: s.copied ? 'Copiado' : 'Copiar',
+      copy: function () { try { navigator.clipboard.writeText(exportText); } catch (e) {} set({ copied: true }); },
+      download: function () { try { const b = new Blob([exportText], { type: 'text/plain;charset=utf-8' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = fileName; a.click(); } catch (e) {} }
+    };
+  }
+}
+</script>
+</body>
+</html>

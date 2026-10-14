@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>QualiReq — Versiones y comparación</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.qr{--s0:#f4f3ee;--s1:#ffffff;--s2:#ecebe4;--s3:#dedcd2;--line:#e1dfd6;--ls:#8c8a80;--ink:#15201d;--mut:#585c55;--acc:#0e6656;--acch:#0b5246;--onacc:#ffffff;--accs:#dcede7;--focus:#0e6656;--alta:#b03d0b;--altas:#fbe6da;--media:#835500;--medias:#f6ead0;--baja:#4c5864;--bajas:#e6eaee;--lim:#35557d;--lims:#e3eaf4;--nav:#0f1f1b;--nav2:#1b342d;--navink:#eef3ef;--navmut:#a9bdb4;--lime:#c6f06a;--sh:0 1px 2px rgba(21,32,29,.06),0 6px 20px rgba(21,32,29,.06);font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--s0);font-size:15px;line-height:24px;-webkit-font-smoothing:antialiased}
+.qr.dark{--s0:#0f1110;--s1:#181a18;--s2:#232521;--s3:#33352f;--line:#30322d;--ls:#77786f;--ink:#edece6;--mut:#a7a89f;--acc:#5cc7ae;--acch:#86dcc5;--onacc:#0b1a16;--accs:#16302a;--focus:#7fe0c8;--alta:#ff9c66;--altas:#3b2114;--media:#e9b850;--medias:#33290f;--baja:#a9b6c2;--bajas:#262c31;--lim:#93b4dc;--lims:#1d2836;--nav:#0a1412;--nav2:#16291f}
+.qr *{box-sizing:border-box}
+.qr h1,.qr h2,.qr h3,.qr p{margin:0}
+.qr a{color:var(--acc)}.qr a:hover{color:var(--acch)}
+.qr :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.disp{font-family:"Bricolage Grotesque","Plus Jakarta Sans",system-ui,sans-serif;font-weight:700;letter-spacing:-0.035em}
+.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-size:13px;line-height:20px;font-weight:600}
+.label{font-size:13px;line-height:18px;font-weight:600;color:var(--mut)}
+.small{font-size:13px;line-height:20px;color:var(--mut)}
+.num{font-variant-numeric:tabular-nums}
+.ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.ic.lg{width:20px;height:20px}
+.btn{height:42px;padding:0 16px;border-radius:12px;border:1px solid var(--ls);background:var(--s1);color:var(--ink);font:inherit;font-size:14px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;white-space:nowrap;text-decoration:none}
+.qr a.btn{color:var(--ink)}
+.btn:hover{background:var(--s2)}
+.qr a.btn.primary,.btn.primary{background:var(--acc);border-color:var(--acc);color:var(--onacc)}
+.btn.sm{height:32px;padding:0 12px;font-size:13px;border-radius:10px}
+.btn.sm.on{background:var(--ink);border-color:var(--ink);color:var(--s1)}
+.badge{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:999px;font-size:13px;font-weight:600;line-height:1;white-space:nowrap}
+.b-alta{color:var(--alta);background:var(--altas)}.b-media{color:var(--media);background:var(--medias)}.b-ok{color:var(--acc);background:var(--accs)}.b-neutral{color:var(--mut);background:var(--s2)}.b-limite{color:var(--lim);background:var(--lims)}
+.panel{background:var(--s1);border:1px solid var(--line);border-radius:18px}
+.nav{flex:1 1 236px;background:var(--nav);color:var(--navink);padding:22px 14px;display:flex;flex-direction:column;gap:2px}
+.navlab{font-size:13px;font-weight:600;color:var(--navmut);padding:18px 12px 6px}
+.qr .navi{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 12px;border-radius:12px;color:var(--navink);text-decoration:none;font-size:14px;font-weight:500}
+.qr .navi:hover{background:var(--nav2);color:#ffffff}
+.qr .navi.on{background:var(--nav2);color:#ffffff;font-weight:600}
+.navi.on .ic{color:var(--lime)}
+.ring{border-radius:999px;display:grid;place-items:center;flex:none}
+.ring .in{border-radius:999px;background:var(--s1);display:grid;place-items:center}
+.ver{border:1px solid var(--line);border-radius:16px;padding:14px 16px;background:var(--s1);display:flex;flex-direction:column;gap:10px;position:relative}
+.ver.a{border-color:var(--lim);box-shadow:0 0 0 1px var(--lim) inset}
+.ver.b{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}
+.delta{flex:1 1 150px;padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.delta .big{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:34px;line-height:38px;letter-spacing:-0.03em}
+.up{color:var(--acc)}.down{color:var(--alta)}.flat{color:var(--mut)}
+.del{background:var(--altas);color:var(--alta);text-decoration:line-through;border-radius:4px;padding:0 3px}
+.ins{background:var(--accs);color:var(--acc);border-radius:4px;padding:0 3px;font-weight:600}
+.drow{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.drow:last-child{border-bottom:0}
+</style>
+</helmet>
+<div class="{{rootClass}}" style="min-height: 100vh; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<nav class="nav" aria-label="Principal">
+<a href="Inicio.dc.html" style="text-decoration: none; padding: 4px 12px 14px; display: flex; flex-direction: column; gap: 2px">
+<span class="disp" style="font-size: 26px; line-height: 30px; color: #ffffff">Quali<span style="color: var(--lime)">Req</span></span>
+<span style="font-size: 13px; line-height: 18px; color: var(--navmut)">Calidad de requisitos</span>
+</a>
+<a class="navi" href="Inicio.dc.html"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 9.5 10 3.5l7 6V16a1 1 0 0 1-1 1h-3.5v-4.5h-5V17H4a1 1 0 0 1-1-1z"></path></svg>Inicio</a>
+<span class="navlab">Módulos · Sistema de ventas</span>
+<a class="navi" href="Main.dc.html" onClick="{{goRev}}"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5.5"></circle><path d="m13 13 4 4M6.8 9l1.6 1.6 3-3.2"></path></svg>Revisor de requisitos</a>
+<a class="navi" href="Main.dc.html" onClick="{{goGen}}"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="3"></rect><path d="M7 7.5h6M7 10.5h6M7 13.5h3.5"></path></svg>Generador de casos</a>
+<a class="navi" href="Main.dc.html" onClick="{{goExp}}"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v9M6.5 8.5 10 12l3.5-3.5M4 15.5h12"></path></svg>Exportar</a>
+<span class="navlab">Proyecto</span>
+<a class="navi on" href="Versiones.dc.html" aria-current="page"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><circle cx="6" cy="5" r="2"></circle><circle cx="6" cy="15" r="2"></circle><circle cx="14" cy="9" r="2"></circle><path d="M6 7v6M14 11c0 2-2 3-6 3"></path></svg>Versiones</a>
+<a class="navi" href="Reglas.dc.html"><svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5h12M4 10h12M4 15h12"></path><circle cx="7" cy="5" r="1.6"></circle><circle cx="13" cy="10" r="1.6"></circle><circle cx="9" cy="15" r="1.6"></circle></svg>Reglas y diccionario</a>
+<div style="flex: 1; min-height: 24px"></div>
+<div style="margin: 0 4px 8px; padding: 14px; border-radius: 14px; background: var(--nav2); display: flex; flex-direction: column; gap: 6px">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #ffffff"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--lime)"><path d="M8 1.5 13 3.5v4c0 3-2.2 5.5-5 7-2.8-1.5-5-4-5-7v-4z"></path><path d="M5.8 8 7.3 9.5 10.3 6.5"></path></svg>Motor v0.1.0</span>
+<span style="font-size: 13px; line-height: 19px; color: var(--navmut)">Determinista. Analiza en tu navegador: el texto no sale de este equipo.</span>
+</div>
+<a class="navi" href="Login.dc.html" style="gap: 10px"><span style="width: 30px; height: 30px; border-radius: 999px; background: var(--lime); color: #15201d; display: grid; place-items: center; font-weight: 700; font-size: 13px">MF</span><span style="display: flex; flex-direction: column; line-height: 18px"><span style="font-size: 14px">Milton F.</span><span style="font-size: 13px; color: var(--navmut)">Cerrar sesión</span></span></a>
+</nav>
+
+<main style="flex: 999 1 640px; min-width: 0; padding: 32px; display: flex; flex-direction: column; gap: 24px">
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span class="small"><a href="Inicio.dc.html" style="text-decoration: none">Proyectos</a> / <a href="Main.dc.html" style="text-decoration: none">Sistema de ventas</a> / Versiones</span>
+<h1 class="disp" style="font-size: 40px; line-height: 44px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap">Versiones <span class="badge b-limite" style="font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: 0">Fase 2</span></h1>
+<p style="color: var(--mut)">Elige una versión base y otra para comparar. Cada versión guarda su texto y la versión del motor: el análisis es reproducible.</p>
+</div>
+<a class="btn primary" href="Main.dc.html" onClick="{{goRev}}"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>Abrir versión {{bName}}</a>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+<section aria-label="Historial" style="flex: 1 1 300px; max-width: 380px; display: flex; flex-direction: column; gap: 10px">
+<span class="label">Historial</span>
+<sc-for list="{{versions}}" as="v" hint-placeholder-count="3">
+<div class="{{v.cls}}">
+<div style="display: flex; align-items: center; gap: 12px">
+<span class="ring" style="width: 50px; height: 50px; background: conic-gradient({{v.color}} {{v.score}}%, var(--s3) 0)"><span class="in disp num" style="width: 40px; height: 40px; font-size: 15px; letter-spacing: -0.02em">{{v.score}}</span></span>
+<span style="display: flex; flex-direction: column; flex: 1; min-width: 0">
+<span style="display: flex; align-items: center; gap: 8px"><span class="disp" style="font-size: 20px; line-height: 24px; letter-spacing: -0.02em">{{v.name}}</span><sc-if value="{{v.isLatest}}" hint-placeholder-val="{{ false }}"><span class="badge b-ok" style="height: 22px">Actual</span></sc-if></span>
+<span class="small">{{v.date}} · Milton F.</span>
+</span>
+</div>
+<p style="font-size: 14px; line-height: 21px">{{v.note}}</p>
+<div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap">
+<span class="small num">{{v.stats}}</span>
+<span style="flex: 1"></span>
+<button class="{{v.aCls}}" type="button" aria-pressed="{{v.aPressed}}" onClick="{{v.pickA}}">Base</button>
+<button class="{{v.bCls}}" type="button" aria-pressed="{{v.bPressed}}" onClick="{{v.pickB}}">Comparar</button>
+</div>
+</div>
+</sc-for>
+</section>
+
+<section aria-label="Comparación" style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<sc-if value="{{same}}" hint-placeholder-val="{{ false }}">
+<div class="panel" style="padding: 40px; text-align: center; display: flex; flex-direction: column; gap: 4px"><span style="font-weight: 700; font-size: 16px">Elige dos versiones distintas</span><span class="small">Marca una como base y otra para comparar.</span></div>
+</sc-if>
+<sc-if value="{{diff}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div class="panel" style="padding: 18px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<span class="badge b-limite" style="height: 30px; font-size: 14px">Base · {{aName}}</span>
+<svg class="ic lg" viewBox="0 0 20 20" aria-hidden="true" style="color: var(--mut)"><path d="M4 10h12M12 6l4 4-4 4"></path></svg>
+<span class="badge b-ok" style="height: 30px; font-size: 14px">Comparar · {{bName}}</span>
+<span style="flex: 1"></span>
+<span class="small">Mismo motor (v0.1.0): las diferencias vienen del texto, no del analizador.</span>
+</div>
+<div class="panel" style="display: flex; flex-wrap: wrap">
+<sc-for list="{{deltas}}" as="d" hint-placeholder-count="4">
+<div class="delta" style="border-right: 1px solid var(--line)">
+<span class="label">{{d.label}}</span>
+<span class="{{d.cls}}"><span class="big num">{{d.value}}</span></span>
+<span class="small num">{{d.from}} → {{d.to}}</span>
+</div>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<span class="badge b-ok">{{nAdded}} nuevos</span>
+<span class="badge b-media">{{nMod}} modificados</span>
+<span class="badge b-alta">{{nDel}} eliminados</span>
+<span class="badge b-neutral">{{nSame}} sin cambios</span>
+</div>
+
+<div class="panel" style="overflow: hidden">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+<div class="drow">
+<div style="display: flex; align-items: center; gap: 8px"><span class="mono">{{r.id}}</span><span class="{{r.cls}}">{{r.label}}</span></div>
+<p style="font-size: 15px; line-height: 25px"><sc-for list="{{r.segs}}" as="sg" hint-placeholder-count="3"><span class="{{sg.cls}}">{{sg.t}}</span> </sc-for></p>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+</section>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["Claro","Oscuro"],"default":"Claro"},"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+  wordDiff(a, b) {
+    const x = a.split(' '), y = b.split(' ');
+    const n = x.length, m = y.length;
+    const L = [];
+    for (let i = 0; i <= n; i++) { L.push(new Array(m + 1).fill(0)); }
+    for (let i = n - 1; i >= 0; i--) { for (let j = m - 1; j >= 0; j--) { L[i][j] = x[i] === y[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]); } }
+    const out = []; let i = 0, j = 0;
+    while (i < n && j < m) {
+      if (x[i] === y[j]) { out.push({ t: x[i], cls: '' }); i++; j++; }
+      else if (L[i + 1][j] >= L[i][j + 1]) { out.push({ t: x[i], cls: 'del' }); i++; }
+      else { out.push({ t: y[j], cls: 'ins' }); j++; }
+    }
+    while (i < n) { out.push({ t: x[i++], cls: 'del' }); }
+    while (j < m) { out.push({ t: y[j++], cls: 'ins' }); }
+    return out;
+  }
+  renderVals() {
+    const self = this;
+    const s = Object.assign({ a: 1, b: 2 }, this.state || {});
+    const V = [
+      { name: 'v1', date: '7 oct 2026', note: 'Primer borrador desde el acta de reunión.', score: 47, finds: 11, cases: 0, reqs: {
+        'RF-01': 'El sistema debe permitir contraseñas seguras.',
+        'RNF-01': 'El sistema debe ser rápido y fácil de usar.',
+        'RNF-02': 'El sistema debe soportar muchos usuarios.',
+        'RF-03': 'Los reportes serán generados y exportados a PDF y/o Excel, etc.' } },
+      { name: 'v2', date: '10 oct 2026', note: 'Rango de contraseña y requisito de confirmación de pedido.', score: 58, finds: 14, cases: 7, reqs: {
+        'RF-01': 'El sistema debe permitir al usuario ingresar una contraseña de entre 8 y 16 caracteres.',
+        'RNF-01': 'El sistema debe ser rápido y fácil de usar.',
+        'RF-02': 'Cuando el usuario confirme el pedido, el sistema debe enviar un correo de confirmación rápidamente.',
+        'RNF-02': 'El sistema debe soportar varios usuarios concurrentes.',
+        'RF-03': 'Los reportes serán generados y exportados a PDF y/o Excel, etc.' } },
+      { name: 'v3', date: '12 oct 2026', note: 'Umbral de 30 s, prioridades y regla de descuento.', score: 72, finds: 13, cases: 13, reqs: {
+        'RF-01': 'El sistema debe permitir al usuario ingresar una contraseña de entre 8 y 16 caracteres.',
+        'RNF-01': 'El sistema debe ser rápido y fácil de usar.',
+        'RF-02': 'Cuando el usuario confirme el pedido, el sistema debe enviar un correo de confirmación en menos de 30 s.',
+        'RNF-02': 'El sistema debe soportar varios usuarios concurrentes.',
+        'RF-03': 'Los reportes serán generados y exportados a PDF y/o Excel, etc.',
+        'RF-04': 'Si el monto de la compra supera S/ 500, el sistema debe aplicar un descuento del 10 %.' } }
+    ];
+    const color = function (p) { return p >= 80 ? 'var(--acc)' : (p >= 50 ? 'var(--media)' : 'var(--alta)'); };
+    const versions = V.map(function (v, i) {
+      const isA = s.a === i, isB = s.b === i;
+      return {
+        name: v.name, date: v.date, note: v.note, score: v.score, color: color(v.score), isLatest: i === V.length - 1,
+        stats: Object.keys(v.reqs).length + ' req. · ' + v.finds + ' sospechas · ' + v.cases + ' casos',
+        cls: 'ver' + (isB ? ' b' : (isA ? ' a' : '')),
+        aCls: 'btn sm' + (isA ? ' on' : ''), bCls: 'btn sm' + (isB ? ' on' : ''),
+        aPressed: isA ? 'true' : 'false', bPressed: isB ? 'true' : 'false',
+        pickA: function () { self.setState({ a: i }); }, pickB: function () { self.setState({ b: i }); }
+      };
+    }).reverse();
+    const A = V[s.a], B = V[s.b];
+    const ids = []; Object.keys(A.reqs).concat(Object.keys(B.reqs)).forEach(function (k) { if (ids.indexOf(k) < 0) { ids.push(k); } });
+    let nAdded = 0, nMod = 0, nDel = 0, nSame = 0;
+    const rows = ids.map(function (id) {
+      const x = A.reqs[id], y = B.reqs[id];
+      if (x && !y) { nDel++; return { id: id, label: 'Eliminado', cls: 'badge b-alta', segs: [{ t: x, cls: 'del' }], o: 1 }; }
+      if (!x && y) { nAdded++; return { id: id, label: 'Nuevo', cls: 'badge b-ok', segs: [{ t: y, cls: 'ins' }], o: 0 }; }
+      if (x !== y) { nMod++; return { id: id, label: 'Modificado', cls: 'badge b-media', segs: self.wordDiff(x, y), o: 0 }; }
+      nSame++; return { id: id, label: 'Sin cambios', cls: 'badge b-neutral', segs: [{ t: y, cls: '' }], o: 2 };
+    }).sort(function (p, q) { return p.o - q.o; });
+    const dl = function (label, from, to, betterUp, suffix) {
+      const d = to - from;
+      const good = betterUp ? d > 0 : d < 0;
+      return { label: label, from: from + (suffix || ''), to: to + (suffix || ''), value: (d > 0 ? '+' : '') + d + (suffix || ''), cls: d === 0 ? 'flat' : (good ? 'up' : 'down') };
+    };
+    return {
+      rootClass: 'qr' + (this.props.tema === 'Oscuro' ? ' dark' : ''),
+      goRev: function () { try { localStorage.setItem('qualireq.step', '"revisar"'); } catch (e) {} },
+      goGen: function () { try { localStorage.setItem('qualireq.step', '"generar"'); } catch (e) {} },
+      goExp: function () { try { localStorage.setItem('qualireq.step', '"exportar"'); } catch (e) {} },
+      versions: versions, aName: A.name, bName: B.name,
+      same: s.a === s.b, diff: s.a !== s.b,
+      deltas: [dl('Calidad global', A.score, B.score, true, ' %'), dl('Sospechas abiertas', A.finds, B.finds, false), dl('Casos de prueba', A.cases, B.cases, true), dl('Requisitos', Object.keys(A.reqs).length, Object.keys(B.reqs).length, true)],
+      rows: rows, nAdded: nAdded, nMod: nMod, nDel: nDel, nSame: nSame
+    };
+  }
+}
+</script>
+</body>
+</html>
