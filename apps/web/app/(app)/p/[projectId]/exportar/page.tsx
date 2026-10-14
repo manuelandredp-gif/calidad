@@ -44,20 +44,27 @@ const groups: { key: ExportGroup; label: string; formats: { key: ExportFormat; l
 export default function ExportarPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const { analysis, decisions } = useWorkspace();
-  const openFindings = useWorkspace((s) => s.openFindings());
+  const openFindings = useMemo(() => {
+    if (!analysis) return [];
+    return analysis.findings.filter((f) => decisions[f.key] !== 'rechazado');
+  }, [analysis, decisions]);
   const [selectedGroup, setSelectedGroup] = useState<ExportGroup>('mejorados');
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('improvedTxt');
   const [copied, setCopied] = useState(false);
 
   const preview = useMemo(() => {
     if (!analysis) return '';
-    const fn = (exporters as Record<string, Function>)[selectedFormat];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fn = (exporters as Record<string, (...args: any[]) => string>)[selectedFormat];
     if (!fn) return '';
     if (selectedFormat.startsWith('improved')) {
-      return fn(analysis.requirements, openFindings);
+      return fn(analysis, openFindings, { project: 'Proyecto', version: 1, withOriginal: true });
     }
     if (selectedFormat.startsWith('cases')) {
-      return fn(analysis.cases);
+      return fn(analysis);
+    }
+    if (selectedFormat === 'findingsJson') {
+      return fn(openFindings, analysis);
     }
     return fn(openFindings);
   }, [analysis, openFindings, selectedFormat]);
