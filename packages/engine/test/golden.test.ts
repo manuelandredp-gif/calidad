@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { analyze } from '../src/index.js';
+import { analyze, globalScore } from '../src/index.js';
 import { GOLDEN_TEXT } from './fixtures.js';
 
 describe('ejemplo de referencia', () => {
-  it('produce seis requisitos, trece sospechas y trece casos pendientes del hito 2', () => {
+  it('produce los conteos de referencia y calidad global de 72 %', () => {
     const result = analyze(GOLDEN_TEXT);
     expect(result.requirements).toHaveLength(6);
     expect(result.findings).toHaveLength(13);
-    expect(result.cases).toHaveLength(0);
+    expect(result.cases).toHaveLength(13);
+    expect(globalScore(result.requirements, result.findings)).toBe(72);
   });
 
   it('mantiene una huella estable', () => {
