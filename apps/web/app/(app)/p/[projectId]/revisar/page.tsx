@@ -29,7 +29,7 @@ export default async function RevisarPage({ params }: { params: Promise<{ projec
       .select('finding_key, status')
       .eq('set_id', setId);
     if (data) {
-      decisions = Object.fromEntries(data.map((d) => [d.finding_key, d.status as 'aceptado' | 'rechazado']));
+      decisions = Object.fromEntries(data.map((d: { finding_key: string; status: string }) => [d.finding_key, d.status as 'aceptado' | 'rechazado']));
     }
   }
 
@@ -43,8 +43,8 @@ export default async function RevisarPage({ params }: { params: Promise<{ projec
     .select('term')
     .eq('project_id', projectId);
 
-  const disabledRules = (overrides ?? []).filter((o) => !o.enabled).map((o) => o.rule_id);
-  const domainTerms = (terms ?? []).map((t) => t.term);
+  const disabledRules = (overrides ?? []).filter((o: { rule_id: string; enabled: boolean }) => !o.enabled).map((o: { rule_id: string; enabled: boolean }) => o.rule_id);
+  const domainTerms = (terms ?? []).map((t: { term: string }) => t.term);
 
   return (
     <RevisarView

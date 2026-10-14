@@ -20,7 +20,7 @@ export default async function Home() {
     .select('id, name, updated_at')
     .order('updated_at', { ascending: false });
 
-  const projectIds = (projects ?? []).map((p) => p.id);
+  const projectIds = (projects ?? []).map((p: { id: string }) => p.id);
 
   let drafts: { project_id: string; version: number; summary: { reqs: number; findings: number; cases: number; score: number; verifPct: number }; updated_at: string }[] = [];
   if (projectIds.length > 0) {
@@ -32,7 +32,7 @@ export default async function Home() {
     drafts = (data ?? []) as typeof drafts;
   }
 
-  const enriched = (projects ?? []).map((p) => {
+  const enriched = (projects ?? []).map((p: { id: string; name: string; updated_at: string }) => {
     const draft = drafts.find((d) => d.project_id === p.id);
     return {
       id: p.id,

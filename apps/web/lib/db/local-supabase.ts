@@ -14,7 +14,6 @@ class QueryBuilder {
   private orderCol: string | null = null;
   private orderAsc = true;
   private isSingle = false;
-  private conflictCols: string[] = [];
 
   constructor(table: string) {
     this.table = table;
@@ -76,26 +75,59 @@ class QueryBuilder {
       let result: Row[];
 
       if (this.op === 'select') {
-        const where = this.buildWhere();
-        const order = this.orderCol
-          ? sql` ORDER BY ${sql(this.orderCol)} ${this.orderAsc ? sql`ASC` : sql`DESC`}`
-          : sql``;
-        result = await sql`SELECT ${this.cols === '*' ? sql`*` : sql.unsafe(this.cols)} FROM ${sql(this.table)} ${where} ${order}`;
+        const orderClause = this.orderCol
+          ? ` ORDER BY "${this.orderCol}" ${this.orderAsc ? 'ASC' : 'DESC'}`
+          : '';
+        const whereClause = this.buildWhereString();
+        const q = `SELECT ${this.cols === '*' ? '*' : this.cols} FROM "${this.table}"${whereClause}${orderClause}`;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        result = (await sql.unsafe(q, this.filterValues() as any[])) as Row[];
       } else if (this.op === 'insert') {
         const rows = Array.isArray(this.data) ? this.data : [this.data];
         const keys = Object.keys(rows[0]);
-        result = await sql`INSERT INTO ${sql(this.table)} ${sql(rows as Record<string, unknown>[], ...keys)} RETURNING *`;
+        const cols = keys.map((k) => `"${k}"`).join(', ');
+        const placeholders = rows.map((_, ri) =>
+          `(${keys.map((_, ki) => `$${ri * keys.length + ki + 1}`).join(', ')})`
+        ).join(', ');
+        const vals = rows.flatMap((r) => keys.map((k) => r[k]));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        result = (await sql.unsafe(
+          `INSERT INTO "${this.table}" (${cols}) VALUES ${placeholders} RETURNING *`,
+          vals as any[]
+        )) as Row[];
       } else if (this.op === 'update') {
-        const where = this.buildWhere();
         const data = this.data as Row;
-        result = await sql`UPDATE ${sql(this.table)} SET ${sql(data as Record<string, unknown>, ...Object.keys(data))} ${where} RETURNING *`;
+        const keys = Object.keys(data);
+        const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+        const setVals = keys.map((k) => data[k]);
+        const whereClause = this.buildWhereString(keys.length);
+        const vals = [...setVals, ...this.filterValues()];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        result = (await sql.unsafe(
+          `UPDATE "${this.table}" SET ${setClause}${whereClause} RETURNING *`,
+          vals as any[]
+        )) as Row[];
       } else if (this.op === 'upsert') {
         const rows = Array.isArray(this.data) ? this.data : [this.data];
         const keys = Object.keys(rows[0]);
-        result = await sql`INSERT INTO ${sql(this.table)} ${sql(rows as Record<string, unknown>[], ...keys)} ON CONFLICT DO UPDATE SET ${sql(rows[0] as Record<string, unknown>, ...keys)} RETURNING *`;
+        const cols = keys.map((k) => `"${k}"`).join(', ');
+        const placeholders = rows.map((_, ri) =>
+          `(${keys.map((_, ki) => `$${ri * keys.length + ki + 1}`).join(', ')})`
+        ).join(', ');
+        const vals = rows.flatMap((r) => keys.map((k) => r[k]));
+        const updateSet = keys.map((k) => `"${k}" = EXCLUDED."${k}"`).join(', ');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        result = (await sql.unsafe(
+          `INSERT INTO "${this.table}" (${cols}) VALUES ${placeholders} ON CONFLICT DO UPDATE SET ${updateSet} RETURNING *`,
+          vals as any[]
+        )) as Row[];
       } else {
-        const where = this.buildWhere();
-        result = await sql`DELETE FROM ${sql(this.table)} ${where} RETURNING *`;
+        const whereClause = this.buildWhereString();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        result = (await sql.unsafe(
+          `DELETE FROM "${this.table}"${whereClause} RETURNING *`,
+          this.filterValues() as any[]
+        )) as Row[];
       }
 
       if (this.isSingle) {
@@ -107,19 +139,32 @@ class QueryBuilder {
     }
   }
 
-  private buildWhere() {
-    if (this.filters.length === 0) return sql``;
-    let where = sql`WHERE `;
-    for (let i = 0; i < this.filters.length; i++) {
-      const f = this.filters[i];
-      if (i > 0) where = sql`${where} AND `;
+  private buildWhereString(offset = 0): string {
+    if (this.filters.length === 0) return '';
+    const parts: string[] = [];
+    let idx = offset + 1;
+    for (const f of this.filters) {
       if (f.op === 'IN') {
-        where = sql`${where} ${sql(f.col)} IN ${sql(f.val as unknown[])}`;
+        const vals = f.val as unknown[];
+        const placeholders = vals.map(() => `$${idx++}`).join(', ');
+        parts.push(`"${f.col}" IN (${placeholders})`);
       } else {
-        where = sql`${where} ${sql(f.col)} = ${f.val}`;
+        parts.push(`"${f.col}" = $${idx++}`);
       }
     }
-    return where;
+    return ` WHERE ${parts.join(' AND ')}`;
+  }
+
+  private filterValues(): unknown[] {
+    const vals: unknown[] = [];
+    for (const f of this.filters) {
+      if (f.op === 'IN') {
+        vals.push(...(f.val as unknown[]));
+      } else {
+        vals.push(f.val);
+      }
+    }
+    return vals;
   }
 
   then(resolve: (val: { data: Row | Row[] | null; error: { message: string } | null }) => void, reject?: (err: unknown) => void) {
@@ -131,10 +176,14 @@ class RpcCaller {
   async call(fn: string, params: Row): Promise<{ data: unknown; error: { message: string } | null }> {
     try {
       await sql`SELECT set_config('app.current_user_id', ${LOCAL_USER_ID}, true)`;
-      const args = Object.values(params);
       if (fn === 'save_version') {
-        const result = await sql`SELECT public.save_version(${args[0]}::uuid, ${args[1]})`;
-        return { data: result[0]?.save_version, error: null };
+        const pid = String(params.pid);
+        const pNote = params.p_note != null ? String(params.p_note) : null;
+        const result = await sql.unsafe(
+          `SELECT public.save_version($1::uuid, $2)`,
+          [pid, pNote]
+        );
+        return { data: (result[0] as Row)?.save_version, error: null };
       }
       return { data: null, error: { message: `Unknown function: ${fn}` } };
     } catch (e) {

@@ -6,3 +6,5 @@ pnpm-install*.log
 .env*.local
 .next/
 web-install*.log
+test-results/
+playwright-report/
